@@ -1,5 +1,6 @@
 import { Document } from "../models/DocumentSchema";
 import { samplePaper } from "../documents/samplePaper";
+import { templates, type TemplateType } from "../documents/templates";
 import "../styles/StartScreen.css";
 
 interface StartScreenProps {
@@ -68,18 +69,48 @@ export function StartScreen({ onSelectDocument, onImport }: StartScreenProps) {
             onClick={() => onSelectDocument(createBlankDocument())}
           >
             <div className="card-icon">📝</div>
-            <h3>New Document</h3>
-            <p>Start with a blank canvas</p>
+            <h3>Blank Document</h3>
+            <p>Start from scratch</p>
           </div>
 
-          {/* Load Sample Example */}
+          {/* APA Template */}
+          <div
+            className="start-card start-card-example"
+            onClick={() => onSelectDocument(templates.apa)}
+          >
+            <div className="card-icon">📑</div>
+            <h3>APA Format</h3>
+            <p>7th Edition template</p>
+          </div>
+
+          {/* MLA Template */}
+          <div
+            className="start-card start-card-example"
+            onClick={() => onSelectDocument(templates.mla)}
+          >
+            <div className="card-icon">📄</div>
+            <h3>MLA Format</h3>
+            <p>9th Edition template</p>
+          </div>
+
+          {/* Chicago Template */}
+          <div
+            className="start-card start-card-example"
+            onClick={() => onSelectDocument(templates.chicago)}
+          >
+            <div className="card-icon">📋</div>
+            <h3>Chicago Style</h3>
+            <p>17th Edition template</p>
+          </div>
+
+          {/* Sample Example */}
           <div
             className="start-card start-card-example"
             onClick={() => onSelectDocument(samplePaper)}
           >
             <div className="card-icon">📚</div>
             <h3>Sample Paper</h3>
-            <p>View a formatted example document</p>
+            <p>View a formatted example</p>
           </div>
 
           {/* Import Document */}

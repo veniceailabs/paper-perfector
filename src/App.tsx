@@ -6,13 +6,29 @@ import type { Document } from "./models/DocumentSchema";
 import { importDocumentFromFile } from "./utils/importers";
 import { exportToPdf } from "./utils/export";
 import { hashDocument } from "./utils/hash";
+import { useAutoSave, loadAutoSavedDocument, clearAutoSave } from "./hooks/useAutoSave";
+import {
+  getSharedDocumentFromUrl,
+  copyShareLink,
+  emailDocument,
+} from "./utils/share";
 
 export default function App() {
-  const [doc, setDoc] = useState<Document | null>(null);
+  const [doc, setDoc] = useState<Document | null>(() => {
+    // Check for shared document in URL first
+    const shared = getSharedDocumentFromUrl();
+    if (shared) return shared;
+
+    // Otherwise load auto-saved document
+    return loadAutoSavedDocument();
+  });
   const [editMode, setEditMode] = useState(false);
   const [status, setStatus] = useState<string | null>(null);
   const [theme, setTheme] = useState<"dark" | "light">("dark");
   const [hash, setHash] = useState<string>("");
+
+  // Auto-save document
+  useAutoSave(doc);
 
   useEffect(() => {
     document.documentElement.setAttribute("data-theme", theme);
@@ -69,6 +85,26 @@ export default function App() {
     }
   };
 
+  const handleShare = async () => {
+    if (!doc) return;
+
+    const copied = await copyShareLink(doc);
+    if (copied) {
+      setStatus("Share link copied to clipboard! 🔗");
+      setTimeout(() => setStatus(null), 3000);
+    } else {
+      setStatus("Failed to copy share link");
+    }
+  };
+
+  const handleEmail = () => {
+    if (!doc) return;
+
+    setStatus("Opening email client...");
+    emailDocument(doc);
+    setTimeout(() => setStatus(null), 2000);
+  };
+
   if (!doc) {
     return (
       <>
@@ -121,6 +157,22 @@ export default function App() {
             onClick={() => setEditMode(!editMode)}
           >
             {editMode ? "👁️ View" : "✏️ Edit"}
+          </button>
+          <button
+            className="toolbar-button"
+            type="button"
+            onClick={handleShare}
+            title="Copy shareable link to clipboard"
+          >
+            🔗 Share
+          </button>
+          <button
+            className="toolbar-button"
+            type="button"
+            onClick={handleEmail}
+            title="Download PDF and open email"
+          >
+            📧 Email
           </button>
           <button
             className="toolbar-button"
