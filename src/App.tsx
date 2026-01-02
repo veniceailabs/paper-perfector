@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { DocumentRenderer } from "./renderer/DocumentRenderer";
 import { DocumentEditor } from "./components/DocumentEditor";
 import { StartScreen } from "./components/StartScreen";
+import { ShareModal } from "./components/ShareModal";
 import type { Document } from "./models/DocumentSchema";
 import { importDocumentFromFile } from "./utils/importers";
 import { exportToPdf } from "./utils/export";
@@ -9,7 +10,6 @@ import { hashDocument } from "./utils/hash";
 import { useAutoSave, loadAutoSavedDocument, clearAutoSave } from "./hooks/useAutoSave";
 import {
   getSharedDocumentFromUrl,
-  copyShareLink,
   emailDocument,
 } from "./utils/share";
 
@@ -24,8 +24,9 @@ export default function App() {
   });
   const [editMode, setEditMode] = useState(false);
   const [status, setStatus] = useState<string | null>(null);
+  const [showShareModal, setShowShareModal] = useState(false);
   const [theme, setTheme] = useState<"dark" | "light">("dark");
-  const [hash, setHash] = useState<string>("");
+  const [printHash, setPrintHash] = useState<string>("");
 
   // Auto-save document
   useAutoSave(doc);
@@ -33,30 +34,6 @@ export default function App() {
   useEffect(() => {
     document.documentElement.setAttribute("data-theme", theme);
   }, [theme]);
-
-  useEffect(() => {
-    if (!doc) {
-      setHash("");
-      return;
-    }
-
-    let active = true;
-    hashDocument(doc)
-      .then((value) => {
-        if (active) {
-          setHash(value);
-        }
-      })
-      .catch(() => {
-        if (active) {
-          setHash("");
-        }
-      });
-
-    return () => {
-      active = false;
-    };
-  }, [doc]);
 
   const handleImport = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -85,24 +62,27 @@ export default function App() {
     }
   };
 
-  const handleShare = async () => {
-    if (!doc) return;
-
-    const copied = await copyShareLink(doc);
-    if (copied) {
-      setStatus("Share link copied to clipboard! 🔗");
-      setTimeout(() => setStatus(null), 3000);
-    } else {
-      setStatus("Failed to copy share link");
-    }
-  };
-
   const handleEmail = () => {
     if (!doc) return;
 
     setStatus("Opening email client...");
     emailDocument(doc);
     setTimeout(() => setStatus(null), 2000);
+  };
+
+  const handleExportPdf = async () => {
+    if (!doc) return;
+
+    try {
+      const hash = await hashDocument(doc);
+      setPrintHash(hash);
+      requestAnimationFrame(() => {
+        exportToPdf(doc.title, () => setPrintHash(""));
+      });
+    } catch {
+      setPrintHash("");
+      exportToPdf(doc.title);
+    }
   };
 
   if (!doc) {
@@ -120,7 +100,11 @@ export default function App() {
             </button>
           </div>
         </div>
-        <StartScreen onSelectDocument={setDoc} onImport={handleImport} />
+        <StartScreen
+          onSelectDocument={setDoc}
+          onImport={handleImport}
+          onThemeChange={setTheme}
+        />
       </div>
     );
   }
@@ -128,7 +112,8 @@ export default function App() {
   return (
     <div className="app-shell">
       <div className="toolbar">
-        <div className="brand">
+        <div className="brand">Paper Perfector</div>
+        <div className="toolbar-actions">
           <button
             className="toolbar-button toolbar-home"
             type="button"
@@ -138,11 +123,8 @@ export default function App() {
             }}
             title="Back to start screen"
           >
-            ⌂
+            Home
           </button>
-          Paper Perfector
-        </div>
-        <div className="toolbar-actions">
           <label className="file-upload">
             Import
             <input
@@ -161,8 +143,8 @@ export default function App() {
           <button
             className="toolbar-button"
             type="button"
-            onClick={handleShare}
-            title="Copy shareable link to clipboard"
+            onClick={() => setShowShareModal(true)}
+            title="Share this document"
           >
             🔗 Share
           </button>
@@ -184,7 +166,7 @@ export default function App() {
           <button
             className="toolbar-button"
             type="button"
-            onClick={() => exportToPdf(doc.title)}
+            onClick={handleExportPdf}
           >
             📥 Export PDF
           </button>
@@ -198,10 +180,10 @@ export default function App() {
           setTimeout(() => setStatus(null), 2000);
         }} />
       ) : (
-        <DocumentRenderer doc={doc} />
+        <DocumentRenderer doc={doc} printHash={printHash || undefined} />
       )}
-      {hash ? (
-        <div className="hash-footnote">Document hash: {hash}</div>
+      {showShareModal && doc ? (
+        <ShareModal doc={doc} onClose={() => setShowShareModal(false)} />
       ) : null}
     </div>
   );

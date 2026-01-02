@@ -1,10 +1,15 @@
 .editor-container {
   display: grid;
-  grid-template-columns: 1fr 280px;
-  gap: 32px;
-  max-width: 1200px;
+  grid-template-columns: minmax(220px, 280px) minmax(0, 1fr) minmax(220px, 300px);
+  gap: 28px;
+  max-width: 1400px;
   margin: 32px auto;
   padding: 0 32px 120px;
+}
+
+.editor-container.markdown {
+  grid-template-columns: minmax(0, 1fr);
+  max-width: 1100px;
 }
 
 .editor-main {
@@ -12,6 +17,46 @@
   border: 1px solid var(--rule-color);
   border-radius: 8px;
   padding: 32px;
+}
+
+.editor-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 24px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--rule-color);
+}
+
+.editor-mode-toggle {
+  display: inline-flex;
+  gap: 8px;
+  background: var(--bg-primary);
+  border: 1px solid var(--rule-color);
+  border-radius: 999px;
+  padding: 4px;
+}
+
+.editor-mode-button {
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  padding: 6px 14px;
+  border-radius: 999px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.editor-mode-button.active {
+  background: var(--accent);
+  color: white;
+}
+
+.editor-mode-hint {
+  font-size: 12px;
+  color: var(--text-muted);
 }
 
 .editor-header {
@@ -116,6 +161,54 @@
   color: var(--text-muted);
   letter-spacing: 0.05em;
   margin: 0 0 20px 0;
+}
+
+.editor-markdown {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.editor-markdown-textarea {
+  width: 100%;
+  min-height: 520px;
+  resize: vertical;
+  border-radius: 10px;
+  border: 1px solid var(--rule-color);
+  padding: 16px;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  font-size: 14px;
+  line-height: 1.7;
+  font-family: "Roboto Mono", monospace;
+}
+
+.editor-markdown-textarea:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px rgba(138, 180, 248, 0.1);
+}
+
+.editor-markdown-error {
+  color: #fca5a5;
+  font-size: 0.9em;
+}
+
+.editor-markdown-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+}
+
+.editor-secondary-btn {
+  background: transparent;
+  border: 1px solid var(--rule-color);
+  color: var(--text-secondary);
+  padding: 10px 14px;
+  border-radius: 6px;
+  font-size: 13px;
+  cursor: pointer;
 }
 
 .section-editor {
@@ -272,6 +365,10 @@
   top: 80px;
 }
 
+.editor-container.markdown .editor-sidebar {
+  display: none;
+}
+
 .save-btn {
   background: var(--accent);
   color: white;
@@ -334,5 +431,10 @@
 
   .editor-title {
     font-size: 20px;
+  }
+
+  .editor-toolbar {
+    flex-direction: column;
+    align-items: flex-start;
   }
 }

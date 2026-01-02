@@ -1,7 +1,7 @@
 /**
  * Triggers browser print dialog for PDF export
  */
-export function exportToPdf(title?: string) {
+export function exportToPdf(title?: string, onAfterPrint?: () => void) {
   const previousTitle = document.title;
   if (title) {
     document.title = title;
@@ -10,6 +10,9 @@ export function exportToPdf(title?: string) {
   const restoreTitle = () => {
     document.title = previousTitle;
     window.removeEventListener("afterprint", restoreTitle);
+    if (onAfterPrint) {
+      onAfterPrint();
+    }
   };
 
   window.addEventListener("afterprint", restoreTitle);

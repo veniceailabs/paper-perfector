@@ -6,7 +6,13 @@ import MetaBlock from "./MetaBlock";
 import Section from "./Section";
 import "../styles/DocumentLayout.css";
 
-export function DocumentRenderer({ doc }: { doc: Document }) {
+export function DocumentRenderer({
+  doc,
+  printHash,
+}: {
+  doc: Document;
+  printHash?: string;
+}) {
   const [currentSectionId, setCurrentSectionId] = useState<string | undefined>();
 
   // Track current section as user scrolls
@@ -46,6 +52,9 @@ export function DocumentRenderer({ doc }: { doc: Document }) {
             <Section {...section} />
           </div>
         ))}
+        {printHash ? (
+          <div className="print-hash">Document Integrity Hash: {printHash}</div>
+        ) : null}
       </article>
 
       <aside className="document-sidebar">

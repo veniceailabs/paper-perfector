@@ -2,6 +2,7 @@ import type { Document } from "../models/DocumentSchema";
 import { importFromHtml } from "./htmlImport";
 import { importFromPdf } from "./pdfImport";
 import { importFromImage } from "./imageImport";
+import { importFromMarkdown } from "./markdownImport";
 
 export type ImportResult = {
   document: Document;
@@ -42,5 +43,17 @@ export async function importDocumentFromFile(file: File): Promise<ImportResult> 
     };
   }
 
-  throw new Error("Unsupported file type. Import HTML, PDF, or image files.");
+  if (
+    file.type === "text/markdown" ||
+    fileName.endsWith(".md") ||
+    fileName.endsWith(".markdown")
+  ) {
+    return {
+      document: await importFromMarkdown(file),
+      warnings,
+      source: "Markdown",
+    };
+  }
+
+  throw new Error("Unsupported file type. Import HTML, PDF, Markdown, or image files.");
 }

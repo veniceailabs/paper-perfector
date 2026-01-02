@@ -1,14 +1,27 @@
+import { useState } from "react";
 import { Document } from "../models/DocumentSchema";
 import { samplePaper } from "../documents/samplePaper";
-import { templates, type TemplateType } from "../documents/templates";
+import { templates } from "../documents/templates";
+import { importFromMarkdownText } from "../utils/markdownImport";
 import "../styles/StartScreen.css";
 
 interface StartScreenProps {
   onSelectDocument: (doc: Document) => void;
   onImport: (event: React.ChangeEvent<HTMLInputElement>) => void;
+  onThemeChange: (theme: "light" | "dark") => void;
 }
 
-export function StartScreen({ onSelectDocument, onImport }: StartScreenProps) {
+export function StartScreen({
+  onSelectDocument,
+  onImport,
+  onThemeChange,
+}: StartScreenProps) {
+  const [showPasteModal, setShowPasteModal] = useState(false);
+  const [showThemeModal, setShowThemeModal] = useState(false);
+  const [markdownText, setMarkdownText] = useState("");
+  const [markdownError, setMarkdownError] = useState<string | null>(null);
+  const [pendingDoc, setPendingDoc] = useState<Document | null>(null);
+
   const createBlankDocument = (): Document => {
     return {
       title: "Untitled Document",
@@ -52,6 +65,41 @@ export function StartScreen({ onSelectDocument, onImport }: StartScreenProps) {
         },
       ],
     };
+  };
+
+  const openPasteModal = () => {
+    setMarkdownText("");
+    setMarkdownError(null);
+    setShowPasteModal(true);
+  };
+
+  const handlePasteContinue = () => {
+    if (!markdownText.trim()) {
+      setMarkdownError("Paste your markdown to continue.");
+      return;
+    }
+
+    try {
+      const doc = importFromMarkdownText(markdownText);
+      setPendingDoc(doc);
+      setShowPasteModal(false);
+      setShowThemeModal(true);
+      setMarkdownError(null);
+    } catch (error) {
+      setMarkdownError(
+        error instanceof Error ? error.message : "Failed to parse markdown."
+      );
+    }
+  };
+
+  const handleThemeSelect = (theme: "light" | "dark") => {
+    if (!pendingDoc) {
+      return;
+    }
+    onThemeChange(theme);
+    onSelectDocument(pendingDoc);
+    setPendingDoc(null);
+    setShowThemeModal(false);
   };
 
   return (
@@ -125,12 +173,97 @@ export function StartScreen({ onSelectDocument, onImport }: StartScreenProps) {
               style={{ display: "none" }}
             />
           </label>
+
+          {/* Paste Markdown */}
+          <div className="start-card start-card-paste" onClick={openPasteModal}>
+            <div className="card-icon">🧾</div>
+            <h3>Paste Markdown</h3>
+            <p>Paste text and keep formatting</p>
+          </div>
         </div>
 
         <div className="start-footer">
           <p>💡 Tip: You can import markdown, HTML, or PDF files</p>
         </div>
       </div>
+
+      {showPasteModal ? (
+        <div className="start-modal-backdrop" role="dialog" aria-modal="true">
+          <div className="start-modal">
+            <div className="start-modal-header">
+              <h2>Paste Markdown</h2>
+              <p>Paste your markdown and keep the formatting intact.</p>
+            </div>
+            <textarea
+              className="start-modal-textarea"
+              value={markdownText}
+              onChange={(event) => setMarkdownText(event.target.value)}
+              placeholder="Paste markdown here..."
+              rows={14}
+            />
+            {markdownError ? (
+              <div className="start-modal-error">{markdownError}</div>
+            ) : null}
+            <div className="start-modal-actions">
+              <button
+                className="start-modal-button secondary"
+                type="button"
+                onClick={() => setShowPasteModal(false)}
+              >
+                Cancel
+              </button>
+              <button
+                className="start-modal-button primary"
+                type="button"
+                onClick={handlePasteContinue}
+              >
+                Continue
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      {showThemeModal ? (
+        <div className="start-modal-backdrop" role="dialog" aria-modal="true">
+          <div className="start-modal">
+            <div className="start-modal-header">
+              <h2>Choose Paper Theme</h2>
+              <p>Select a background before opening your document.</p>
+            </div>
+            <div className="start-theme-grid">
+              <button
+                className="start-theme-card"
+                type="button"
+                onClick={() => handleThemeSelect("light")}
+              >
+                <span className="theme-swatch theme-swatch-light" />
+                <span>Light</span>
+              </button>
+              <button
+                className="start-theme-card"
+                type="button"
+                onClick={() => handleThemeSelect("dark")}
+              >
+                <span className="theme-swatch theme-swatch-dark" />
+                <span>Dark</span>
+              </button>
+            </div>
+            <div className="start-modal-actions">
+              <button
+                className="start-modal-button secondary"
+                type="button"
+                onClick={() => {
+                  setShowThemeModal(false);
+                  setShowPasteModal(true);
+                }}
+              >
+                Back
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }
