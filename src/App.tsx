@@ -107,8 +107,8 @@ export default function App() {
 
   if (!doc) {
     return (
-      <>
-        <div className="toolbar" style={{ position: "fixed", top: 0, width: "100%", zIndex: 100 }}>
+      <div className="app-shell">
+        <div className="toolbar">
           <div className="brand">Paper Perfector</div>
           <div className="toolbar-actions">
             <button
@@ -121,7 +121,7 @@ export default function App() {
           </div>
         </div>
         <StartScreen onSelectDocument={setDoc} onImport={handleImport} />
-      </>
+      </div>
     );
   }
 
