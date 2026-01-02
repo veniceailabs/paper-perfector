@@ -1,5 +1,6 @@
 import { useState } from "react";
 import type { Document } from "../models/DocumentSchema";
+import { TableOfContents } from "./TableOfContents";
 import "../styles/DocumentEditor.css";
 
 interface DocumentEditorProps {
@@ -12,6 +13,9 @@ export function DocumentEditor({ doc, onSave }: DocumentEditorProps) {
   const [subtitle, setSubtitle] = useState(doc.subtitle || "");
   const [metadata, setMetadata] = useState(doc.metadata);
   const [sections, setSections] = useState(doc.sections);
+  const [currentSectionId, setCurrentSectionId] = useState<string>(
+    sections[0]?.id || ""
+  );
 
   const handleMetadataChange = (key: string, value: string) => {
     setMetadata({ ...metadata, [key]: value });
@@ -91,8 +95,26 @@ export function DocumentEditor({ doc, onSave }: DocumentEditorProps) {
     onSave(updatedDoc);
   };
 
+  const handleSectionClick = (sectionId: string) => {
+    setCurrentSectionId(sectionId);
+    // Scroll to section in the editor
+    const element = document.getElementById(`editor-section-${sectionId}`);
+    if (element) {
+      element.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+  };
+
   return (
     <div className="editor-container">
+      <aside className="editor-sidebar">
+        <TableOfContents
+          sections={sections}
+          currentSectionId={currentSectionId}
+          onSectionClick={handleSectionClick}
+          isCompact={true}
+        />
+      </aside>
+
       <div className="editor-main">
         <div className="editor-header">
           <input
@@ -130,7 +152,14 @@ export function DocumentEditor({ doc, onSave }: DocumentEditorProps) {
         <div className="editor-sections">
           <h3>Sections</h3>
           {sections.map((section) => (
-            <div key={section.id} className={`section-editor level-${section.level}`}>
+            <div
+              key={section.id}
+              id={`editor-section-${section.id}`}
+              className={`section-editor level-${section.level} ${
+                currentSectionId === section.id ? "active" : ""
+              }`}
+              onMouseEnter={() => setCurrentSectionId(section.id)}
+            >
               <div className="section-header">
                 <input
                   type="text"

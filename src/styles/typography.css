@@ -146,6 +146,10 @@ body {
   background: var(--bg-primary);
   color: var(--text-primary);
   max-width: 900px;
+}
+
+/* Legacy fallback for DocumentEditor view */
+.editor-container .paper-canvas {
   margin: 32px auto 0;
   padding: 64px 48px 120px;
 }

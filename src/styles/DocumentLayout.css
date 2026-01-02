@@ -1,0 +1,54 @@
+/* Two-column layout for document viewer */
+.document-container {
+  display: grid;
+  grid-template-columns: 1fr 300px;
+  gap: 32px;
+  max-width: 1300px;
+  margin: 32px auto 0;
+  padding: 64px 48px 120px;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+}
+
+.paper-canvas {
+  min-width: 0; /* Prevents overflow of content in grid */
+}
+
+.document-sidebar {
+  position: relative;
+}
+
+/* Responsive: Stack on smaller screens */
+@media (max-width: 1024px) {
+  .document-container {
+    grid-template-columns: 1fr;
+    gap: 24px;
+    padding: 48px 32px 80px;
+  }
+
+  .document-sidebar {
+    order: -1; /* Put sidebar above content on medium screens */
+  }
+
+  .table-of-contents {
+    position: static;
+    max-height: none;
+    margin: 0 0 24px 0;
+  }
+}
+
+@media (max-width: 720px) {
+  .document-container {
+    grid-template-columns: 1fr;
+    gap: 16px;
+    padding: 48px 24px 80px;
+  }
+
+  .document-sidebar {
+    order: -1;
+  }
+
+  .paper-canvas {
+    margin-top: 0;
+  }
+}
