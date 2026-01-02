@@ -1,0 +1,331 @@
+.editor-container {
+  display: grid;
+  grid-template-columns: 1fr 280px;
+  gap: 32px;
+  max-width: 1200px;
+  margin: 32px auto;
+  padding: 0 32px 120px;
+}
+
+.editor-main {
+  background: var(--bg-secondary);
+  border: 1px solid var(--rule-color);
+  border-radius: 8px;
+  padding: 32px;
+}
+
+.editor-header {
+  margin-bottom: 32px;
+  padding-bottom: 24px;
+  border-bottom: 1px solid var(--rule-color);
+}
+
+.editor-title {
+  width: 100%;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  border: 1px solid var(--rule-color);
+  border-radius: 6px;
+  padding: 12px;
+  font-size: 28px;
+  font-weight: 600;
+  margin-bottom: 12px;
+  font-family: "Google Sans", system-ui, -apple-system, sans-serif;
+}
+
+.editor-title:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px rgba(138, 180, 248, 0.1);
+}
+
+.editor-subtitle {
+  width: 100%;
+  background: var(--bg-primary);
+  color: var(--text-secondary);
+  border: 1px solid var(--rule-color);
+  border-radius: 6px;
+  padding: 8px 12px;
+  font-size: 16px;
+  font-family: "Google Sans", system-ui, -apple-system, sans-serif;
+}
+
+.editor-subtitle:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px rgba(138, 180, 248, 0.1);
+}
+
+.editor-metadata {
+  margin-bottom: 32px;
+}
+
+.editor-metadata h3 {
+  font-size: 14px;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  letter-spacing: 0.05em;
+  margin: 0 0 16px 0;
+}
+
+.metadata-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+}
+
+.metadata-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.metadata-field label {
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  letter-spacing: 0.05em;
+}
+
+.metadata-field input {
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  border: 1px solid var(--rule-color);
+  border-radius: 6px;
+  padding: 8px 12px;
+  font-size: 13px;
+  font-family: "Roboto Mono", monospace;
+}
+
+.metadata-field input:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px rgba(138, 180, 248, 0.1);
+}
+
+.editor-sections {
+  margin-top: 32px;
+}
+
+.editor-sections h3 {
+  font-size: 14px;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  letter-spacing: 0.05em;
+  margin: 0 0 20px 0;
+}
+
+.section-editor {
+  background: var(--bg-primary);
+  border: 1px solid var(--rule-color);
+  border-radius: 8px;
+  padding: 20px;
+  margin-bottom: 20px;
+  border-left: 4px solid var(--accent);
+}
+
+.section-editor.level-2 {
+  margin-left: 0;
+}
+
+.section-editor.level-3 {
+  margin-left: 20px;
+}
+
+.section-header {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  margin-bottom: 16px;
+}
+
+.section-title-input {
+  flex: 1;
+  background: transparent;
+  color: var(--text-primary);
+  border: none;
+  border-bottom: 1px solid var(--rule-color);
+  padding: 8px 0;
+  font-size: 18px;
+  font-weight: 600;
+  font-family: "Google Sans", system-ui, -apple-system, sans-serif;
+}
+
+.section-title-input:focus {
+  outline: none;
+  border-bottom-color: var(--accent);
+}
+
+.remove-section-btn {
+  background: transparent;
+  border: 1px solid var(--rule-color);
+  color: var(--text-secondary);
+  padding: 6px 10px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.2s;
+}
+
+.remove-section-btn:hover {
+  border-color: #dc2626;
+  color: #dc2626;
+}
+
+.section-body {
+  margin-bottom: 16px;
+}
+
+.paragraph-editor {
+  margin-bottom: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.paragraph-editor textarea {
+  background: transparent;
+  color: var(--text-primary);
+  border: 1px solid var(--rule-color);
+  border-radius: 6px;
+  padding: 12px;
+  font-size: 14.5px;
+  line-height: 1.6;
+  font-family: "Google Sans", system-ui, -apple-system, sans-serif;
+  resize: vertical;
+}
+
+.paragraph-editor textarea:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px rgba(138, 180, 248, 0.1);
+}
+
+.remove-paragraph-btn {
+  align-self: flex-start;
+  background: transparent;
+  border: 1px solid var(--rule-color);
+  color: var(--text-secondary);
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.remove-paragraph-btn:hover {
+  border-color: #dc2626;
+  color: #dc2626;
+}
+
+.add-paragraph-btn {
+  background: transparent;
+  border: 1px dashed var(--rule-color);
+  color: var(--text-secondary);
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s;
+  width: 100%;
+}
+
+.add-paragraph-btn:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.add-section-btn {
+  background: transparent;
+  border: 2px dashed var(--rule-color);
+  color: var(--text-secondary);
+  padding: 12px 16px;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  width: 100%;
+  margin-top: 20px;
+}
+
+.add-section-btn:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.editor-sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  position: sticky;
+  top: 80px;
+}
+
+.save-btn {
+  background: var(--accent);
+  color: white;
+  border: none;
+  padding: 12px 16px;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-align: center;
+}
+
+.save-btn:hover {
+  opacity: 0.9;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(138, 180, 248, 0.3);
+}
+
+.editor-tips {
+  background: var(--bg-secondary);
+  border: 1px solid var(--rule-color);
+  border-radius: 6px;
+  padding: 16px;
+  font-size: 12px;
+}
+
+.editor-tips h4 {
+  margin: 0 0 12px 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.editor-tips ul {
+  margin: 0;
+  padding-left: 16px;
+}
+
+.editor-tips li {
+  margin-bottom: 8px;
+  color: var(--text-secondary);
+  line-height: 1.4;
+}
+
+@media (max-width: 900px) {
+  .editor-container {
+    grid-template-columns: 1fr;
+    gap: 24px;
+    padding: 0 16px 100px;
+  }
+
+  .editor-sidebar {
+    position: static;
+  }
+
+  .metadata-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .editor-title {
+    font-size: 20px;
+  }
+}

@@ -1,0 +1,9 @@
+:root[data-theme="dark"] {
+  --bg-primary: #0f0f10;
+  --bg-secondary: #141416;
+  --text-primary: #e8eaed;
+  --text-secondary: #b0b3b8;
+  --text-muted: #8a8d91;
+  --rule-color: rgba(255, 255, 255, 0.12);
+  --accent: #8ab4f8;
+}
