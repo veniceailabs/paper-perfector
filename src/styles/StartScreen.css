@@ -32,6 +32,14 @@
   color: white;
 }
 
+.start-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
 .start-header h1 {
   font-size: 3em;
   margin: 0 0 12px 0;
@@ -47,6 +55,22 @@
   font-size: 1.2em;
   color: #94a3b8;
   margin: 0;
+}
+
+.start-resume-button {
+  border-radius: 999px;
+  border: 1px solid rgba(148, 163, 184, 0.4);
+  background: transparent;
+  color: #cfe8ff;
+  padding: 6px 14px;
+  font-size: 0.85em;
+  cursor: pointer;
+  margin-bottom: 12px;
+}
+
+.start-resume-button:hover {
+  border-color: #4a9eff;
+  color: #ffffff;
 }
 
 .start-grid {
@@ -98,15 +122,6 @@
   margin-bottom: 0;
 }
 
-.start-card-resume {
-  grid-column: 1 / -1;
-  border-color: rgba(74, 158, 255, 0.6);
-  background: linear-gradient(135deg, rgba(74, 158, 255, 0.15), rgba(15, 23, 42, 0.9));
-}
-
-.start-card-resume h3 {
-  color: #a5d8ff;
-}
 
 @media (max-width: 900px) {
   .start-grid-templates {
@@ -115,10 +130,6 @@
 
   .start-grid-content {
     grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  }
-
-  .start-card-resume {
-    grid-column: auto;
   }
 }
 
@@ -410,6 +421,16 @@
 [data-theme="light"] .start-modal-button.primary {
   border-color: #2563eb;
   color: #2563eb;
+}
+
+[data-theme="light"] .start-resume-button {
+  border-color: rgba(148, 163, 184, 0.6);
+  color: #1e293b;
+}
+
+[data-theme="light"] .start-resume-button:hover {
+  border-color: #2563eb;
+  color: #0f172a;
 }
 
 [data-theme="light"] .start-theme-card {

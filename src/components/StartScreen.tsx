@@ -108,7 +108,18 @@ export function StartScreen({
     <div className="start-screen">
       <div className="start-container">
         <div className="start-header">
-          <h1>Paper Perfector</h1>
+          <div className="start-header-row">
+            <h1>Paper Perfector</h1>
+            {resumeDoc ? (
+              <button
+                className="start-resume-button"
+                type="button"
+                onClick={() => onSelectDocument(resumeDoc)}
+              >
+                ↩️ Resume
+              </button>
+            ) : null}
+          </div>
           <p>Create and format professional documents</p>
         </div>
 
@@ -155,16 +166,6 @@ export function StartScreen({
             <h2>Bring Your Own Content</h2>
           </div>
           <div className="start-grid start-grid-content">
-            {resumeDoc ? (
-              <div
-                className="start-card start-card-resume"
-                onClick={() => onSelectDocument(resumeDoc)}
-              >
-                <div className="card-icon">↩️</div>
-                <h3>Resume Last Document</h3>
-                <p>Pick up where you left off</p>
-              </div>
-            ) : null}
             {/* New Document */}
             <div
               className="start-card start-card-new"
