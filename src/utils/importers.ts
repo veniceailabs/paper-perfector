@@ -5,6 +5,7 @@ import { importFromImage } from "./imageImport";
 import { importFromMarkdown } from "./markdownImport";
 import { importFromPlainText } from "./plainTextImport";
 import { importFromDocx } from "./docxImport";
+import { importFromLegacyDoc } from "./legacyDocImport";
 
 export type ImportResult = {
   document: Document;
@@ -70,7 +71,12 @@ export async function importDocumentFromFile(file: File): Promise<ImportResult> 
   }
 
   if (file.type === "application/msword" || fileName.endsWith(".doc")) {
-    throw new Error("Legacy .doc files are not supported. Please save as .docx.");
+    warnings.push("Legacy .doc import is best-effort; review formatting after import.");
+    return {
+      document: await importFromLegacyDoc(file),
+      warnings,
+      source: "Word",
+    };
   }
 
   if (
@@ -86,6 +92,6 @@ export async function importDocumentFromFile(file: File): Promise<ImportResult> 
   }
 
   throw new Error(
-    "Unsupported file type. Import HTML, PDF, Markdown, Word (.docx), text, or image files."
+    "Unsupported file type. Import HTML, PDF, Markdown, Word, text, or image files."
   );
 }
