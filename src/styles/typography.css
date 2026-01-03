@@ -300,6 +300,18 @@ body {
     gap: 12px;
   }
 
+  .toolbar-actions {
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 8px;
+  }
+
+  .toolbar-button,
+  .file-upload {
+    padding: 6px 12px;
+    font-size: 12px;
+  }
+
   .paper-canvas {
     padding: 48px 24px 80px;
   }
