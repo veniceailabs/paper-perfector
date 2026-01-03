@@ -109,6 +109,11 @@ body {
   cursor: pointer;
 }
 
+.toolbar-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 .toolbar-button:hover,
 .file-upload:hover {
   border-color: var(--text-secondary);

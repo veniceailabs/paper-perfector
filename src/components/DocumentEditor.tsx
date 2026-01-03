@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { Document } from "../models/DocumentSchema";
 import { TableOfContents } from "./TableOfContents";
 import { importFromMarkdownText } from "../utils/markdownImport";
@@ -8,9 +8,18 @@ import "../styles/DocumentEditor.css";
 interface DocumentEditorProps {
   doc: Document;
   onSave: (doc: Document) => void;
+  onDirtyChange?: (isDirty: boolean) => void;
+  saveSignal?: number;
+  onSaveResult?: (success: boolean) => void;
 }
 
-export function DocumentEditor({ doc, onSave }: DocumentEditorProps) {
+export function DocumentEditor({
+  doc,
+  onSave,
+  onDirtyChange,
+  saveSignal,
+  onSaveResult,
+}: DocumentEditorProps) {
   const [title, setTitle] = useState(doc.title);
   const [subtitle, setSubtitle] = useState(doc.subtitle || "");
   const [metadata, setMetadata] = useState(doc.metadata);
@@ -18,6 +27,7 @@ export function DocumentEditor({ doc, onSave }: DocumentEditorProps) {
   const [currentSectionId, setCurrentSectionId] = useState<string>(
     sections[0]?.id || ""
   );
+  const [isDirty, setIsDirty] = useState(false);
   const [editorMode, setEditorMode] = useState<"structured" | "markdown">(
     "structured"
   );
@@ -28,9 +38,34 @@ export function DocumentEditor({ doc, onSave }: DocumentEditorProps) {
     index: number;
   } | null>(null);
   const [expandedText, setExpandedText] = useState("");
+  const [saveTrigger, setSaveTrigger] = useState(0);
+
+  useEffect(() => {
+    setTitle(doc.title);
+    setSubtitle(doc.subtitle || "");
+    setMetadata(doc.metadata);
+    setSections(doc.sections);
+    setCurrentSectionId(doc.sections[0]?.id || "");
+    setIsDirty(false);
+    setMarkdownError(null);
+  }, [doc]);
+
+  useEffect(() => {
+    onDirtyChange?.(isDirty);
+  }, [isDirty, onDirtyChange]);
+
+  useEffect(() => {
+    if (saveSignal === undefined || saveSignal === saveTrigger) {
+      return;
+    }
+    setSaveTrigger(saveSignal);
+    const success = handleSave();
+    onSaveResult?.(success);
+  }, [saveSignal, saveTrigger]);
 
   const handleMetadataChange = (key: string, value: string) => {
     setMetadata({ ...metadata, [key]: value });
+    setIsDirty(true);
   };
 
   const handleSectionBodyChange = (sectionId: string, bodyIndex: number, text: string) => {
@@ -44,6 +79,7 @@ export function DocumentEditor({ doc, onSave }: DocumentEditorProps) {
         return section;
       })
     );
+    setIsDirty(true);
   };
 
   const handleSectionTitleChange = (sectionId: string, text: string) => {
@@ -55,6 +91,7 @@ export function DocumentEditor({ doc, onSave }: DocumentEditorProps) {
         return section;
       })
     );
+    setIsDirty(true);
   };
 
   const addParagraphToSection = (sectionId: string) => {
@@ -66,6 +103,7 @@ export function DocumentEditor({ doc, onSave }: DocumentEditorProps) {
         return section;
       })
     );
+    setIsDirty(true);
   };
 
   const removeParagraphFromSection = (sectionId: string, bodyIndex: number) => {
@@ -77,6 +115,7 @@ export function DocumentEditor({ doc, onSave }: DocumentEditorProps) {
         return section;
       })
     );
+    setIsDirty(true);
   };
 
   const addSection = () => {
@@ -91,10 +130,12 @@ export function DocumentEditor({ doc, onSave }: DocumentEditorProps) {
         monoBlocks: [],
       },
     ]);
+    setIsDirty(true);
   };
 
   const removeSection = (sectionId: string) => {
     setSections(sections.filter((s) => s.id !== sectionId));
+    setIsDirty(true);
   };
 
   const buildStructuredDoc = (): Document => ({
@@ -135,14 +176,17 @@ export function DocumentEditor({ doc, onSave }: DocumentEditorProps) {
     if (editorMode === "markdown") {
       const parsed = parseMarkdownDraft();
       if (!parsed) {
-        return;
+        return false;
       }
       applyParsedDoc(parsed);
       onSave(parsed);
-      return;
+      setIsDirty(false);
+      return true;
     }
 
     onSave(buildStructuredDoc());
+    setIsDirty(false);
+    return true;
   };
 
   const handleSectionClick = (sectionId: string) => {
@@ -241,20 +285,26 @@ export function DocumentEditor({ doc, onSave }: DocumentEditorProps) {
         {editorMode === "structured" ? (
           <>
             <div className="editor-header">
-              <input
-                type="text"
-                className="editor-title"
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                placeholder="Document Title"
-              />
-              <input
-                type="text"
-                className="editor-subtitle"
-                value={subtitle}
-                onChange={(e) => setSubtitle(e.target.value)}
-                placeholder="Subtitle (optional)"
-              />
+          <input
+            type="text"
+            className="editor-title"
+            value={title}
+            onChange={(e) => {
+              setTitle(e.target.value);
+              setIsDirty(true);
+            }}
+            placeholder="Document Title"
+          />
+          <input
+            type="text"
+            className="editor-subtitle"
+            value={subtitle}
+            onChange={(e) => {
+              setSubtitle(e.target.value);
+              setIsDirty(true);
+            }}
+            placeholder="Subtitle (optional)"
+          />
             </div>
 
             <div className="editor-metadata">
@@ -363,7 +413,10 @@ export function DocumentEditor({ doc, onSave }: DocumentEditorProps) {
             <textarea
               className="editor-markdown-textarea"
               value={markdownDraft}
-              onChange={(event) => setMarkdownDraft(event.target.value)}
+              onChange={(event) => {
+                setMarkdownDraft(event.target.value);
+                setIsDirty(true);
+              }}
               placeholder="# Title\n\n## Subtitle\n\n**Author:** Name\n\n## Section\n\nWrite freely here..."
               rows={22}
             />
