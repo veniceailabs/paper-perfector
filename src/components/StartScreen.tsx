@@ -75,7 +75,7 @@ export function StartScreen({
 
   const handlePasteContinue = () => {
     if (!markdownText.trim()) {
-      setMarkdownError("Paste your markdown to continue.");
+      setMarkdownError("Paste your markdown or text to continue.");
       return;
     }
 
@@ -87,7 +87,7 @@ export function StartScreen({
       setMarkdownError(null);
     } catch (error) {
       setMarkdownError(
-        error instanceof Error ? error.message : "Failed to parse markdown."
+        error instanceof Error ? error.message : "Failed to parse content."
       );
     }
   };
@@ -173,33 +173,33 @@ export function StartScreen({
               <p>View a formatted example</p>
             </div>
 
-            {/* Paste Markdown */}
+            {/* Paste Text */}
             <div
               className="start-card start-card-paste"
               onClick={openPasteModal}
             >
               <div className="card-icon">🧾</div>
-              <h3>Paste Markdown</h3>
-              <p>Paste text and keep formatting</p>
+              <h3>Paste Text</h3>
+              <p>Paste markdown or plain text</p>
             </div>
 
             {/* Import Document */}
             <label className="start-card start-card-import">
               <div className="card-icon">📤</div>
               <h3>Import Document</h3>
-              <p>Load from HTML, PDF, or Markdown</p>
-              <input
-                type="file"
-                accept="text/html,.html,.htm,application/pdf,.pdf,image/*,text/markdown,.md"
-                onChange={onImport}
-                style={{ display: "none" }}
-              />
+              <p>Load from HTML, PDF, Word, or Markdown</p>
+            <input
+              type="file"
+              accept="text/html,.html,.htm,application/pdf,.pdf,image/*,text/markdown,.md,text/plain,.txt,application/vnd.openxmlformats-officedocument.wordprocessingml.document,.docx,.doc"
+              onChange={onImport}
+              style={{ display: "none" }}
+            />
             </label>
           </div>
         </div>
 
         <div className="start-footer">
-          <p>💡 Tip: You can import markdown, HTML, or PDF files</p>
+          <p>💡 Tip: You can import markdown, HTML, PDF, Word, or text files</p>
         </div>
       </div>
 
@@ -207,14 +207,14 @@ export function StartScreen({
         <div className="start-modal-backdrop" role="dialog" aria-modal="true">
           <div className="start-modal">
             <div className="start-modal-header">
-              <h2>Paste Markdown</h2>
-              <p>Paste your markdown and keep the formatting intact.</p>
+              <h2>Paste Markdown or Text</h2>
+              <p>Paste markdown or plain text and keep the formatting intact.</p>
             </div>
             <textarea
               className="start-modal-textarea"
               value={markdownText}
               onChange={(event) => setMarkdownText(event.target.value)}
-              placeholder="Paste markdown here..."
+              placeholder="Paste markdown or plain text here..."
               rows={14}
             />
             {markdownError ? (

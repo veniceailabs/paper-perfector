@@ -42,20 +42,22 @@ function sortedLines(lines: TextLine[]) {
 function addParagraph(
   paragraphs: string[],
   nextLine: string,
-  join: boolean
+  join: boolean,
+  joiner: string = " "
 ) {
   if (!join || paragraphs.length === 0) {
     paragraphs.push(nextLine);
     return;
   }
   const lastIndex = paragraphs.length - 1;
-  paragraphs[lastIndex] = `${paragraphs[lastIndex]} ${nextLine}`;
+  paragraphs[lastIndex] = `${paragraphs[lastIndex]}${joiner}${nextLine}`;
 }
 
 export function buildDocumentFromLines(options: {
   lines: TextLine[];
   fileName: string;
   sourceLabel: string;
+  preserveLineBreaks?: boolean;
 }) {
   const cleaned = sortedLines(options.lines)
     .map((line) => ({
@@ -72,6 +74,7 @@ export function buildDocumentFromLines(options: {
   let title = options.fileName.replace(/\.[^.]+$/, "");
   const sections: Section[] = [];
   let currentSection: Section | null = null;
+  let lastBodyLine: TextLine | null = null;
 
   const pushSection = () => {
     if (currentSection) {
@@ -99,6 +102,7 @@ export function buildDocumentFromLines(options: {
         title: line.text,
         body: [],
       };
+      lastBodyLine = null;
       return;
     }
 
@@ -111,11 +115,31 @@ export function buildDocumentFromLines(options: {
       };
     }
 
+    if (
+      options.preserveLineBreaks &&
+      lastBodyLine?.y !== undefined &&
+      line.y !== undefined &&
+      (lastBodyLine.page ?? 0) === (line.page ?? 0)
+    ) {
+      const gap = lastBodyLine.y - line.y;
+      if (gap > medianSize * 1.6) {
+        currentSection.body.push("");
+      }
+    }
+
+    const lastParagraph = currentSection.body[currentSection.body.length - 1] ?? "";
     const join =
       currentSection.body.length > 0 &&
-      !punctuationRegex.test(currentSection.body[currentSection.body.length - 1]);
+      lastParagraph.trim().length > 0 &&
+      !punctuationRegex.test(lastParagraph);
 
-    addParagraph(currentSection.body, line.text, join);
+    addParagraph(
+      currentSection.body,
+      line.text,
+      join,
+      options.preserveLineBreaks ? "\n" : " "
+    );
+    lastBodyLine = line;
   });
 
   pushSection();

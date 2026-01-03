@@ -63,5 +63,6 @@ export async function importFromPdf(file: File): Promise<Document> {
     lines,
     fileName: file.name,
     sourceLabel: "PDF import",
+    preserveLineBreaks: true,
   });
 }

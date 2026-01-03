@@ -241,7 +241,7 @@ export default function App() {
             Import
             <input
               type="file"
-              accept="text/html,.html,.htm,application/pdf,.pdf,image/*,text/markdown,.md"
+              accept="text/html,.html,.htm,application/pdf,.pdf,image/*,text/markdown,.md,text/plain,.txt,application/vnd.openxmlformats-officedocument.wordprocessingml.document,.docx,.doc"
               onChange={handleImport}
             />
           </label>

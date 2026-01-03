@@ -16,7 +16,7 @@ function stripWrapping(token: string) {
   return token;
 }
 
-export function renderInlineMarkdown(text: string, keyPrefix: string): ReactNode[] {
+function renderInlineMarkdownLine(text: string, keyPrefix: string): ReactNode[] {
   const nodes: ReactNode[] = [];
   let remaining = text;
   let tokenIndex = 0;
@@ -47,6 +47,20 @@ export function renderInlineMarkdown(text: string, keyPrefix: string): ReactNode
     remaining = remaining.slice(match.index + token.length);
     tokenIndex += 1;
   }
+
+  return nodes;
+}
+
+export function renderInlineMarkdown(text: string, keyPrefix: string): ReactNode[] {
+  const lines = text.split("\n");
+  const nodes: ReactNode[] = [];
+
+  lines.forEach((line, lineIndex) => {
+    if (lineIndex > 0) {
+      nodes.push(<br key={`${keyPrefix}-br-${lineIndex}`} />);
+    }
+    nodes.push(...renderInlineMarkdownLine(line, `${keyPrefix}-line-${lineIndex}`));
+  });
 
   return nodes;
 }

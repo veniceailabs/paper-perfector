@@ -3,6 +3,8 @@ import { importFromHtml } from "./htmlImport";
 import { importFromPdf } from "./pdfImport";
 import { importFromImage } from "./imageImport";
 import { importFromMarkdown } from "./markdownImport";
+import { importFromPlainText } from "./plainTextImport";
+import { importFromDocx } from "./docxImport";
 
 export type ImportResult = {
   document: Document;
@@ -43,6 +45,34 @@ export async function importDocumentFromFile(file: File): Promise<ImportResult> 
     };
   }
 
+  if (file.type === "text/plain" || fileName.endsWith(".txt")) {
+    return {
+      document: importFromPlainText(await file.text(), {
+        sourceLabel: file.name,
+        fileName: file.name,
+      }),
+      warnings,
+      source: "Text",
+    };
+  }
+
+  if (
+    file.type ===
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.document" ||
+    fileName.endsWith(".docx")
+  ) {
+    warnings.push("Word import is best-effort; review formatting after import.");
+    return {
+      document: await importFromDocx(file),
+      warnings,
+      source: "Word",
+    };
+  }
+
+  if (file.type === "application/msword" || fileName.endsWith(".doc")) {
+    throw new Error("Legacy .doc files are not supported. Please save as .docx.");
+  }
+
   if (
     file.type === "text/markdown" ||
     fileName.endsWith(".md") ||
@@ -55,5 +85,7 @@ export async function importDocumentFromFile(file: File): Promise<ImportResult> 
     };
   }
 
-  throw new Error("Unsupported file type. Import HTML, PDF, Markdown, or image files.");
+  throw new Error(
+    "Unsupported file type. Import HTML, PDF, Markdown, Word (.docx), text, or image files."
+  );
 }

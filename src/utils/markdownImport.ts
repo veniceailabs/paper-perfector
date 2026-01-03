@@ -1,4 +1,5 @@
 import type { Document, Section } from "../models/DocumentSchema";
+import { importFromPlainText } from "./plainTextImport";
 
 type MarkdownImportOptions = {
   sourceLabel?: string;
@@ -19,6 +20,32 @@ const unorderedListRegex = /^[-*+]\s+(.+)$/;
 const orderedListRegex = /^(\d+)\.\s+(.+)$/;
 const dividerRegex = /^([-*_])\1\1+$/;
 const metadataRegex = /^\*\*([^*]+)\*\*\s*:\s*(.+)$/;
+const inlineMarkdownRegex = /(\*\*[^*]+\*\*|`[^`]+`|\*[^*]+\*|_[^_]+_)/;
+const linkRegex = /\[[^\]]+\]\([^)]+\)/;
+
+function looksLikeMarkdown(text: string) {
+  const trimmed = text.trim();
+  if (!trimmed) {
+    return false;
+  }
+
+  if (/```/.test(trimmed) || inlineMarkdownRegex.test(trimmed) || linkRegex.test(trimmed)) {
+    return true;
+  }
+
+  const lines = trimmed.split("\n");
+  return lines.some((line) => {
+    const lineTrimmed = line.trim();
+    return (
+      headingRegex.test(lineTrimmed) ||
+      unorderedListRegex.test(lineTrimmed) ||
+      orderedListRegex.test(lineTrimmed) ||
+      dividerRegex.test(lineTrimmed) ||
+      metadataRegex.test(lineTrimmed) ||
+      /^>\s+/.test(lineTrimmed)
+    );
+  });
+}
 
 function normalizeLine(line: string) {
   return line.replace(/\s+$/, "");
@@ -36,6 +63,13 @@ export function importFromMarkdownText(
   text: string,
   options: MarkdownImportOptions = {}
 ): Document {
+  if (!looksLikeMarkdown(text)) {
+    return importFromPlainText(text, {
+      sourceLabel: options.sourceLabel,
+      fileName: options.fileName,
+    });
+  }
+
   const lines = text.replace(/\r\n/g, "\n").split("\n").map(normalizeLine);
   const metadata: Record<string, string> = {};
 
@@ -78,7 +112,7 @@ export function importFromMarkdownText(
     if (paragraphParts.length === 0) {
       return;
     }
-    const paragraph = paragraphParts.join(" ").trim();
+    const paragraph = paragraphParts.join("\n").trim();
     paragraphParts = [];
     if (!paragraph) {
       return;
