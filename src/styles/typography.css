@@ -530,7 +530,7 @@ mark {
   }
 
   .paper-canvas {
-    padding: 0;
+    padding: 10mm;
     margin: 0;
     max-width: none;
     width: 100%;
