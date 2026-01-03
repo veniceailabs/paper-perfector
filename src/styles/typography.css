@@ -68,6 +68,17 @@ body {
   flex-wrap: wrap;
 }
 
+.toolbar-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.toolbar-resume {
+  padding: 6px 12px;
+  font-size: 12px;
+}
+
 .brand {
   font-size: 15px;
   font-weight: 600;

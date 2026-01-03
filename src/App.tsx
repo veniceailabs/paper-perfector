@@ -188,7 +188,18 @@ export default function App() {
     return (
       <div className="app-shell">
         <div className="toolbar">
-          <div className="brand">Paper Perfector</div>
+          <div className="toolbar-left">
+            <div className="brand">Paper Perfector</div>
+            {resumeDoc ? (
+              <button
+                className="toolbar-button toolbar-resume"
+                type="button"
+                onClick={() => applyDocument(resumeDoc)}
+              >
+                ↩️ Resume
+              </button>
+            ) : null}
+          </div>
           <div className="toolbar-actions">
             <button
               className="toolbar-button"
@@ -203,7 +214,6 @@ export default function App() {
           onSelectDocument={applyDocument}
           onImport={handleImport}
           onThemeChange={setTheme}
-          resumeDoc={resumeDoc}
         />
       </div>
     );
