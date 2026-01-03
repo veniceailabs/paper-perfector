@@ -605,21 +605,21 @@ export default function App() {
   return (
     <div className="app-shell">
       <div className="toolbar">
-        <button
-          className="brand brand-button"
-          type="button"
-          onClick={() => {
-            requestSafeNavigation(() => {
-              setDoc(null);
-              setEditMode(false);
-            });
-          }}
-        >
-          Paper Perfector
-        </button>
-        <div className="toolbar-actions">
+        <div className="toolbar-left">
           <button
-            className="toolbar-button toolbar-home"
+            className="brand brand-button"
+            type="button"
+            onClick={() => {
+              requestSafeNavigation(() => {
+                setDoc(null);
+                setEditMode(false);
+              });
+            }}
+          >
+            Paper Perfector
+          </button>
+          <button
+            className="toolbar-button toolbar-home toolbar-nav"
             type="button"
             onClick={() => {
               requestSafeNavigation(() => {
@@ -632,7 +632,7 @@ export default function App() {
             Home
           </button>
           <button
-            className="toolbar-button"
+            className="toolbar-button toolbar-nav"
             type="button"
             onClick={handleBack}
             disabled={historyIndex <= 0}
@@ -641,7 +641,7 @@ export default function App() {
             ← Back
           </button>
           <button
-            className="toolbar-button"
+            className="toolbar-button toolbar-nav"
             type="button"
             onClick={handleForward}
             disabled={historyIndex >= history.length - 1}
@@ -650,12 +650,14 @@ export default function App() {
             Forward →
           </button>
           <button
-            className="toolbar-button"
+            className="toolbar-button toolbar-nav"
             type="button"
             onClick={() => setShowSearchPanel(true)}
           >
             🔍 Search
           </button>
+        </div>
+        <div className="toolbar-actions">
           <label className="file-upload">
             Import
             <input

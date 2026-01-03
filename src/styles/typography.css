@@ -83,6 +83,7 @@ mark {
   display: flex;
   align-items: center;
   gap: 12px;
+  flex-wrap: wrap;
 }
 
 .toolbar-resume {
@@ -127,8 +128,9 @@ mark {
 
 .toolbar-actions {
   display: flex;
-  gap: 12px;
+  gap: 10px;
   align-items: center;
+  flex-wrap: wrap;
 }
 
 .toolbar-search {
@@ -232,6 +234,11 @@ mark {
   font-size: 13px;
   font-weight: 500;
   cursor: pointer;
+}
+
+.toolbar-button.toolbar-nav {
+  padding: 6px 12px;
+  font-size: 12px;
 }
 
 .toolbar-button:disabled {
