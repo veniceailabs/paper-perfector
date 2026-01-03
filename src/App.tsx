@@ -184,6 +184,14 @@ export default function App() {
     requestSafeNavigation(() => goToHistory(historyIndexRef.current + 1));
   };
 
+  const exitEditModeWithSave = () => {
+    if (!editMode) {
+      return;
+    }
+    pendingActionRef.current = () => setEditMode(false);
+    setSaveSignal((value) => value + 1);
+  };
+
   if (!doc) {
     return (
       <div className="app-shell">
@@ -257,7 +265,11 @@ export default function App() {
             type="button"
             onClick={() => {
               if (editMode) {
-                requestSafeNavigation(() => setEditMode(false));
+                if (hasUnsavedChanges) {
+                  requestSafeNavigation(() => setEditMode(false));
+                  return;
+                }
+                exitEditModeWithSave();
                 return;
               }
               setEditMode(true);
