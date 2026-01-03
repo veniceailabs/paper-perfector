@@ -492,7 +492,7 @@ mark {
 
 @media print {
   @page {
-    margin: 10mm;
+    margin: 12mm;
   }
 
   * {
@@ -530,7 +530,7 @@ mark {
   }
 
   .paper-canvas {
-    padding: 10mm;
+    padding: 14mm;
     margin: 0;
     max-width: none;
     width: 100%;
