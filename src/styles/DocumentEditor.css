@@ -81,7 +81,7 @@
 .editor-title:focus {
   outline: none;
   border-color: var(--accent);
-  box-shadow: 0 0 0 2px rgba(138, 180, 248, 0.1);
+  box-shadow: 0 0 0 2px var(--accent-soft);
 }
 
 .editor-subtitle {
@@ -98,7 +98,7 @@
 .editor-subtitle:focus {
   outline: none;
   border-color: var(--accent);
-  box-shadow: 0 0 0 2px rgba(138, 180, 248, 0.1);
+  box-shadow: 0 0 0 2px var(--accent-soft);
 }
 
 .editor-metadata {
@@ -147,7 +147,7 @@
 .metadata-field input:focus {
   outline: none;
   border-color: var(--accent);
-  box-shadow: 0 0 0 2px rgba(138, 180, 248, 0.1);
+  box-shadow: 0 0 0 2px var(--accent-soft);
 }
 
 .editor-sections {
@@ -186,7 +186,7 @@
 .editor-markdown-textarea:focus {
   outline: none;
   border-color: var(--accent);
-  box-shadow: 0 0 0 2px rgba(138, 180, 248, 0.1);
+  box-shadow: 0 0 0 2px var(--accent-soft);
 }
 
 .editor-markdown-error {
@@ -222,7 +222,7 @@
 }
 
 .section-editor.active {
-  background: rgba(138, 180, 248, 0.05);
+  background: var(--accent-faint);
   border-color: var(--accent);
   box-shadow: inset 0 0 0 1px var(--accent);
 }
@@ -321,7 +321,7 @@
 }
 
 .format-toolbar-button:hover {
-  background: rgba(138, 180, 248, 0.15);
+  background: var(--accent-soft);
   color: var(--accent);
 }
 
@@ -379,7 +379,7 @@
 .paragraph-editor textarea:focus {
   outline: none;
   border-color: var(--accent);
-  box-shadow: 0 0 0 2px rgba(138, 180, 248, 0.1);
+  box-shadow: 0 0 0 2px var(--accent-soft);
 }
 
 .remove-paragraph-btn {
@@ -459,7 +459,7 @@
 .editor-modal-textarea:focus {
   outline: none;
   border-color: var(--accent);
-  box-shadow: 0 0 0 2px rgba(138, 180, 248, 0.1);
+  box-shadow: 0 0 0 2px var(--accent-soft);
 }
 
 .editor-modal-actions {
@@ -480,12 +480,12 @@
 }
 
 .editor-modal-button.primary {
-  border-color: #4a9eff;
-  color: #4a9eff;
+  border-color: var(--accent);
+  color: var(--accent);
 }
 
 .editor-modal-button.primary:hover {
-  background: rgba(74, 158, 255, 0.1);
+  background: var(--accent-faint);
 }
 
 .editor-modal-button.secondary:hover,
@@ -512,8 +512,8 @@
 }
 
 [data-theme="light"] .editor-modal-button.primary {
-  border-color: #2563eb;
-  color: #2563eb;
+  border-color: var(--accent);
+  color: var(--accent);
 }
 .add-paragraph-btn {
   background: transparent;
@@ -579,7 +579,7 @@
 .save-btn:hover {
   opacity: 0.9;
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(138, 180, 248, 0.3);
+  box-shadow: 0 4px 12px var(--accent-glow);
 }
 
 .editor-format-panel {

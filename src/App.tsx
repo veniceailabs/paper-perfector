@@ -509,7 +509,13 @@ export default function App() {
       <div className="app-shell">
         <div className="toolbar">
           <div className="toolbar-left">
-            <div className="brand">Paper Perfector</div>
+            <button
+              className="brand brand-button"
+              type="button"
+              onClick={() => setDoc(null)}
+            >
+              Paper Perfector
+            </button>
             {resumeDoc ? (
               <button
                 className="toolbar-button toolbar-resume"
@@ -542,7 +548,18 @@ export default function App() {
   return (
     <div className="app-shell">
       <div className="toolbar">
-        <div className="brand">Paper Perfector</div>
+        <button
+          className="brand brand-button"
+          type="button"
+          onClick={() => {
+            requestSafeNavigation(() => {
+              setDoc(null);
+              setEditMode(false);
+            });
+          }}
+        >
+          Paper Perfector
+        </button>
         <div className="toolbar-actions">
           <button
             className="toolbar-button toolbar-home"

@@ -79,8 +79,8 @@
 }
 
 .share-link-button {
-  border: 1px solid #4a9eff;
-  background: rgba(74, 158, 255, 0.15);
+  border: 1px solid var(--accent);
+  background: var(--accent-soft);
   color: #cbd5ff;
   padding: 8px 16px;
   border-radius: 999px;
@@ -132,7 +132,7 @@
 .share-link-button:hover,
 .share-native:hover,
 .share-modal-close:hover {
-  border-color: #4a9eff;
+  border-color: var(--accent);
 }
 
 @media (max-width: 600px) {
@@ -174,9 +174,9 @@
 }
 
 [data-theme="light"] .share-link-button {
-  border-color: #2563eb;
-  color: #2563eb;
-  background: rgba(37, 99, 235, 0.08);
+  border-color: var(--accent);
+  color: var(--accent);
+  background: var(--accent-faint);
 }
 
 [data-theme="light"] .share-status {

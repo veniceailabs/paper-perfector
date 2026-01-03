@@ -38,6 +38,6 @@
 
 .format-field input:focus,
 .format-field select:focus {
-  outline: 2px solid rgba(74, 158, 255, 0.35);
+  outline: 2px solid var(--accent-glow);
   outline-offset: 2px;
 }
