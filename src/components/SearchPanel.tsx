@@ -26,7 +26,6 @@ type SearchPanelProps = {
   scholarError?: string | null;
   selectedScholarId: string | null;
   onSelectScholar: (id: string) => void;
-  onOpenScholarReader: (url: string, title: string) => void;
   onReplaceNext: () => void;
   onReplaceAll: () => void;
   actions: AppAction[];
@@ -63,7 +62,6 @@ export function SearchPanel({
   scholarError,
   selectedScholarId,
   onSelectScholar,
-  onOpenScholarReader,
   onReplaceNext,
   onReplaceAll,
   actions,
@@ -293,29 +291,24 @@ export function SearchPanel({
               )}
               <div className="scholar-detail-actions">
                 {selectedScholar.pdfUrl ? (
-                  <button
-                    type="button"
+                  <a
                     className="search-panel-button"
-                    onClick={() =>
-                      onOpenScholarReader(
-                        selectedScholar.pdfUrl ?? selectedScholar.url ?? "",
-                        selectedScholar.title
-                      )
-                    }
+                    href={selectedScholar.pdfUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
                   >
                     Open PDF
-                  </button>
+                  </a>
                 ) : null}
                 {selectedScholar.url ? (
-                  <button
-                    type="button"
+                  <a
                     className="search-panel-button"
-                    onClick={() =>
-                      onOpenScholarReader(selectedScholar.url ?? "", selectedScholar.title)
-                    }
+                    href={selectedScholar.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
                   >
                     Source Link
-                  </button>
+                  </a>
                 ) : null}
               </div>
             </div>

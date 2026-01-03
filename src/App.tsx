@@ -6,7 +6,6 @@ import { ShareModal } from "./components/ShareModal";
 import { MobilePreviewModal } from "./components/MobilePreviewModal";
 import { FormatModal } from "./components/FormatModal";
 import { SearchPanel } from "./components/SearchPanel";
-import { ScholarReaderModal } from "./components/ScholarReaderModal";
 import type { Document, DocumentFormat } from "./models/DocumentSchema";
 import type { ScholarResult } from "./models/Scholar";
 import {
@@ -59,15 +58,12 @@ export default function App() {
   );
   const [scholarError, setScholarError] = useState<string | null>(null);
   const [selectedScholarId, setSelectedScholarId] = useState<string | null>(null);
-  const [scholarReader, setScholarReader] = useState<{
-    title: string;
-    url: string;
-  } | null>(null);
 
   const historyRef = useRef(history);
   const historyIndexRef = useRef(historyIndex);
   const editorRef = useRef<DocumentEditorHandle | null>(null);
   const importInputRef = useRef<HTMLInputElement | null>(null);
+  const scholarRequestRef = useRef(0);
 
   const searchResults = useMemo<SearchResult[]>(() => {
     const trimmedQuery = findQuery.trim();
@@ -236,6 +232,22 @@ export default function App() {
       setResumeDoc(loadAutoSavedDocument());
     }
   }, [doc]);
+
+  useEffect(() => {
+    if (!scholarQuery.trim()) {
+      setScholarResults([]);
+      setScholarStatus("idle");
+      setScholarError(null);
+      setSelectedScholarId(null);
+      return;
+    }
+
+    const timeout = window.setTimeout(() => {
+      runScholarSearch(scholarQuery);
+    }, 500);
+
+    return () => window.clearTimeout(timeout);
+  }, [scholarQuery]);
 
   const pushHistory = (nextDoc: Document) => {
     setHistory((prev) => {
@@ -487,15 +499,6 @@ export default function App() {
     }
   };
 
-  const handleOpenScholarReader = (url: string, title: string) => {
-    if (!url) {
-      setStatus("No source link available for this result.");
-      setTimeout(() => setStatus(null), 2000);
-      return;
-    }
-    setScholarReader({ url, title });
-  };
-
   const handleSearchNavigate = (sectionId: string) => {
     if (sectionId === "document-top") {
       const topTarget = editMode
@@ -517,8 +520,19 @@ export default function App() {
     }
   };
 
-  const handleScholarSearch = async () => {
-    const query = scholarQuery.trim();
+  const runScholarSearch = async (query: string) => {
+    const trimmedQuery = query.trim();
+    if (!trimmedQuery) {
+      setScholarResults([]);
+      setScholarStatus("idle");
+      setScholarError(null);
+      setSelectedScholarId(null);
+      return;
+    }
+
+    const requestId = scholarRequestRef.current + 1;
+    scholarRequestRef.current = requestId;
+
     if (!query) {
       return;
     }
@@ -527,14 +541,24 @@ export default function App() {
     setSelectedScholarId(null);
     setScholarResults([]);
     try {
-      const results = await fetchScholarResults(query);
+      const results = await fetchScholarResults(trimmedQuery);
+      if (scholarRequestRef.current !== requestId) {
+        return;
+      }
       setScholarResults(results);
       setScholarStatus("idle");
       setSelectedScholarId(results[0]?.id ?? null);
     } catch (error) {
+      if (scholarRequestRef.current !== requestId) {
+        return;
+      }
       setScholarStatus("error");
       setScholarError(error instanceof Error ? error.message : "Search failed.");
     }
+  };
+
+  const handleScholarSearch = async () => {
+    await runScholarSearch(scholarQuery);
   };
 
   if (!doc) {
@@ -715,13 +739,6 @@ export default function App() {
       {showMobilePreview && doc ? (
         <MobilePreviewModal doc={doc} onClose={() => setShowMobilePreview(false)} />
       ) : null}
-      {scholarReader ? (
-        <ScholarReaderModal
-          title={scholarReader.title}
-          url={scholarReader.url}
-          onClose={() => setScholarReader(null)}
-        />
-      ) : null}
       {showSearchPanel && doc ? (
         <SearchPanel
           findQuery={findQuery}
@@ -740,7 +757,6 @@ export default function App() {
           scholarError={scholarError}
           selectedScholarId={selectedScholarId}
           onSelectScholar={setSelectedScholarId}
-          onOpenScholarReader={handleOpenScholarReader}
           onReplaceNext={() => handleReplace(false)}
           onReplaceAll={() => handleReplace(true)}
           actions={appActions}
