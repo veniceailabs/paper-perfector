@@ -27,6 +27,22 @@
   margin-bottom: 24px;
   padding-bottom: 16px;
   border-bottom: 1px solid var(--rule-color);
+  position: sticky;
+  top: 88px;
+  z-index: 5;
+  background: var(--bg-secondary);
+}
+
+.editor-toolbar-left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.editor-toolbar-right {
+  display: flex;
+  align-items: center;
 }
 
 .editor-mode-toggle {

@@ -434,47 +434,54 @@ export const DocumentEditor = forwardRef<DocumentEditorHandle, DocumentEditorPro
 
       <div className="editor-main">
         <div className="editor-toolbar">
-          <div className="editor-mode-toggle">
-            <button
-              type="button"
-              className={`editor-mode-button ${
-                editorMode === "structured" ? "active" : ""
-              }`}
-              onClick={() => {
-                if (editorMode === "structured") {
-                  return;
-                }
-                const parsed = parseMarkdownDraft();
-                if (!parsed) {
-                  return;
-                }
-                applyParsedDoc(parsed);
-                setEditorMode("structured");
-              }}
-            >
-              Structured
-            </button>
-            <button
-              type="button"
-              className={`editor-mode-button ${
-                editorMode === "markdown" ? "active" : ""
-              }`}
-              onClick={() => {
-                if (editorMode === "markdown") {
-                  return;
-                }
-                syncMarkdownDraft();
-                setEditorMode("markdown");
-              }}
-            >
-              Freeform
+          <div className="editor-toolbar-left">
+            <div className="editor-mode-toggle">
+              <button
+                type="button"
+                className={`editor-mode-button ${
+                  editorMode === "structured" ? "active" : ""
+                }`}
+                onClick={() => {
+                  if (editorMode === "structured") {
+                    return;
+                  }
+                  const parsed = parseMarkdownDraft();
+                  if (!parsed) {
+                    return;
+                  }
+                  applyParsedDoc(parsed);
+                  setEditorMode("structured");
+                }}
+              >
+                Structured
+              </button>
+              <button
+                type="button"
+                className={`editor-mode-button ${
+                  editorMode === "markdown" ? "active" : ""
+                }`}
+                onClick={() => {
+                  if (editorMode === "markdown") {
+                    return;
+                  }
+                  syncMarkdownDraft();
+                  setEditorMode("markdown");
+                }}
+              >
+                Freeform
+              </button>
+            </div>
+            <span className="editor-mode-hint">
+              {editorMode === "markdown"
+                ? "Edit markdown freely and add blank lines for spacing."
+                : "Edit sections or switch to Freeform for full markdown control."}
+            </span>
+          </div>
+          <div className="editor-toolbar-right">
+            <button className="save-btn" type="button" onClick={handleSave}>
+              💾 Save Changes
             </button>
           </div>
-          <span className="editor-mode-hint">
-            {editorMode === "markdown"
-              ? "Edit markdown freely and add blank lines for spacing."
-              : "Edit sections or switch to Freeform for full markdown control."}
-          </span>
         </div>
 
         {editorMode === "structured" ? (
