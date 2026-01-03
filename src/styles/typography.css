@@ -492,7 +492,7 @@ mark {
 
 @media print {
   @page {
-    margin: 6mm;
+    margin: 10mm;
   }
 
   * {
