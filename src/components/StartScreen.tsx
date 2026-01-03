@@ -32,6 +32,9 @@ export function StartScreen({
         version: "1.0.0",
         classification: "Draft",
       },
+      format: {
+        preset: "default",
+      },
       sections: [
         {
           id: "introduction",

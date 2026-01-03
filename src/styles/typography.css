@@ -162,40 +162,9 @@ body {
   background: var(--bg-primary);
   color: var(--text-primary);
   max-width: 900px;
-}
-
-.paper-canvas.format-apa,
-.paper-canvas.format-mla {
-  font-family: "Times New Roman", Times, serif;
-  font-size: 12pt;
-  line-height: 2;
-}
-
-.paper-canvas.format-apa h1,
-.paper-canvas.format-apa h2,
-.paper-canvas.format-apa h3,
-.paper-canvas.format-apa h4,
-.paper-canvas.format-mla h1,
-.paper-canvas.format-mla h2,
-.paper-canvas.format-mla h3,
-.paper-canvas.format-mla h4 {
-  font-family: "Times New Roman", Times, serif;
-  font-size: 12pt;
-  line-height: 2;
-  font-weight: 700;
-  letter-spacing: 0;
-}
-
-.paper-canvas.format-apa p,
-.paper-canvas.format-apa li,
-.paper-canvas.format-apa dt,
-.paper-canvas.format-apa dd,
-.paper-canvas.format-mla p,
-.paper-canvas.format-mla li,
-.paper-canvas.format-mla dt,
-.paper-canvas.format-mla dd {
-  font-size: 12pt;
-  line-height: 2;
+  font-family: var(--paper-font-family, "Google Sans", system-ui, -apple-system, sans-serif);
+  font-size: var(--paper-font-size, 14.5px);
+  line-height: var(--paper-line-height, 1.65);
 }
 
 /* Legacy fallback for DocumentEditor view */
@@ -205,7 +174,7 @@ body {
 }
 
 .paper-canvas h1 {
-  font-size: 28px;
+  font-size: 1.93em;
   font-weight: 600;
   margin: 0 0 12px;
   line-height: 1.25;
@@ -213,7 +182,7 @@ body {
 }
 
 .paper-canvas h2 {
-  font-size: 20px;
+  font-size: 1.38em;
   font-weight: 500;
   color: var(--text-secondary);
   margin: 0 0 24px;
@@ -221,14 +190,14 @@ body {
 }
 
 .paper-canvas h3 {
-  font-size: 16px;
+  font-size: 1.1em;
   font-weight: 600;
   margin: 24px 0 12px;
   line-height: 1.25;
 }
 
 .paper-canvas h4 {
-  font-size: 14.5px;
+  font-size: 1em;
   font-weight: 600;
   margin: 20px 0 10px;
   line-height: 1.25;
@@ -236,8 +205,8 @@ body {
 }
 
 .paper-canvas p {
-  font-size: 14.5px;
-  line-height: 1.65;
+  font-size: 1em;
+  line-height: inherit;
   margin: 12px 0;
 }
 
@@ -259,8 +228,8 @@ body {
 }
 
 .paper-canvas li {
-  font-size: 14.5px;
-  line-height: 1.6;
+  font-size: 1em;
+  line-height: inherit;
   margin-bottom: 8px;
 }
 
@@ -272,7 +241,7 @@ body {
 
 .mono {
   font-family: "Roboto Mono", monospace;
-  font-size: 13.5px;
+  font-size: 0.93em;
   background: var(--bg-secondary);
   padding: 10px 12px;
   border-radius: 6px;
@@ -301,7 +270,7 @@ body {
 }
 
 .meta-row dt {
-  font-size: 11px;
+  font-size: 0.76em;
   text-transform: uppercase;
   letter-spacing: 0.05em;
   color: var(--text-muted);
@@ -310,7 +279,25 @@ body {
 .meta-row dd {
   margin: 0;
   font-family: "Roboto Mono", monospace;
-  font-size: 13px;
+  font-size: 0.9em;
+}
+
+.paper-canvas.format-apa h1,
+.paper-canvas.format-apa h2,
+.paper-canvas.format-apa h3,
+.paper-canvas.format-apa h4,
+.paper-canvas.format-mla h1,
+.paper-canvas.format-mla h2,
+.paper-canvas.format-mla h3,
+.paper-canvas.format-mla h4,
+.paper-canvas.format-chicago h1,
+.paper-canvas.format-chicago h2,
+.paper-canvas.format-chicago h3,
+.paper-canvas.format-chicago h4 {
+  font-size: 1em;
+  line-height: inherit;
+  font-weight: 700;
+  letter-spacing: 0;
 }
 
 .paper-section {

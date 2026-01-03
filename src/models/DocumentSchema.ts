@@ -6,9 +6,19 @@ export type Section = {
   monoBlocks?: string[];
 };
 
+export type FormatPreset = "default" | "apa" | "mla" | "chicago" | "custom";
+
+export type DocumentFormat = {
+  preset: FormatPreset;
+  fontFamily?: string;
+  fontSize?: string;
+  lineHeight?: number;
+};
+
 export type Document = {
   title: string;
   subtitle?: string;
   metadata: Record<string, string>;
   sections: Section[];
+  format?: DocumentFormat;
 };

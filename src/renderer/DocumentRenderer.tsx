@@ -1,9 +1,10 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, type CSSProperties } from "react";
 import type { Document } from "../models/DocumentSchema";
 import { TableOfContents } from "../components/TableOfContents";
 import Divider from "./Divider";
 import MetaBlock from "./MetaBlock";
 import Section from "./Section";
+import { resolveFormat } from "../utils/formatting";
 import "../styles/DocumentLayout.css";
 
 export function DocumentRenderer({
@@ -14,17 +15,16 @@ export function DocumentRenderer({
   printHash?: string;
 }) {
   const [currentSectionId, setCurrentSectionId] = useState<string | undefined>();
-  const formatClass = (() => {
-    const classification = (doc.metadata?.classification ?? "").toLowerCase();
-    const title = doc.title.toLowerCase();
-    if (classification.includes("apa") || title.includes("apa")) {
-      return "format-apa";
-    }
-    if (classification.includes("mla") || title.includes("mla")) {
-      return "format-mla";
-    }
-    return "";
-  })();
+  const resolvedFormat = resolveFormat(doc);
+  const formatClass =
+    resolvedFormat.preset !== "default" && resolvedFormat.preset !== "custom"
+      ? `format-${resolvedFormat.preset}`
+      : "";
+  const formatStyle: CSSProperties = {
+    "--paper-font-family": resolvedFormat.fontFamily,
+    "--paper-font-size": resolvedFormat.fontSize,
+    "--paper-line-height": resolvedFormat.lineHeight?.toString(),
+  } as CSSProperties;
 
   // Track current section as user scrolls
   useEffect(() => {
@@ -50,7 +50,7 @@ export function DocumentRenderer({
 
   return (
     <div className="document-container">
-      <article className={`paper-canvas ${formatClass}`.trim()}>
+      <article className={`paper-canvas ${formatClass}`.trim()} style={formatStyle}>
         <header>
           <h1>{doc.title}</h1>
           {doc.subtitle ? <h2>{doc.subtitle}</h2> : null}

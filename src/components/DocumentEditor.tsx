@@ -1,12 +1,16 @@
 import { forwardRef, useEffect, useImperativeHandle, useState } from "react";
-import type { Document } from "../models/DocumentSchema";
+import type { Document, DocumentFormat } from "../models/DocumentSchema";
 import { TableOfContents } from "./TableOfContents";
+import { FormatControls } from "./FormatControls";
 import { importFromMarkdownText } from "../utils/markdownImport";
 import { documentToMarkdown } from "../utils/markdownExport";
+import { resolveFormat } from "../utils/formatting";
 import "../styles/DocumentEditor.css";
 
 export type DocumentEditorHandle = {
   save: () => boolean;
+  setFormat: (format: DocumentFormat) => void;
+  getFormat: () => DocumentFormat | undefined;
 };
 
 interface DocumentEditorProps {
@@ -24,6 +28,7 @@ export const DocumentEditor = forwardRef<DocumentEditorHandle, DocumentEditorPro
   const [currentSectionId, setCurrentSectionId] = useState<string>(
     sections[0]?.id || ""
   );
+  const [format, setFormat] = useState<DocumentFormat>(resolveFormat(doc));
   const [isDirty, setIsDirty] = useState(false);
   const [editorMode, setEditorMode] = useState<"structured" | "markdown">(
     "structured"
@@ -42,6 +47,7 @@ export const DocumentEditor = forwardRef<DocumentEditorHandle, DocumentEditorPro
     setMetadata(doc.metadata);
     setSections(doc.sections);
     setCurrentSectionId(doc.sections[0]?.id || "");
+    setFormat(resolveFormat(doc));
     setIsDirty(false);
     setMarkdownError(null);
   }, [doc]);
@@ -130,6 +136,7 @@ export const DocumentEditor = forwardRef<DocumentEditorHandle, DocumentEditorPro
     subtitle: subtitle || undefined,
     metadata,
     sections,
+    format,
   });
 
   const syncMarkdownDraft = () => {
@@ -157,6 +164,7 @@ export const DocumentEditor = forwardRef<DocumentEditorHandle, DocumentEditorPro
     setMetadata(parsed.metadata);
     setSections(parsed.sections);
     setCurrentSectionId(parsed.sections[0]?.id || "");
+    setFormat(parsed.format ?? format);
   };
 
   const handleSave = () => {
@@ -165,8 +173,12 @@ export const DocumentEditor = forwardRef<DocumentEditorHandle, DocumentEditorPro
       if (!parsed) {
         return false;
       }
-      applyParsedDoc(parsed);
-      onSave(parsed);
+      const withFormat = {
+        ...parsed,
+        format: parsed.format ?? format,
+      };
+      applyParsedDoc(withFormat);
+      onSave(withFormat);
       setIsDirty(false);
       return true;
     }
@@ -180,8 +192,13 @@ export const DocumentEditor = forwardRef<DocumentEditorHandle, DocumentEditorPro
     ref,
     () => ({
       save: handleSave,
+      setFormat: (nextFormat) => {
+        setFormat(nextFormat);
+        setIsDirty(true);
+      },
+      getFormat: () => format,
     }),
-    [handleSave]
+    [handleSave, format]
   );
 
   const handleSectionClick = (sectionId: string) => {
@@ -437,6 +454,17 @@ export const DocumentEditor = forwardRef<DocumentEditorHandle, DocumentEditorPro
                 Switch to Structured
               </button>
             </div>
+            <div className="editor-format-panel compact">
+              <h4>Formatting</h4>
+              <FormatControls
+                format={format}
+                onChange={(nextFormat) => {
+                  setFormat(nextFormat);
+                  setIsDirty(true);
+                }}
+                compact={true}
+              />
+            </div>
           </div>
         )}
       </div>
@@ -446,6 +474,17 @@ export const DocumentEditor = forwardRef<DocumentEditorHandle, DocumentEditorPro
           <button className="save-btn" onClick={handleSave}>
             💾 Save Changes
           </button>
+          <div className="editor-format-panel">
+            <h4>Formatting</h4>
+            <FormatControls
+              format={format}
+              onChange={(nextFormat) => {
+                setFormat(nextFormat);
+                setIsDirty(true);
+              }}
+              compact={true}
+            />
+          </div>
           <div className="editor-tips">
             <h4>Tips</h4>
             <ul>

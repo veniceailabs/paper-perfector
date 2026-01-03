@@ -14,6 +14,9 @@ export const templates: Record<TemplateType, Document> = {
       version: "1.0.0",
       classification: "Draft",
     },
+    format: {
+      preset: "default",
+    },
     sections: [
       {
         id: "introduction",
@@ -59,6 +62,9 @@ export const templates: Record<TemplateType, Document> = {
       institution: "Your Institution",
       course: "Course Number and Title",
       professor: "Professor Name",
+    },
+    format: {
+      preset: "apa",
     },
     sections: [
       {
@@ -144,6 +150,9 @@ export const templates: Record<TemplateType, Document> = {
       course: "Course Number",
       professor: "Professor Name",
     },
+    format: {
+      preset: "mla",
+    },
     sections: [
       {
         id: "opening",
@@ -225,6 +234,9 @@ export const templates: Record<TemplateType, Document> = {
       classification: "Chicago Manual of Style (17th Edition)",
       institution: "Your Institution",
       course: "Course Title",
+    },
+    format: {
+      preset: "chicago",
     },
     sections: [
       {

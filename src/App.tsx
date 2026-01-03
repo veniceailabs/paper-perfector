@@ -4,7 +4,8 @@ import { DocumentEditor, type DocumentEditorHandle } from "./components/Document
 import { StartScreen } from "./components/StartScreen";
 import { ShareModal } from "./components/ShareModal";
 import { MobilePreviewModal } from "./components/MobilePreviewModal";
-import type { Document } from "./models/DocumentSchema";
+import { FormatModal } from "./components/FormatModal";
+import type { Document, DocumentFormat } from "./models/DocumentSchema";
 import { importDocumentFromFile } from "./utils/importers";
 import { exportToPdf } from "./utils/export";
 import { hashDocument } from "./utils/hash";
@@ -12,6 +13,7 @@ import { useAutoSave, loadAutoSavedDocument } from "./hooks/useAutoSave";
 import {
   getSharedDocumentFromUrl,
 } from "./utils/share";
+import { resolveFormat } from "./utils/formatting";
 
 export default function App() {
   const sharedDoc = getSharedDocumentFromUrl();
@@ -28,10 +30,14 @@ export default function App() {
   const [editMode, setEditMode] = useState(false);
   const [status, setStatus] = useState<string | null>(null);
   const [showShareModal, setShowShareModal] = useState(false);
+  const [showFormatModal, setShowFormatModal] = useState(false);
   const [showMobilePreview, setShowMobilePreview] = useState(false);
   const [theme, setTheme] = useState<"dark" | "light">("dark");
   const [printHash, setPrintHash] = useState<string>("");
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [formatModalValue, setFormatModalValue] = useState<DocumentFormat | null>(
+    null
+  );
 
   const historyRef = useRef(history);
   const historyIndexRef = useRef(historyIndex);
@@ -87,6 +93,35 @@ export default function App() {
   const notifySaveError = () => {
     setStatus("Fix errors before leaving.");
     setTimeout(() => setStatus(null), 3000);
+  };
+
+  const openFormatModal = () => {
+    if (!doc) {
+      return;
+    }
+    if (editMode) {
+      const editorFormat = editorRef.current?.getFormat();
+      setFormatModalValue(editorFormat ?? resolveFormat(doc));
+    } else {
+      setFormatModalValue(resolveFormat(doc));
+    }
+    setShowFormatModal(true);
+  };
+
+  const handleFormatChange = (nextFormat: DocumentFormat) => {
+    if (!doc) {
+      return;
+    }
+    setFormatModalValue(nextFormat);
+    if (editMode) {
+      editorRef.current?.setFormat(nextFormat);
+      setHasUnsavedChanges(true);
+      return;
+    }
+    applyDocument({
+      ...doc,
+      format: nextFormat,
+    });
   };
 
   const requestSafeNavigation = (action: () => void) => {
@@ -293,6 +328,13 @@ export default function App() {
           <button
             className="toolbar-button"
             type="button"
+            onClick={openFormatModal}
+          >
+            Aa Format
+          </button>
+          <button
+            className="toolbar-button"
+            type="button"
             onClick={() => setShowMobilePreview(true)}
           >
             📱 Mobile
@@ -326,6 +368,13 @@ export default function App() {
       )}
       {showShareModal && doc ? (
         <ShareModal doc={doc} onClose={() => setShowShareModal(false)} />
+      ) : null}
+      {showFormatModal && formatModalValue ? (
+        <FormatModal
+          format={formatModalValue}
+          onChange={handleFormatChange}
+          onClose={() => setShowFormatModal(false)}
+        />
       ) : null}
       {showMobilePreview && doc ? (
         <MobilePreviewModal doc={doc} onClose={() => setShowMobilePreview(false)} />

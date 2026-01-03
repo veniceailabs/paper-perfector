@@ -1,0 +1,43 @@
+.format-controls {
+  display: grid;
+  gap: 12px;
+}
+
+.format-controls.compact {
+  gap: 10px;
+}
+
+.format-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.format-field-row {
+  display: grid;
+  grid-template-columns: 1fr 0.8fr;
+  gap: 12px;
+}
+
+.format-field label {
+  font-size: 0.75em;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+}
+
+.format-field input,
+.format-field select {
+  background: transparent;
+  border: 1px solid var(--rule-color);
+  color: var(--text-primary);
+  border-radius: 8px;
+  padding: 6px 10px;
+  font-size: 0.9em;
+}
+
+.format-field input:focus,
+.format-field select:focus {
+  outline: 2px solid rgba(74, 158, 255, 0.35);
+  outline-offset: 2px;
+}
