@@ -48,6 +48,7 @@ export function importFromMarkdownText(
   let titleSet = false;
   let subtitle: string | undefined;
   let frontMatter = true;
+  let blankLineStreak = 0;
 
   const sections: Section[] = [];
   let currentSection: Section | null = null;
@@ -112,6 +113,7 @@ export function importFromMarkdownText(
         codeLines = [];
         frontMatter = false;
       }
+      blankLineStreak = 0;
       return;
     }
 
@@ -121,9 +123,21 @@ export function importFromMarkdownText(
     }
 
     if (!trimmed) {
-      flushParagraph();
+      if (paragraphParts.length > 0) {
+        flushParagraph();
+        blankLineStreak = 1;
+        return;
+      }
+
+      blankLineStreak += 1;
+      if (blankLineStreak >= 2 && (!frontMatter || currentSection)) {
+        ensureSection();
+        currentSection?.body.push("");
+      }
       return;
     }
+
+    blankLineStreak = 0;
 
     if (frontMatter) {
       const metaMatch = trimmed.match(metadataRegex);

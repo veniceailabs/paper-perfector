@@ -41,6 +41,7 @@ export function documentToMarkdown(doc: Document): string {
     section.body.forEach((paragraph, index) => {
       const trimmed = paragraph.trim();
       if (!trimmed) {
+        lines.push("");
         return;
       }
 
