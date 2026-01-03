@@ -46,6 +46,17 @@ body {
   line-height: 1.5;
 }
 
+mark {
+  background: rgba(138, 180, 248, 0.3);
+  color: inherit;
+  padding: 0 2px;
+  border-radius: 3px;
+}
+
+[data-theme="light"] mark {
+  background: rgba(59, 130, 246, 0.2);
+}
+
 .app-shell {
   min-height: 100vh;
   width: 100%;
@@ -106,6 +117,97 @@ body {
   display: flex;
   gap: 12px;
   align-items: center;
+}
+
+.toolbar-search {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid var(--rule-color);
+  background: var(--bg-primary);
+  padding: 4px 10px;
+  border-radius: 999px;
+}
+
+.toolbar-search-input {
+  border: none;
+  background: transparent;
+  color: var(--text-primary);
+  font-size: 12px;
+  font-family: "Google Sans", system-ui, -apple-system, sans-serif;
+  width: 180px;
+}
+
+.toolbar-search-input:focus {
+  outline: none;
+}
+
+.toolbar-search-clear,
+.toolbar-search-submit {
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  font-size: 12px;
+  padding: 2px 4px;
+}
+
+.toolbar-search-submit:hover,
+.toolbar-search-clear:hover {
+  color: var(--accent);
+}
+
+.toolbar-search-panel {
+  position: absolute;
+  top: 44px;
+  left: 0;
+  min-width: 280px;
+  max-width: 360px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--rule-color);
+  border-radius: 12px;
+  padding: 8px;
+  box-shadow: 0 16px 32px rgba(0, 0, 0, 0.2);
+  z-index: 30;
+}
+
+.toolbar-search-result {
+  width: 100%;
+  text-align: left;
+  border: none;
+  background: transparent;
+  color: var(--text-primary);
+  padding: 8px 10px;
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  cursor: pointer;
+}
+
+.toolbar-search-result:hover {
+  background: rgba(138, 180, 248, 0.15);
+}
+
+.search-result-title {
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.search-result-snippet {
+  font-size: 11px;
+  color: var(--text-secondary);
+}
+
+.toolbar-search-empty {
+  padding: 10px 12px;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.toolbar-search-scholar .toolbar-search-input {
+  width: 160px;
 }
 
 .toolbar-button,
@@ -336,6 +438,22 @@ body {
     flex-wrap: wrap;
     justify-content: center;
     gap: 8px;
+  }
+
+  .toolbar-search {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .toolbar-search-input {
+    width: 100%;
+  }
+
+  .toolbar-search-panel {
+    left: 0;
+    right: 0;
+    min-width: 0;
+    max-width: none;
   }
 
   .toolbar-button,

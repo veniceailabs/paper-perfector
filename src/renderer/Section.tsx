@@ -14,7 +14,8 @@ export default function Section({
   title,
   body,
   monoBlocks,
-}: SectionType) {
+  highlightQuery,
+}: SectionType & { highlightQuery?: string }) {
   const HeadingTag = headingTags[level];
   const listItemRegex = /^[-*+]\s+(.+)$/;
   const orderedItemRegex = /^\d+\.\s+(.+)$/;
@@ -30,7 +31,11 @@ export default function Section({
       }
       const items = listBuffer.items.map((item, itemIndex) => (
         <li key={`list-${keyIndex}-${itemIndex}`}>
-          {renderInlineMarkdown(item, `list-${keyIndex}-${itemIndex}`)}
+          {renderInlineMarkdown(
+            item,
+            `list-${keyIndex}-${itemIndex}`,
+            highlightQuery
+          )}
         </li>
       ));
       blocks.push(
@@ -76,7 +81,7 @@ export default function Section({
       flushList(index);
       blocks.push(
         <p key={`${title}-${index}`}>
-          {renderInlineMarkdown(paragraph, `${title}-${index}`)}
+          {renderInlineMarkdown(paragraph, `${title}-${index}`, highlightQuery)}
         </p>
       );
     });
@@ -87,7 +92,9 @@ export default function Section({
 
   return (
     <section className={`paper-section level-${level}`}>
-      <HeadingTag>{title}</HeadingTag>
+      <HeadingTag>
+        {renderInlineMarkdown(title, `heading-${title}`, highlightQuery)}
+      </HeadingTag>
       {renderedBody()}
       {monoBlocks?.map((block, index) => (
         <MonoBlock content={block} key={`${title}-mono-${index}`} />

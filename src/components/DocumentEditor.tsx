@@ -1,16 +1,27 @@
-import { forwardRef, useEffect, useImperativeHandle, useState } from "react";
+import {
+  forwardRef,
+  useEffect,
+  useImperativeHandle,
+  useRef,
+  useState,
+  type KeyboardEvent,
+} from "react";
 import type { Document, DocumentFormat } from "../models/DocumentSchema";
+import type { SearchScope } from "../models/Search";
 import { TableOfContents } from "./TableOfContents";
 import { FormatControls } from "./FormatControls";
 import { importFromMarkdownText } from "../utils/markdownImport";
 import { documentToMarkdown } from "../utils/markdownExport";
 import { resolveFormat } from "../utils/formatting";
+import { replaceInDocument, replaceInText } from "../utils/search";
 import "../styles/DocumentEditor.css";
 
 export type DocumentEditorHandle = {
   save: () => boolean;
   setFormat: (format: DocumentFormat) => void;
   getFormat: () => DocumentFormat | undefined;
+  replaceAll: (query: string, replacement: string, scope: SearchScope) => number;
+  replaceNext: (query: string, replacement: string, scope: SearchScope) => number;
 };
 
 interface DocumentEditorProps {
@@ -40,6 +51,7 @@ export const DocumentEditor = forwardRef<DocumentEditorHandle, DocumentEditorPro
     index: number;
   } | null>(null);
   const [expandedText, setExpandedText] = useState("");
+  const markdownTextareaRef = useRef<HTMLTextAreaElement | null>(null);
 
   useEffect(() => {
     setTitle(doc.title);
@@ -197,8 +209,12 @@ export const DocumentEditor = forwardRef<DocumentEditorHandle, DocumentEditorPro
         setIsDirty(true);
       },
       getFormat: () => format,
+      replaceAll: (query, replacement, scope) =>
+        runReplace(query, replacement, scope, true),
+      replaceNext: (query, replacement, scope) =>
+        runReplace(query, replacement, scope, false),
     }),
-    [handleSave, format]
+    [handleSave, format, markdownDraft, editorMode]
   );
 
   const handleSectionClick = (sectionId: string) => {
@@ -237,6 +253,173 @@ export const DocumentEditor = forwardRef<DocumentEditorHandle, DocumentEditorPro
   };
 
   const isMarkdownMode = editorMode === "markdown";
+  const wrapSelection = (
+    value: string,
+    start: number,
+    end: number,
+    before: string,
+    after: string
+  ) => {
+    const selected = value.slice(start, end);
+    const insertText = `${before}${selected}${after}`;
+    return {
+      nextValue: `${value.slice(0, start)}${insertText}${value.slice(end)}`,
+      selectionStart: start + before.length,
+      selectionEnd: start + before.length + selected.length,
+    };
+  };
+
+  const applyFormatToParagraph = (
+    sectionId: string,
+    index: number,
+    before: string,
+    after = before
+  ) => {
+    const textarea = document.getElementById(
+      `paragraph-${sectionId}-${index}`
+    ) as HTMLTextAreaElement | null;
+    if (!textarea) {
+      return;
+    }
+
+    const start = textarea.selectionStart ?? 0;
+    const end = textarea.selectionEnd ?? 0;
+    const { nextValue, selectionStart, selectionEnd } = wrapSelection(
+      textarea.value,
+      start,
+      end,
+      before,
+      after
+    );
+    handleSectionBodyChange(sectionId, index, nextValue);
+    requestAnimationFrame(() => {
+      textarea.focus();
+      textarea.setSelectionRange(selectionStart, selectionEnd);
+    });
+  };
+
+  const applyFormatToMarkdown = (before: string, after = before) => {
+    const textarea = markdownTextareaRef.current;
+    if (!textarea) {
+      return;
+    }
+
+    const start = textarea.selectionStart ?? 0;
+    const end = textarea.selectionEnd ?? 0;
+    const { nextValue, selectionStart, selectionEnd } = wrapSelection(
+      textarea.value,
+      start,
+      end,
+      before,
+      after
+    );
+    setMarkdownDraft(nextValue);
+    setIsDirty(true);
+    requestAnimationFrame(() => {
+      textarea.focus();
+      textarea.setSelectionRange(selectionStart, selectionEnd);
+    });
+  };
+
+  const renderFormatToolbar = (onApply: (before: string, after?: string) => void) => (
+    <div className="format-toolbar">
+      <span className="format-toolbar-label">Style</span>
+      <button
+        type="button"
+        className="format-toolbar-button"
+        onClick={() => onApply("**")}
+        aria-label="Bold"
+        title="Bold"
+      >
+        <span className="format-toolbar-bold">B</span>
+      </button>
+      <button
+        type="button"
+        className="format-toolbar-button"
+        onClick={() => onApply("*")}
+        aria-label="Italic"
+        title="Italic"
+      >
+        <span className="format-toolbar-italic">I</span>
+      </button>
+      <button
+        type="button"
+        className="format-toolbar-button"
+        onClick={() => onApply("<u>", "</u>")}
+        aria-label="Underline"
+        title="Underline"
+      >
+        <span className="format-toolbar-underline">U</span>
+      </button>
+      <button
+        type="button"
+        className="format-toolbar-button"
+        onClick={() => onApply("~~")}
+        aria-label="Strikethrough"
+        title="Strikethrough"
+      >
+        <span className="format-toolbar-strike">S</span>
+      </button>
+    </div>
+  );
+
+  const handleFormatShortcut = (
+    event: KeyboardEvent<HTMLTextAreaElement>,
+    onApply: (before: string, after?: string) => void
+  ) => {
+    if (!event.metaKey && !event.ctrlKey) {
+      return;
+    }
+
+    const key = event.key.toLowerCase();
+    if (key === "b") {
+      event.preventDefault();
+      onApply("**");
+    } else if (key === "i") {
+      event.preventDefault();
+      onApply("*");
+    } else if (key === "u") {
+      event.preventDefault();
+      onApply("<u>", "</u>");
+    } else if (key === "x" && event.shiftKey) {
+      event.preventDefault();
+      onApply("~~");
+    }
+  };
+
+  const runReplace = (
+    query: string,
+    replacement: string,
+    scope: SearchScope,
+    replaceAll: boolean
+  ) => {
+    if (editorMode === "markdown") {
+      const result = replaceInText(
+        markdownDraft,
+        query,
+        replacement,
+        replaceAll
+      );
+      if (result.count > 0) {
+        setMarkdownDraft(result.value);
+        setIsDirty(true);
+      }
+      return result.count;
+    }
+
+    const result = replaceInDocument(
+      buildStructuredDoc(),
+      query,
+      replacement,
+      scope,
+      replaceAll
+    );
+    if (result.count > 0) {
+      applyParsedDoc(result.doc);
+      setIsDirty(true);
+    }
+    return result.count;
+  };
 
   return (
     <div className={`editor-container ${isMarkdownMode ? "markdown" : ""}`}>
@@ -296,7 +479,7 @@ export const DocumentEditor = forwardRef<DocumentEditorHandle, DocumentEditorPro
 
         {editorMode === "structured" ? (
           <>
-            <div className="editor-header">
+            <div className="editor-header" id="editor-top">
           <input
             type="text"
             className="editor-title"
@@ -368,13 +551,22 @@ export const DocumentEditor = forwardRef<DocumentEditorHandle, DocumentEditorPro
                   <div className="section-body">
                     {section.body.map((paragraph, idx) => (
                       <div key={idx} className="paragraph-editor">
+                        {renderFormatToolbar((before, after) =>
+                          applyFormatToParagraph(section.id, idx, before, after)
+                        )}
                         <textarea
+                          id={`paragraph-${section.id}-${idx}`}
                           value={paragraph}
                           onChange={(e) =>
                             handleSectionBodyChange(
                               section.id,
                               idx,
                               e.target.value
+                            )
+                          }
+                          onKeyDown={(event) =>
+                            handleFormatShortcut(event, (before, after) =>
+                              applyFormatToParagraph(section.id, idx, before, after)
                             )
                           }
                           placeholder="Enter paragraph text..."
@@ -422,13 +614,18 @@ export const DocumentEditor = forwardRef<DocumentEditorHandle, DocumentEditorPro
           </>
         ) : (
           <div className="editor-markdown">
+            {renderFormatToolbar(applyFormatToMarkdown)}
             <textarea
               className="editor-markdown-textarea"
+              ref={markdownTextareaRef}
               value={markdownDraft}
               onChange={(event) => {
                 setMarkdownDraft(event.target.value);
                 setIsDirty(true);
               }}
+              onKeyDown={(event) =>
+                handleFormatShortcut(event, applyFormatToMarkdown)
+              }
               placeholder="# Title\n\n## Subtitle\n\n**Author:** Name\n\n## Section\n\nWrite freely here..."
               rows={22}
             />

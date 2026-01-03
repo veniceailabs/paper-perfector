@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { Document } from "../models/DocumentSchema";
 import { DocumentRenderer } from "../renderer/DocumentRenderer";
 import "../styles/MobilePreviewModal.css";
@@ -12,6 +12,15 @@ interface MobilePreviewModalProps {
 
 export function MobilePreviewModal({ doc, onClose }: MobilePreviewModalProps) {
   const [device, setDevice] = useState<DeviceType>("iphone");
+
+  useEffect(() => {
+    const ua = navigator.userAgent.toLowerCase();
+    if (ua.includes("android")) {
+      setDevice("android");
+    } else if (ua.includes("iphone") || ua.includes("ipad")) {
+      setDevice("iphone");
+    }
+  }, []);
 
   return (
     <div className="mobile-preview-backdrop" role="dialog" aria-modal="true" onClick={onClose}>

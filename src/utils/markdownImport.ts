@@ -20,7 +20,8 @@ const unorderedListRegex = /^[-*+]\s+(.+)$/;
 const orderedListRegex = /^(\d+)\.\s+(.+)$/;
 const dividerRegex = /^([-*_])\1\1+$/;
 const metadataRegex = /^\*\*([^*]+)\*\*\s*:\s*(.+)$/;
-const inlineMarkdownRegex = /(\*\*[^*]+\*\*|`[^`]+`|\*[^*]+\*|_[^_]+_)/;
+const inlineMarkdownRegex =
+  /(\*\*[^*]+\*\*|`[^`]+`|\*[^*]+\*|_[^_]+_|~~[^~]+~~|<u>[^<]+<\/u>|<s>[^<]+<\/s>|<del>[^<]+<\/del>)/;
 const linkRegex = /\[[^\]]+\]\([^)]+\)/;
 
 function looksLikeMarkdown(text: string) {

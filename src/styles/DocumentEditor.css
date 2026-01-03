@@ -286,6 +286,61 @@
   gap: 8px;
 }
 
+.format-toolbar {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid var(--rule-color);
+  background: var(--bg-secondary);
+  border-radius: 999px;
+  padding: 6px 10px;
+  width: fit-content;
+}
+
+.format-toolbar-label {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+  margin-right: 4px;
+}
+
+.format-toolbar-button {
+  border: none;
+  background: transparent;
+  color: var(--text-primary);
+  width: 28px;
+  height: 28px;
+  border-radius: 999px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  transition: all 0.2s ease;
+}
+
+.format-toolbar-button:hover {
+  background: rgba(138, 180, 248, 0.15);
+  color: var(--accent);
+}
+
+.format-toolbar-bold {
+  font-weight: 700;
+}
+
+.format-toolbar-italic {
+  font-style: italic;
+}
+
+.format-toolbar-underline {
+  text-decoration: underline;
+}
+
+.format-toolbar-strike {
+  text-decoration: line-through;
+}
+
 .paragraph-actions {
   display: flex;
   gap: 10px;

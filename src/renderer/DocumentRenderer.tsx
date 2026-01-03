@@ -4,15 +4,21 @@ import { TableOfContents } from "../components/TableOfContents";
 import Divider from "./Divider";
 import MetaBlock from "./MetaBlock";
 import Section from "./Section";
+import type { SearchScope } from "../models/Search";
 import { resolveFormat } from "../utils/formatting";
+import { renderHighlightedText } from "./inlineMarkdown";
 import "../styles/DocumentLayout.css";
 
 export function DocumentRenderer({
   doc,
   printHash,
+  highlightQuery,
+  highlightScope,
 }: {
   doc: Document;
   printHash?: string;
+  highlightQuery?: string;
+  highlightScope?: SearchScope;
 }) {
   const [currentSectionId, setCurrentSectionId] = useState<string | undefined>();
   const resolvedFormat = resolveFormat(doc);
@@ -50,17 +56,41 @@ export function DocumentRenderer({
 
   return (
     <div className="document-container">
-      <article className={`paper-canvas ${formatClass}`.trim()} style={formatStyle}>
+      <article
+        id="document-top"
+        className={`paper-canvas ${formatClass}`.trim()}
+        style={formatStyle}
+      >
         <header>
-          <h1>{doc.title}</h1>
-          {doc.subtitle ? <h2>{doc.subtitle}</h2> : null}
+          <h1>
+            {renderHighlightedText(
+              doc.title,
+              "doc-title",
+              highlightScope?.title ? highlightQuery : undefined
+            )}
+          </h1>
+          {doc.subtitle ? (
+            <h2>
+              {renderHighlightedText(
+                doc.subtitle,
+                "doc-subtitle",
+                highlightScope?.title ? highlightQuery : undefined
+              )}
+            </h2>
+          ) : null}
           <Divider />
-          <MetaBlock data={doc.metadata} />
+          <MetaBlock
+            data={doc.metadata}
+            highlightQuery={highlightScope?.metadata ? highlightQuery : undefined}
+          />
         </header>
 
         {doc.sections.map((section) => (
           <div key={section.id} data-section-id={section.id} id={`section-${section.id}`}>
-            <Section {...section} />
+            <Section
+              {...section}
+              highlightQuery={highlightScope?.body ? highlightQuery : undefined}
+            />
           </div>
         ))}
         {printHash ? (

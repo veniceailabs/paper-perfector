@@ -1,11 +1,17 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { DocumentRenderer } from "./renderer/DocumentRenderer";
 import { DocumentEditor, type DocumentEditorHandle } from "./components/DocumentEditor";
 import { StartScreen } from "./components/StartScreen";
 import { ShareModal } from "./components/ShareModal";
 import { MobilePreviewModal } from "./components/MobilePreviewModal";
 import { FormatModal } from "./components/FormatModal";
+import { SearchPanel } from "./components/SearchPanel";
 import type { Document, DocumentFormat } from "./models/DocumentSchema";
+import {
+  defaultSearchScope,
+  type SearchResult,
+  type SearchScope,
+} from "./models/Search";
 import { importDocumentFromFile } from "./utils/importers";
 import { exportToPdf } from "./utils/export";
 import { hashDocument } from "./utils/hash";
@@ -14,6 +20,7 @@ import {
   getSharedDocumentFromUrl,
 } from "./utils/share";
 import { resolveFormat } from "./utils/formatting";
+import { replaceInDocument } from "./utils/search";
 
 export default function App() {
   const sharedDoc = getSharedDocumentFromUrl();
@@ -38,10 +45,163 @@ export default function App() {
   const [formatModalValue, setFormatModalValue] = useState<DocumentFormat | null>(
     null
   );
+  const [showSearchPanel, setShowSearchPanel] = useState(false);
+  const [findQuery, setFindQuery] = useState("");
+  const [replaceValue, setReplaceValue] = useState("");
+  const [searchScope, setSearchScope] = useState<SearchScope>(defaultSearchScope);
+  const [scholarQuery, setScholarQuery] = useState("");
 
   const historyRef = useRef(history);
   const historyIndexRef = useRef(historyIndex);
   const editorRef = useRef<DocumentEditorHandle | null>(null);
+  const importInputRef = useRef<HTMLInputElement | null>(null);
+
+  const searchResults = useMemo<SearchResult[]>(() => {
+    const trimmedQuery = findQuery.trim();
+    if (!doc || !trimmedQuery) {
+      return [];
+    }
+
+    const normalized = trimmedQuery.toLowerCase();
+    const results: SearchResult[] = [];
+    const addResult = (result: SearchResult) => {
+      if (results.length < 20) {
+        results.push(result);
+      }
+    };
+
+    if (searchScope.title) {
+      if (doc.title.toLowerCase().includes(normalized)) {
+        addResult({
+          sectionId: "document-top",
+          title: "Document Title",
+          snippet: doc.title,
+          matchType: "title",
+        });
+      }
+      if (doc.subtitle && doc.subtitle.toLowerCase().includes(normalized)) {
+        addResult({
+          sectionId: "document-top",
+          title: "Subtitle",
+          snippet: doc.subtitle,
+          matchType: "title",
+        });
+      }
+    }
+
+    if (searchScope.metadata) {
+      Object.entries(doc.metadata).forEach(([key, value]) => {
+        if (results.length >= 20) {
+          return;
+        }
+        const combined = `${key} ${value}`.toLowerCase();
+        if (combined.includes(normalized)) {
+          addResult({
+            sectionId: "document-top",
+            title: `Metadata: ${key}`,
+            snippet: value,
+            matchType: "metadata",
+          });
+        }
+      });
+    }
+
+    doc.sections.forEach((section) => {
+      if (results.length >= 20) {
+        return;
+      }
+
+      if (searchScope.title) {
+        const titleMatch = section.title.toLowerCase().includes(normalized);
+        if (titleMatch) {
+          addResult({
+            sectionId: section.id,
+            title: section.title,
+            snippet: section.title,
+            matchType: "title",
+          });
+        }
+      }
+
+      if (!searchScope.body || results.length >= 20) {
+        return;
+      }
+
+      const checkLine = (line: string) => {
+        const normalizedLine = line.replace(/\s+/g, " ").trim();
+        if (!normalizedLine) {
+          return false;
+        }
+        const lineLower = normalizedLine.toLowerCase();
+        if (lineLower.includes(normalized)) {
+          const matchIndex = lineLower.indexOf(normalized);
+          const start = Math.max(matchIndex - 40, 0);
+          const end = Math.min(
+            matchIndex + normalized.length + 60,
+            normalizedLine.length
+          );
+          addResult({
+            sectionId: section.id,
+            title: section.title,
+            snippet: normalizedLine.slice(start, end),
+            matchType: "body",
+          });
+          return true;
+        }
+        return false;
+      };
+
+      for (const paragraph of section.body) {
+        if (checkLine(paragraph)) {
+          break;
+        }
+      }
+
+      if (section.monoBlocks?.length) {
+        for (const block of section.monoBlocks) {
+          if (checkLine(block)) {
+            break;
+          }
+        }
+      }
+    });
+
+    return results;
+  }, [doc, findQuery, searchScope]);
+
+  const appActions = useMemo(
+    () => [
+      { id: "home", label: "Home", description: "Start screen" },
+      {
+        id: "back",
+        label: "Back",
+        description: "Previous state",
+        disabled: historyIndex <= 0,
+      },
+      {
+        id: "forward",
+        label: "Forward",
+        description: "Next state",
+        disabled: historyIndex >= history.length - 1,
+      },
+      {
+        id: "edit",
+        label: editMode ? "View Mode" : "Edit Mode",
+        description: editMode ? "Return to viewer" : "Open editor",
+      },
+      { id: "format", label: "Format", description: "Fonts & spacing" },
+      { id: "mobile", label: "Mobile Preview", description: "Device frame" },
+      { id: "share", label: "Share", description: "Link + email" },
+      { id: "import", label: "Import", description: "PDF, DOCX, Markdown" },
+      { id: "export", label: "Export PDF", description: "Print-ready" },
+      {
+        id: "theme",
+        label: theme === "dark" ? "Light Mode" : "Dark Mode",
+        description: "Toggle theme",
+      },
+    ],
+    [editMode, history.length, historyIndex, theme]
+  );
 
   // Auto-save document
   useAutoSave(doc);
@@ -93,6 +253,20 @@ export default function App() {
   const notifySaveError = () => {
     setStatus("Fix errors before leaving.");
     setTimeout(() => setStatus(null), 3000);
+  };
+
+  const handleToggleEditMode = () => {
+    if (editMode) {
+      const success = editorRef.current?.save();
+      if (success === false) {
+        notifySaveError();
+        return;
+      }
+      setHasUnsavedChanges(false);
+      setEditMode(false);
+    } else {
+      setEditMode(true);
+    }
   };
 
   const openFormatModal = () => {
@@ -219,6 +393,117 @@ export default function App() {
     requestSafeNavigation(() => goToHistory(historyIndexRef.current + 1));
   };
 
+  const handleOpenImport = () => {
+    importInputRef.current?.click();
+  };
+
+  const handleReplace = (replaceAll: boolean) => {
+    if (!doc) {
+      return;
+    }
+    if (!findQuery.trim()) {
+      setStatus("Enter a search term first.");
+      setTimeout(() => setStatus(null), 2000);
+      return;
+    }
+
+    let count = 0;
+    if (editMode && editorRef.current) {
+      count = replaceAll
+        ? editorRef.current.replaceAll(findQuery, replaceValue, searchScope)
+        : editorRef.current.replaceNext(findQuery, replaceValue, searchScope);
+    } else {
+      const result = replaceInDocument(
+        doc,
+        findQuery,
+        replaceValue,
+        searchScope,
+        replaceAll
+      );
+      count = result.count;
+      if (count > 0) {
+        applyDocument(result.doc);
+      }
+    }
+
+    setStatus(
+      count > 0
+        ? `Replaced ${count} occurrence${count === 1 ? "" : "s"}.`
+        : "No matches found."
+    );
+    setTimeout(() => setStatus(null), 2000);
+  };
+
+  const handleAppAction = (actionId: string) => {
+    switch (actionId) {
+      case "home":
+        requestSafeNavigation(() => {
+          setDoc(null);
+          setEditMode(false);
+        });
+        break;
+      case "back":
+        handleBack();
+        break;
+      case "forward":
+        handleForward();
+        break;
+      case "edit":
+        handleToggleEditMode();
+        break;
+      case "share":
+        setShowShareModal(true);
+        break;
+      case "format":
+        openFormatModal();
+        break;
+      case "mobile":
+        setShowMobilePreview(true);
+        break;
+      case "theme":
+        setTheme(theme === "dark" ? "light" : "dark");
+        break;
+      case "export":
+        handleExportPdf();
+        break;
+      case "import":
+        handleOpenImport();
+        break;
+      default:
+        break;
+    }
+  };
+
+  const handleSearchNavigate = (sectionId: string) => {
+    if (sectionId === "document-top") {
+      const topTarget = editMode
+        ? document.getElementById("editor-top")
+        : document.getElementById("document-top");
+      if (topTarget) {
+        topTarget.scrollIntoView({ behavior: "smooth", block: "start" });
+        return;
+      }
+      window.scrollTo({ top: 0, behavior: "smooth" });
+      return;
+    }
+
+    const editorTarget = document.getElementById(`editor-section-${sectionId}`);
+    const viewTarget = document.getElementById(`section-${sectionId}`);
+    const target = editorTarget ?? viewTarget;
+    if (target) {
+      target.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  };
+
+  const handleScholarSearch = () => {
+    const query = scholarQuery.trim();
+    if (!query) {
+      return;
+    }
+    const url = `https://scholar.google.com/scholar?q=${encodeURIComponent(query)}`;
+    window.open(url, "_blank", "noopener,noreferrer");
+  };
+
   if (!doc) {
     return (
       <div className="app-shell">
@@ -290,9 +575,17 @@ export default function App() {
           >
             Forward →
           </button>
+          <button
+            className="toolbar-button"
+            type="button"
+            onClick={() => setShowSearchPanel(true)}
+          >
+            🔍 Search
+          </button>
           <label className="file-upload">
             Import
             <input
+              ref={importInputRef}
               type="file"
               accept="text/html,.html,.htm,application/pdf,.pdf,image/*,text/markdown,.md,text/plain,.txt,application/vnd.openxmlformats-officedocument.wordprocessingml.document,.docx,.doc"
               onChange={handleImport}
@@ -309,19 +602,7 @@ export default function App() {
           <button
             className={`toolbar-button ${editMode ? "active" : ""}`}
             type="button"
-            onClick={() => {
-              if (editMode) {
-                const success = editorRef.current?.save();
-                if (success === false) {
-                  notifySaveError();
-                  return;
-                }
-                setHasUnsavedChanges(false);
-                setEditMode(false);
-              } else {
-                setEditMode(true);
-              }
-            }}
+            onClick={handleToggleEditMode}
           >
             {editMode ? "👁️ View" : "✏️ Edit"}
           </button>
@@ -364,7 +645,12 @@ export default function App() {
           onDirtyChange={setHasUnsavedChanges}
         />
       ) : (
-        <DocumentRenderer doc={doc} printHash={printHash || undefined} />
+        <DocumentRenderer
+          doc={doc}
+          printHash={printHash || undefined}
+          highlightQuery={findQuery}
+          highlightScope={searchScope}
+        />
       )}
       {showShareModal && doc ? (
         <ShareModal doc={doc} onClose={() => setShowShareModal(false)} />
@@ -378,6 +664,26 @@ export default function App() {
       ) : null}
       {showMobilePreview && doc ? (
         <MobilePreviewModal doc={doc} onClose={() => setShowMobilePreview(false)} />
+      ) : null}
+      {showSearchPanel && doc ? (
+        <SearchPanel
+          findQuery={findQuery}
+          onFindQueryChange={setFindQuery}
+          replaceValue={replaceValue}
+          onReplaceValueChange={setReplaceValue}
+          searchScope={searchScope}
+          onSearchScopeChange={setSearchScope}
+          searchResults={searchResults}
+          onNavigate={handleSearchNavigate}
+          scholarQuery={scholarQuery}
+          onScholarQueryChange={setScholarQuery}
+          onScholarSearch={handleScholarSearch}
+          onReplaceNext={() => handleReplace(false)}
+          onReplaceAll={() => handleReplace(true)}
+          actions={appActions}
+          onAction={handleAppAction}
+          onClose={() => setShowSearchPanel(false)}
+        />
       ) : null}
     </div>
   );
