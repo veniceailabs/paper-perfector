@@ -10,7 +10,6 @@ import { hashDocument } from "./utils/hash";
 import { useAutoSave, loadAutoSavedDocument, clearAutoSave } from "./hooks/useAutoSave";
 import {
   getSharedDocumentFromUrl,
-  emailDocument,
 } from "./utils/share";
 
 export default function App() {
@@ -132,21 +131,6 @@ export default function App() {
     };
 
     requestSafeNavigation(processImport);
-  };
-
-  const handleEmail = async () => {
-    if (!doc) return;
-
-    setStatus("Preparing PDF...");
-    const result = await emailDocument(doc);
-    if (result === "shared") {
-      setStatus("Share sheet opened.");
-    } else if (result === "downloaded") {
-      setStatus("PDF downloaded. Attach it to your email.");
-    } else {
-      setStatus("Opening email with link...");
-    }
-    setTimeout(() => setStatus(null), 3000);
   };
 
   const handleExportPdf = async () => {
@@ -288,14 +272,6 @@ export default function App() {
             title="Share this document"
           >
             🔗 Share
-          </button>
-          <button
-            className="toolbar-button"
-            type="button"
-            onClick={handleEmail}
-            title="Download PDF and open email"
-          >
-            📧 Email
           </button>
           <button
             className="toolbar-button"

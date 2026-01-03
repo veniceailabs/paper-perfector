@@ -36,6 +36,11 @@ export async function exportToPdfBlob(title: string = "document"): Promise<Blob>
   const computed = getComputedStyle(element);
   const backgroundColor = computed.backgroundColor || "#ffffff";
 
+  const colorMatch = backgroundColor.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/);
+  const [red, green, blue] = colorMatch
+    ? colorMatch.slice(1, 4).map((value) => Number(value))
+    : [255, 255, 255];
+
   const canvas = await html2canvas(element, {
     backgroundColor,
     scale: 2,
@@ -52,7 +57,7 @@ export async function exportToPdfBlob(title: string = "document"): Promise<Blob>
 
   const pageWidth = pdf.internal.pageSize.getWidth();
   const pageHeight = pdf.internal.pageSize.getHeight();
-  const margin = 48;
+  const margin = 0;
   const contentWidth = pageWidth - margin * 2;
   const imgWidth = contentWidth;
   const imgHeight = (canvas.height * imgWidth) / canvas.width;
@@ -60,12 +65,19 @@ export async function exportToPdfBlob(title: string = "document"): Promise<Blob>
   let heightLeft = imgHeight;
   let position = margin;
 
+  const addPageBackground = () => {
+    pdf.setFillColor(red, green, blue);
+    pdf.rect(0, 0, pageWidth, pageHeight, "F");
+  };
+
+  addPageBackground();
   pdf.addImage(imgData, "PNG", margin, position, imgWidth, imgHeight);
   heightLeft -= pageHeight - margin * 2;
 
   while (heightLeft > 0) {
     position = margin - (imgHeight - heightLeft);
     pdf.addPage();
+    addPageBackground();
     pdf.addImage(imgData, "PNG", margin, position, imgWidth, imgHeight);
     heightLeft -= pageHeight - margin * 2;
   }
