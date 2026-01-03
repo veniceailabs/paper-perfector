@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import type { Document } from "../models/DocumentSchema";
-import { encodeDocumentToUrl } from "../utils/share";
+import { encodeDocumentToUrl, emailDocument } from "../utils/share";
 import "../styles/ShareModal.css";
 
 type ShareModalProps = {
@@ -37,6 +37,8 @@ async function copyToClipboard(text: string) {
 export function ShareModal({ doc, onClose }: ShareModalProps) {
   const shareUrl = useMemo(() => encodeDocumentToUrl(doc), [doc]);
   const [copyStatus, setCopyStatus] = useState<string | null>(null);
+  const [emailStatus, setEmailStatus] = useState<string | null>(null);
+  const [isEmailing, setIsEmailing] = useState(false);
   const canNativeShare = supportsNativeShare();
 
   const shareText = `Paper Perfector - ${doc.title}`;
@@ -64,12 +66,19 @@ export function ShareModal({ doc, onClose }: ShareModalProps) {
     }
   };
 
-  const handleEmail = () => {
-    const subject = encodeURIComponent(shareText);
-    const body = encodeURIComponent(
-      `Hi,\n\nHere is the document: ${doc.title}\n\n${shareUrl}\n\n`
-    );
-    window.location.href = `mailto:?subject=${subject}&body=${body}`;
+  const handleEmail = async () => {
+    setIsEmailing(true);
+    setEmailStatus("Preparing PDF...");
+    const result = await emailDocument(doc);
+    if (result === "shared") {
+      setEmailStatus("Share sheet opened.");
+    } else if (result === "downloaded") {
+      setEmailStatus("PDF downloaded. Attach it in your email.");
+    } else {
+      setEmailStatus("Opening email with link.");
+    }
+    setIsEmailing(false);
+    setTimeout(() => setEmailStatus(null), 3000);
   };
 
   const openShareWindow = (url: string) => {
@@ -114,8 +123,13 @@ export function ShareModal({ doc, onClose }: ShareModalProps) {
         ) : null}
 
         <div className="share-grid">
-          <button className="share-action" type="button" onClick={handleEmail}>
-            Email
+          <button
+            className="share-action"
+            type="button"
+            onClick={handleEmail}
+            disabled={isEmailing}
+          >
+            Email PDF
           </button>
           <button
             className="share-action"
@@ -157,6 +171,7 @@ export function ShareModal({ doc, onClose }: ShareModalProps) {
             WhatsApp
           </button>
         </div>
+        {emailStatus ? <div className="share-status">{emailStatus}</div> : null}
       </div>
     </div>
   );

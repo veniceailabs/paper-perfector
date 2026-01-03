@@ -62,12 +62,19 @@ export default function App() {
     }
   };
 
-  const handleEmail = () => {
+  const handleEmail = async () => {
     if (!doc) return;
 
-    setStatus("Opening email client...");
-    emailDocument(doc);
-    setTimeout(() => setStatus(null), 2000);
+    setStatus("Preparing PDF...");
+    const result = await emailDocument(doc);
+    if (result === "shared") {
+      setStatus("Share sheet opened.");
+    } else if (result === "downloaded") {
+      setStatus("PDF downloaded. Attach it to your email.");
+    } else {
+      setStatus("Opening email with link...");
+    }
+    setTimeout(() => setStatus(null), 3000);
   };
 
   const handleExportPdf = async () => {

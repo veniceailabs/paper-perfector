@@ -24,37 +24,53 @@ export function exportToPdf(title?: string, onAfterPrint?: () => void) {
  * Returns a promise that resolves to a Blob
  */
 export async function exportToPdfBlob(title: string = "document"): Promise<Blob> {
-  return new Promise((resolve) => {
-    // Create a temporary canvas for the document
-    const element = document.querySelector(".paper-canvas") || document.body;
-    const canvas = document.createElement("canvas");
-    const ctx = canvas.getContext("2d");
+  const [{ default: html2canvas }, { jsPDF }] = await Promise.all([
+    import("html2canvas"),
+    import("jspdf"),
+  ]);
 
-    if (!ctx) {
-      // Fallback: return empty blob
-      resolve(new Blob(["Failed to generate PDF"], { type: "application/pdf" }));
-      return;
-    }
+  const element =
+    (document.querySelector(".paper-canvas") as HTMLElement | null) ??
+    (document.body as HTMLElement);
 
-    // For now, we'll create a simple PDF using browser's built-in capabilities
-    // In production, you'd use html2pdf or similar
-    const printWindow = window.open("", "", "height=400,width=600");
-    if (!printWindow) {
-      resolve(new Blob(["Failed to open print window"], { type: "application/pdf" }));
-      return;
-    }
+  const computed = getComputedStyle(element);
+  const backgroundColor = computed.backgroundColor || "#ffffff";
 
-    printWindow.document.write(element.innerHTML);
-    printWindow.document.title = title;
-
-    printWindow.onload = () => {
-      // Simulate PDF generation by using the print system
-      printWindow.print();
-      setTimeout(() => {
-        printWindow.close();
-        // Return a placeholder blob (in production, actually generate PDF)
-        resolve(new Blob(["PDF generated"], { type: "application/pdf" }));
-      }, 500);
-    };
+  const canvas = await html2canvas(element, {
+    backgroundColor,
+    scale: 2,
+    useCORS: true,
+    logging: false,
   });
+
+  const imgData = canvas.toDataURL("image/png");
+  const pdf = new jsPDF({
+    orientation: "p",
+    unit: "pt",
+    format: "a4",
+  });
+
+  const pageWidth = pdf.internal.pageSize.getWidth();
+  const pageHeight = pdf.internal.pageSize.getHeight();
+  const margin = 48;
+  const contentWidth = pageWidth - margin * 2;
+  const imgWidth = contentWidth;
+  const imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+  let heightLeft = imgHeight;
+  let position = margin;
+
+  pdf.addImage(imgData, "PNG", margin, position, imgWidth, imgHeight);
+  heightLeft -= pageHeight - margin * 2;
+
+  while (heightLeft > 0) {
+    position = margin - (imgHeight - heightLeft);
+    pdf.addPage();
+    pdf.addImage(imgData, "PNG", margin, position, imgWidth, imgHeight);
+    heightLeft -= pageHeight - margin * 2;
+  }
+
+  const fileName = title.replace(/[/\\?%*:|"<>]/g, "-");
+  pdf.setProperties({ title: fileName });
+  return pdf.output("blob");
 }

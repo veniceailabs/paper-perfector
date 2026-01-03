@@ -1,4 +1,5 @@
 import type { Document } from "../models/DocumentSchema";
+import { exportToPdfBlob } from "./export";
 
 function toBase64Url(bytes: Uint8Array) {
   let binary = "";
@@ -68,16 +69,67 @@ export async function copyShareLink(doc: Document): Promise<boolean> {
   }
 }
 
+function sanitizeFileName(name: string) {
+  return name.replace(/[/\\?%*:|"<>]/g, "-").trim() || "document";
+}
+
+function downloadBlob(blob: Blob, fileName: string) {
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = fileName;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
+}
+
+function shareLinkForEmail(doc: Document) {
+  const shareUrl = encodeDocumentToUrl(doc);
+  if (shareUrl.length <= 1800) {
+    return shareUrl;
+  }
+  return window.location.origin;
+}
+
 /**
  * Opens email client with pre-filled subject/body
  * Downloads PDF for user to attach
  */
-export function emailDocument(doc: Document) {
+export async function emailDocument(
+  doc: Document
+): Promise<"shared" | "downloaded" | "link"> {
   const subject = encodeURIComponent(`Paper Perfector - ${doc.title}`);
-  const body = encodeURIComponent(
-    `Hi,\n\nI've created a document using Paper Perfector: "${doc.title}"\n\nYou can view it at: ${window.location.origin}\n\nBest regards`
-  );
 
-  // Open email client with pre-filled content
-  window.location.href = `mailto:?subject=${subject}&body=${body}`;
+  try {
+    const pdfBlob = await exportToPdfBlob(doc.title);
+    const fileName = `${sanitizeFileName(doc.title)}.pdf`;
+    const file = new File([pdfBlob], fileName, { type: "application/pdf" });
+
+    const shareData = {
+      title: doc.title,
+      text: "Paper Perfector PDF attached.",
+      files: [file],
+    };
+
+    if (navigator.share && (!navigator.canShare || navigator.canShare(shareData))) {
+      await navigator.share(shareData);
+      return "shared";
+    }
+
+    downloadBlob(pdfBlob, fileName);
+
+    const body = encodeURIComponent(
+      `Hi,\n\nAttached is the PDF for "${doc.title}".\n\nIf you do not see it, attach "${fileName}" from your downloads.\n\n`
+    );
+    window.location.href = `mailto:?subject=${subject}&body=${body}`;
+    return "downloaded";
+  } catch {
+    const fallbackLink = shareLinkForEmail(doc);
+    const body = encodeURIComponent(
+      `Hi,\n\nHere is the document: "${doc.title}"\n\n${fallbackLink}\n\n`
+    );
+    window.location.href = `mailto:?subject=${subject}&body=${body}`;
+    return "link";
+  }
 }

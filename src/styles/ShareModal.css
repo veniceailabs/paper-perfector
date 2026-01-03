@@ -123,6 +123,11 @@
   text-align: left;
 }
 
+.share-action:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+
 .share-action:hover,
 .share-link-button:hover,
 .share-native:hover,
