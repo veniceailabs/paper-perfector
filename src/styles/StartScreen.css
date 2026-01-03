@@ -32,14 +32,6 @@
   color: white;
 }
 
-.start-header-row {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 12px;
-  flex-wrap: wrap;
-}
-
 .start-header h1 {
   font-size: 3em;
   margin: 0 0 12px 0;
@@ -91,9 +83,17 @@
 .start-section-header {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 12px;
   margin-bottom: 18px;
   color: #cbd5f5;
+}
+
+.start-section-title {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
 }
 
 .start-section-header h2 {

@@ -108,25 +108,16 @@ export function StartScreen({
     <div className="start-screen">
       <div className="start-container">
         <div className="start-header">
-          <div className="start-header-row">
-            <h1>Paper Perfector</h1>
-            {resumeDoc ? (
-              <button
-                className="start-resume-button"
-                type="button"
-                onClick={() => onSelectDocument(resumeDoc)}
-              >
-                ↩️ Resume
-              </button>
-            ) : null}
-          </div>
+          <h1>Paper Perfector</h1>
           <p>Create and format professional documents</p>
         </div>
 
         <div className="start-section">
           <div className="start-section-header">
-            <h2>Academic &amp; Structured</h2>
-            <span className="start-section-tag">Templates</span>
+            <div className="start-section-title">
+              <h2>Academic &amp; Structured</h2>
+              <span className="start-section-tag">Templates</span>
+            </div>
           </div>
           <div className="start-grid start-grid-templates">
             {/* APA Template */}
@@ -163,7 +154,18 @@ export function StartScreen({
 
         <div className="start-section">
           <div className="start-section-header">
-            <h2>Bring Your Own Content</h2>
+            <div className="start-section-title">
+              <h2>Bring Your Own Content</h2>
+            </div>
+            {resumeDoc ? (
+              <button
+                className="start-resume-button"
+                type="button"
+                onClick={() => onSelectDocument(resumeDoc)}
+              >
+                ↩️ Resume
+              </button>
+            ) : null}
           </div>
           <div className="start-grid start-grid-content">
             {/* New Document */}
