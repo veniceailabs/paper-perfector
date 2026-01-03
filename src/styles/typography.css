@@ -314,6 +314,12 @@ body {
     margin: 0;
   }
 
+  * {
+    animation: none !important;
+    transition: none !important;
+    box-shadow: none !important;
+  }
+
   body {
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
@@ -346,6 +352,44 @@ body {
     padding: 20mm;
     margin: 0;
     max-width: none;
+  }
+
+  .paper-section,
+  .meta-block,
+  .mono,
+  .divider,
+  pre,
+  blockquote,
+  table,
+  ul,
+  ol,
+  li,
+  img {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .paper-section.level-1 {
+    break-before: page;
+    page-break-before: always;
+  }
+
+  .paper-section.level-1:first-of-type {
+    break-before: auto;
+    page-break-before: auto;
+  }
+
+  .paper-canvas h2,
+  .paper-canvas h3,
+  .paper-canvas h4 {
+    break-after: avoid;
+    page-break-after: avoid;
+  }
+
+  .paper-canvas p,
+  .paper-canvas li {
+    orphans: 3;
+    widows: 3;
   }
 
   .print-hash {

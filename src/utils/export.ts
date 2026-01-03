@@ -29,6 +29,14 @@ export async function exportToPdfBlob(title: string = "document"): Promise<Blob>
     import("jspdf"),
   ]);
 
+  if (document.fonts?.ready) {
+    try {
+      await document.fonts.ready;
+    } catch {
+      // Ignore font readiness failures
+    }
+  }
+
   const element =
     (document.querySelector(".paper-canvas") as HTMLElement | null) ??
     (document.body as HTMLElement);
@@ -46,6 +54,7 @@ export async function exportToPdfBlob(title: string = "document"): Promise<Blob>
     scale: 2,
     useCORS: true,
     logging: false,
+    windowWidth: 1200,
   });
 
   const imgData = canvas.toDataURL("image/png");

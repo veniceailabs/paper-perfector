@@ -86,7 +86,7 @@ export default function Section({
   };
 
   return (
-    <section className="paper-section">
+    <section className={`paper-section level-${level}`}>
       <HeadingTag>{title}</HeadingTag>
       {renderedBody()}
       {monoBlocks?.map((block, index) => (
