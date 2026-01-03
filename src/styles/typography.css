@@ -164,6 +164,40 @@ body {
   max-width: 900px;
 }
 
+.paper-canvas.format-apa,
+.paper-canvas.format-mla {
+  font-family: "Times New Roman", Times, serif;
+  font-size: 12pt;
+  line-height: 2;
+}
+
+.paper-canvas.format-apa h1,
+.paper-canvas.format-apa h2,
+.paper-canvas.format-apa h3,
+.paper-canvas.format-apa h4,
+.paper-canvas.format-mla h1,
+.paper-canvas.format-mla h2,
+.paper-canvas.format-mla h3,
+.paper-canvas.format-mla h4 {
+  font-family: "Times New Roman", Times, serif;
+  font-size: 12pt;
+  line-height: 2;
+  font-weight: 700;
+  letter-spacing: 0;
+}
+
+.paper-canvas.format-apa p,
+.paper-canvas.format-apa li,
+.paper-canvas.format-apa dt,
+.paper-canvas.format-apa dd,
+.paper-canvas.format-mla p,
+.paper-canvas.format-mla li,
+.paper-canvas.format-mla dt,
+.paper-canvas.format-mla dd {
+  font-size: 12pt;
+  line-height: 2;
+}
+
 /* Legacy fallback for DocumentEditor view */
 .editor-container .paper-canvas {
   margin: 32px auto 0;

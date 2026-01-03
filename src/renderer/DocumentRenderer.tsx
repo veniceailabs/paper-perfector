@@ -14,6 +14,17 @@ export function DocumentRenderer({
   printHash?: string;
 }) {
   const [currentSectionId, setCurrentSectionId] = useState<string | undefined>();
+  const formatClass = (() => {
+    const classification = (doc.metadata?.classification ?? "").toLowerCase();
+    const title = doc.title.toLowerCase();
+    if (classification.includes("apa") || title.includes("apa")) {
+      return "format-apa";
+    }
+    if (classification.includes("mla") || title.includes("mla")) {
+      return "format-mla";
+    }
+    return "";
+  })();
 
   // Track current section as user scrolls
   useEffect(() => {
@@ -39,7 +50,7 @@ export function DocumentRenderer({
 
   return (
     <div className="document-container">
-      <article className="paper-canvas">
+      <article className={`paper-canvas ${formatClass}`.trim()}>
         <header>
           <h1>{doc.title}</h1>
           {doc.subtitle ? <h2>{doc.subtitle}</h2> : null}
