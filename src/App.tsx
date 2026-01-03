@@ -3,6 +3,7 @@ import { DocumentRenderer } from "./renderer/DocumentRenderer";
 import { DocumentEditor, type DocumentEditorHandle } from "./components/DocumentEditor";
 import { StartScreen } from "./components/StartScreen";
 import { ShareModal } from "./components/ShareModal";
+import { MobilePreviewModal } from "./components/MobilePreviewModal";
 import type { Document } from "./models/DocumentSchema";
 import { importDocumentFromFile } from "./utils/importers";
 import { exportToPdf } from "./utils/export";
@@ -27,6 +28,7 @@ export default function App() {
   const [editMode, setEditMode] = useState(false);
   const [status, setStatus] = useState<string | null>(null);
   const [showShareModal, setShowShareModal] = useState(false);
+  const [showMobilePreview, setShowMobilePreview] = useState(false);
   const [theme, setTheme] = useState<"dark" | "light">("dark");
   const [printHash, setPrintHash] = useState<string>("");
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
@@ -281,6 +283,13 @@ export default function App() {
           <button
             className="toolbar-button"
             type="button"
+            onClick={() => setShowMobilePreview(true)}
+          >
+            📱 Mobile
+          </button>
+          <button
+            className="toolbar-button"
+            type="button"
             onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
           >
             {theme === "dark" ? "☀️ Light" : "🌙 Dark"} Mode
@@ -307,6 +316,9 @@ export default function App() {
       )}
       {showShareModal && doc ? (
         <ShareModal doc={doc} onClose={() => setShowShareModal(false)} />
+      ) : null}
+      {showMobilePreview && doc ? (
+        <MobilePreviewModal doc={doc} onClose={() => setShowMobilePreview(false)} />
       ) : null}
     </div>
   );
