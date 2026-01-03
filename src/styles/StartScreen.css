@@ -37,10 +37,7 @@
   margin: 0 0 12px 0;
   font-weight: 300;
   letter-spacing: -1px;
-  background: linear-gradient(135deg, #f8cfa8 0%, var(--accent) 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  color: #e5e7eb;
 }
 
 .start-header p {
