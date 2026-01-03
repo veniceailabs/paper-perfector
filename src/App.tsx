@@ -246,6 +246,14 @@ export default function App() {
             />
           </label>
           <button
+            className="toolbar-button"
+            type="button"
+            onClick={() => setShowShareModal(true)}
+            title="Share this document"
+          >
+            🔗 Share
+          </button>
+          <button
             className={`toolbar-button ${editMode ? "active" : ""}`}
             type="button"
             onClick={() => {
@@ -263,14 +271,6 @@ export default function App() {
             }}
           >
             {editMode ? "👁️ View" : "✏️ Edit"}
-          </button>
-          <button
-            className="toolbar-button"
-            type="button"
-            onClick={() => setShowShareModal(true)}
-            title="Share this document"
-          >
-            🔗 Share
           </button>
           <button
             className="toolbar-button"

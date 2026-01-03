@@ -110,75 +110,91 @@ export function StartScreen({
           <p>Create and format professional documents</p>
         </div>
 
-        <div className="start-grid">
-          {/* New Document */}
-          <div
-            className="start-card start-card-new"
-            onClick={() => onSelectDocument(createBlankDocument())}
-          >
-            <div className="card-icon">📝</div>
-            <h3>Blank Document</h3>
-            <p>Start from scratch</p>
+        <div className="start-section">
+          <div className="start-section-header">
+            <h2>Academic &amp; Structured</h2>
+            <span className="start-section-tag">Templates</span>
           </div>
+          <div className="start-grid start-grid-templates">
+            {/* APA Template */}
+            <div
+              className="start-card start-card-example"
+              onClick={() => onSelectDocument(templates.apa)}
+            >
+              <div className="card-icon">📑</div>
+              <h3>APA Format</h3>
+              <p>7th Edition template</p>
+            </div>
 
-          {/* APA Template */}
-          <div
-            className="start-card start-card-example"
-            onClick={() => onSelectDocument(templates.apa)}
-          >
-            <div className="card-icon">📑</div>
-            <h3>APA Format</h3>
-            <p>7th Edition template</p>
+            {/* MLA Template */}
+            <div
+              className="start-card start-card-example"
+              onClick={() => onSelectDocument(templates.mla)}
+            >
+              <div className="card-icon">📄</div>
+              <h3>MLA Format</h3>
+              <p>9th Edition template</p>
+            </div>
+
+            {/* Chicago Template */}
+            <div
+              className="start-card start-card-example"
+              onClick={() => onSelectDocument(templates.chicago)}
+            >
+              <div className="card-icon">📋</div>
+              <h3>Chicago Style</h3>
+              <p>17th Edition template</p>
+            </div>
           </div>
+        </div>
 
-          {/* MLA Template */}
-          <div
-            className="start-card start-card-example"
-            onClick={() => onSelectDocument(templates.mla)}
-          >
-            <div className="card-icon">📄</div>
-            <h3>MLA Format</h3>
-            <p>9th Edition template</p>
+        <div className="start-section">
+          <div className="start-section-header">
+            <h2>Bring Your Own Content</h2>
           </div>
+          <div className="start-grid start-grid-content">
+            {/* New Document */}
+            <div
+              className="start-card start-card-new"
+              onClick={() => onSelectDocument(createBlankDocument())}
+            >
+              <div className="card-icon">📝</div>
+              <h3>Blank Document</h3>
+              <p>Start from scratch</p>
+            </div>
 
-          {/* Chicago Template */}
-          <div
-            className="start-card start-card-example"
-            onClick={() => onSelectDocument(templates.chicago)}
-          >
-            <div className="card-icon">📋</div>
-            <h3>Chicago Style</h3>
-            <p>17th Edition template</p>
-          </div>
+            {/* Sample Example */}
+            <div
+              className="start-card start-card-example"
+              onClick={() => onSelectDocument(samplePaper)}
+            >
+              <div className="card-icon">📚</div>
+              <h3>Sample Paper</h3>
+              <p>View a formatted example</p>
+            </div>
 
-          {/* Sample Example */}
-          <div
-            className="start-card start-card-example"
-            onClick={() => onSelectDocument(samplePaper)}
-          >
-            <div className="card-icon">📚</div>
-            <h3>Sample Paper</h3>
-            <p>View a formatted example</p>
-          </div>
+            {/* Paste Markdown */}
+            <div
+              className="start-card start-card-paste"
+              onClick={openPasteModal}
+            >
+              <div className="card-icon">🧾</div>
+              <h3>Paste Markdown</h3>
+              <p>Paste text and keep formatting</p>
+            </div>
 
-          {/* Import Document */}
-          <label className="start-card start-card-import">
-            <div className="card-icon">📤</div>
-            <h3>Import Document</h3>
-            <p>Load from HTML, PDF, or Markdown</p>
-            <input
-              type="file"
-              accept="text/html,.html,.htm,application/pdf,.pdf,image/*,text/markdown,.md"
-              onChange={onImport}
-              style={{ display: "none" }}
-            />
-          </label>
-
-          {/* Paste Markdown */}
-          <div className="start-card start-card-paste" onClick={openPasteModal}>
-            <div className="card-icon">🧾</div>
-            <h3>Paste Markdown</h3>
-            <p>Paste text and keep formatting</p>
+            {/* Import Document */}
+            <label className="start-card start-card-import">
+              <div className="card-icon">📤</div>
+              <h3>Import Document</h3>
+              <p>Load from HTML, PDF, or Markdown</p>
+              <input
+                type="file"
+                accept="text/html,.html,.htm,application/pdf,.pdf,image/*,text/markdown,.md"
+                onChange={onImport}
+                style={{ display: "none" }}
+              />
+            </label>
           </div>
         </div>
 
