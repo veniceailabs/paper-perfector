@@ -23,6 +23,11 @@ export function DocumentEditor({ doc, onSave }: DocumentEditorProps) {
   );
   const [markdownDraft, setMarkdownDraft] = useState("");
   const [markdownError, setMarkdownError] = useState<string | null>(null);
+  const [expandedParagraph, setExpandedParagraph] = useState<{
+    sectionId: string;
+    index: number;
+  } | null>(null);
+  const [expandedText, setExpandedText] = useState("");
 
   const handleMetadataChange = (key: string, value: string) => {
     setMetadata({ ...metadata, [key]: value });
@@ -147,6 +152,32 @@ export function DocumentEditor({ doc, onSave }: DocumentEditorProps) {
     if (element) {
       element.scrollIntoView({ behavior: "smooth", block: "center" });
     }
+  };
+
+  const openParagraphExpand = (
+    sectionId: string,
+    index: number,
+    text: string
+  ) => {
+    setExpandedParagraph({ sectionId, index });
+    setExpandedText(text);
+  };
+
+  const closeParagraphExpand = () => {
+    setExpandedParagraph(null);
+    setExpandedText("");
+  };
+
+  const applyExpandedText = () => {
+    if (!expandedParagraph) {
+      return;
+    }
+    handleSectionBodyChange(
+      expandedParagraph.sectionId,
+      expandedParagraph.index,
+      expandedText
+    );
+    closeParagraphExpand();
   };
 
   const isMarkdownMode = editorMode === "markdown";
@@ -287,15 +318,28 @@ export function DocumentEditor({ doc, onSave }: DocumentEditorProps) {
                           placeholder="Enter paragraph text..."
                           rows={Math.max(2, Math.ceil(paragraph.length / 60))}
                         />
-                        {section.body.length > 1 && (
+                        <div className="paragraph-actions">
                           <button
-                            className="remove-paragraph-btn"
-                            onClick={() => removeParagraphFromSection(section.id, idx)}
-                            title="Remove paragraph"
+                            className="expand-paragraph-btn"
+                            type="button"
+                            onClick={() =>
+                              openParagraphExpand(section.id, idx, paragraph)
+                            }
                           >
-                            Remove
+                            Expand
                           </button>
-                        )}
+                          {section.body.length > 1 && (
+                            <button
+                              className="remove-paragraph-btn"
+                              onClick={() =>
+                                removeParagraphFromSection(section.id, idx)
+                              }
+                              title="Remove paragraph"
+                            >
+                              Remove
+                            </button>
+                          )}
+                        </div>
                       </div>
                     ))}
                   </div>
@@ -362,6 +406,53 @@ export function DocumentEditor({ doc, onSave }: DocumentEditorProps) {
               <li>Add new sections as needed</li>
               <li>Edit metadata to track version, author, etc.</li>
             </ul>
+          </div>
+        </div>
+      ) : null}
+
+      {expandedParagraph ? (
+        <div
+          className="editor-modal-backdrop"
+          role="dialog"
+          aria-modal="true"
+          onClick={closeParagraphExpand}
+        >
+          <div
+            className="editor-modal"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="editor-modal-header">
+              <h3>Expanded Paragraph</h3>
+              <button
+                className="editor-modal-close"
+                type="button"
+                onClick={closeParagraphExpand}
+              >
+                X
+              </button>
+            </div>
+            <textarea
+              className="editor-modal-textarea"
+              value={expandedText}
+              onChange={(event) => setExpandedText(event.target.value)}
+              rows={16}
+            />
+            <div className="editor-modal-actions">
+              <button
+                className="editor-modal-button secondary"
+                type="button"
+                onClick={closeParagraphExpand}
+              >
+                Cancel
+              </button>
+              <button
+                className="editor-modal-button primary"
+                type="button"
+                onClick={applyExpandedText}
+              >
+                Apply
+              </button>
+            </div>
           </div>
         </div>
       ) : null}

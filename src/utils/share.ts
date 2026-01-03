@@ -1,10 +1,35 @@
 import type { Document } from "../models/DocumentSchema";
 
+function toBase64Url(bytes: Uint8Array) {
+  let binary = "";
+  bytes.forEach((byte) => {
+    binary += String.fromCharCode(byte);
+  });
+  const base64 = btoa(binary);
+  return base64.replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/g, "");
+}
+
+function fromBase64Url(encoded: string) {
+  let base64 = encoded.replace(/-/g, "+").replace(/_/g, "/");
+  const padLength = base64.length % 4;
+  if (padLength) {
+    base64 += "=".repeat(4 - padLength);
+  }
+  const binary = atob(base64);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i += 1) {
+    bytes[i] = binary.charCodeAt(i);
+  }
+  return bytes;
+}
+
 /**
  * Encodes a document to a shareable URL hash
  */
 export function encodeDocumentToUrl(doc: Document): string {
-  const encoded = btoa(JSON.stringify(doc));
+  const json = JSON.stringify(doc);
+  const bytes = new TextEncoder().encode(json);
+  const encoded = toBase64Url(bytes);
   return `${window.location.origin}?shared=${encoded}`;
 }
 
@@ -13,7 +38,8 @@ export function encodeDocumentToUrl(doc: Document): string {
  */
 export function decodeDocumentFromUrl(encoded: string): Document | null {
   try {
-    const decoded = atob(encoded);
+    const bytes = fromBase64Url(encoded);
+    const decoded = new TextDecoder().decode(bytes);
     return JSON.parse(decoded);
   } catch {
     return null;

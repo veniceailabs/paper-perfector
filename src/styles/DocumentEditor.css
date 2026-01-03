@@ -286,6 +286,29 @@
   gap: 8px;
 }
 
+.paragraph-actions {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.expand-paragraph-btn {
+  align-self: flex-start;
+  background: transparent;
+  border: 1px solid var(--rule-color);
+  color: var(--text-secondary);
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.expand-paragraph-btn:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
 .paragraph-editor textarea {
   background: transparent;
   color: var(--text-primary);
@@ -321,6 +344,122 @@
   color: #dc2626;
 }
 
+.editor-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  z-index: 30;
+  backdrop-filter: blur(8px);
+}
+
+.editor-modal {
+  width: min(780px, 100%);
+  background: linear-gradient(135deg, #0f172a 0%, #111827 100%);
+  border: 1px solid #334155;
+  border-radius: 16px;
+  padding: 24px;
+  color: white;
+  box-shadow: 0 20px 60px rgba(15, 23, 42, 0.5);
+}
+
+.editor-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.editor-modal-header h3 {
+  margin: 0;
+  font-size: 1.1em;
+}
+
+.editor-modal-close {
+  border: 1px solid #334155;
+  background: transparent;
+  color: white;
+  border-radius: 999px;
+  padding: 6px 10px;
+  cursor: pointer;
+}
+
+.editor-modal-textarea {
+  width: 100%;
+  resize: vertical;
+  min-height: 320px;
+  border-radius: 12px;
+  border: 1px solid #334155;
+  background: #0f172a;
+  color: white;
+  padding: 16px;
+  font-family: "Google Sans", system-ui, -apple-system, sans-serif;
+  font-size: 14px;
+  line-height: 1.7;
+}
+
+.editor-modal-textarea:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px rgba(138, 180, 248, 0.1);
+}
+
+.editor-modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.editor-modal-button {
+  border-radius: 999px;
+  border: 1px solid #334155;
+  background: transparent;
+  color: white;
+  padding: 8px 18px;
+  font-size: 0.95em;
+  cursor: pointer;
+}
+
+.editor-modal-button.primary {
+  border-color: #4a9eff;
+  color: #4a9eff;
+}
+
+.editor-modal-button.primary:hover {
+  background: rgba(74, 158, 255, 0.1);
+}
+
+.editor-modal-button.secondary:hover,
+.editor-modal-close:hover {
+  border-color: #64748b;
+}
+
+[data-theme="light"] .editor-modal-backdrop {
+  background: rgba(248, 250, 252, 0.85);
+}
+
+[data-theme="light"] .editor-modal {
+  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+  color: #0f172a;
+  border-color: #cbd5e1;
+}
+
+[data-theme="light"] .editor-modal-close,
+[data-theme="light"] .editor-modal-textarea,
+[data-theme="light"] .editor-modal-button {
+  color: #0f172a;
+  border-color: #cbd5e1;
+  background: #ffffff;
+}
+
+[data-theme="light"] .editor-modal-button.primary {
+  border-color: #2563eb;
+  color: #2563eb;
+}
 .add-paragraph-btn {
   background: transparent;
   border: 1px dashed var(--rule-color);
