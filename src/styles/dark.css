@@ -5,9 +5,9 @@
   --text-secondary: #b0b3b8;
   --text-muted: #8a8d91;
   --rule-color: rgba(255, 255, 255, 0.12);
-  --accent: #f4a261;
-  --accent-faint: rgba(244, 162, 97, 0.08);
-  --accent-soft: rgba(244, 162, 97, 0.14);
-  --accent-glow: rgba(244, 162, 97, 0.25);
-  --accent-glow-strong: rgba(244, 162, 97, 0.4);
+  --accent: #e07a3f;
+  --accent-faint: rgba(224, 122, 63, 0.08);
+  --accent-soft: rgba(224, 122, 63, 0.12);
+  --accent-glow: rgba(224, 122, 63, 0.22);
+  --accent-glow-strong: rgba(224, 122, 63, 0.34);
 }

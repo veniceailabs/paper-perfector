@@ -1,3 +1,4 @@
+import type { ScholarResult } from "../models/Scholar";
 import type { SearchResult, SearchScope } from "../models/Search";
 import "../styles/SearchPanel.css";
 
@@ -20,6 +21,12 @@ type SearchPanelProps = {
   scholarQuery: string;
   onScholarQueryChange: (value: string) => void;
   onScholarSearch: () => void;
+  scholarResults: ScholarResult[];
+  scholarStatus: "idle" | "loading" | "error";
+  scholarError?: string | null;
+  selectedScholarId: string | null;
+  onSelectScholar: (id: string) => void;
+  onOpenScholarReader: (url: string, title: string) => void;
   onReplaceNext: () => void;
   onReplaceAll: () => void;
   actions: AppAction[];
@@ -51,6 +58,12 @@ export function SearchPanel({
   scholarQuery,
   onScholarQueryChange,
   onScholarSearch,
+  scholarResults,
+  scholarStatus,
+  scholarError,
+  selectedScholarId,
+  onSelectScholar,
+  onOpenScholarReader,
   onReplaceNext,
   onReplaceAll,
   actions,
@@ -62,6 +75,8 @@ export function SearchPanel({
   };
 
   const hasQuery = findQuery.trim().length > 0;
+  const selectedScholar =
+    scholarResults.find((result) => result.id === selectedScholarId) ?? null;
 
   return (
     <div className="search-panel-backdrop" onClick={onClose} role="presentation">
@@ -193,6 +208,9 @@ export function SearchPanel({
 
         <section className="search-panel-section">
           <h3>Google Scholar</h3>
+          <p className="search-panel-note">
+            Results shown in-app (OpenAlex metadata).
+          </p>
           <div className="search-panel-field scholar">
             <input
               type="search"
@@ -216,6 +234,92 @@ export function SearchPanel({
               Search
             </button>
           </div>
+          <div className="scholar-results">
+            {scholarStatus === "loading" ? (
+              <div className="search-panel-empty">Searching...</div>
+            ) : null}
+            {scholarStatus === "error" ? (
+              <div className="search-panel-empty">
+                {scholarError ?? "Scholar search failed."}
+              </div>
+            ) : null}
+            {scholarStatus === "idle" && scholarResults.length === 0 ? (
+              <div className="search-panel-empty">
+                Search to view scholarly sources.
+              </div>
+            ) : null}
+            {scholarResults.map((result) => (
+              <button
+                key={result.id}
+                type="button"
+                className={`scholar-result ${
+                  selectedScholarId === result.id ? "active" : ""
+                }`}
+                onClick={() => onSelectScholar(result.id)}
+              >
+                <span className="scholar-title">{result.title}</span>
+                <span className="scholar-meta">
+                  {[
+                    result.authors.slice(0, 3).join(", "),
+                    result.year,
+                    result.venue,
+                  ]
+                    .filter(Boolean)
+                    .join(" • ")}
+                </span>
+              </button>
+            ))}
+          </div>
+          {selectedScholar ? (
+            <div className="scholar-detail">
+              <h4>{selectedScholar.title}</h4>
+              <p className="scholar-detail-meta">
+                {[
+                  selectedScholar.authors.join(", "),
+                  selectedScholar.year,
+                  selectedScholar.venue,
+                ]
+                  .filter(Boolean)
+                  .join(" • ")}
+              </p>
+              {selectedScholar.abstract ? (
+                <p className="scholar-detail-abstract">
+                  {selectedScholar.abstract}
+                </p>
+              ) : (
+                <p className="scholar-detail-abstract">
+                  No abstract available for this source.
+                </p>
+              )}
+              <div className="scholar-detail-actions">
+                {selectedScholar.pdfUrl ? (
+                  <button
+                    type="button"
+                    className="search-panel-button"
+                    onClick={() =>
+                      onOpenScholarReader(
+                        selectedScholar.pdfUrl ?? selectedScholar.url ?? "",
+                        selectedScholar.title
+                      )
+                    }
+                  >
+                    Open PDF
+                  </button>
+                ) : null}
+                {selectedScholar.url ? (
+                  <button
+                    type="button"
+                    className="search-panel-button"
+                    onClick={() =>
+                      onOpenScholarReader(selectedScholar.url ?? "", selectedScholar.title)
+                    }
+                  >
+                    Source Link
+                  </button>
+                ) : null}
+              </div>
+            </div>
+          ) : null}
         </section>
 
         <section className="search-panel-section">
