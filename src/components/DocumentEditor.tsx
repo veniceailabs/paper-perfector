@@ -1,25 +1,22 @@
-import { useEffect, useState } from "react";
+import { forwardRef, useEffect, useImperativeHandle, useState } from "react";
 import type { Document } from "../models/DocumentSchema";
 import { TableOfContents } from "./TableOfContents";
 import { importFromMarkdownText } from "../utils/markdownImport";
 import { documentToMarkdown } from "../utils/markdownExport";
 import "../styles/DocumentEditor.css";
 
+export type DocumentEditorHandle = {
+  save: () => boolean;
+};
+
 interface DocumentEditorProps {
   doc: Document;
   onSave: (doc: Document) => void;
   onDirtyChange?: (isDirty: boolean) => void;
-  saveSignal?: number;
-  onSaveResult?: (success: boolean) => void;
 }
 
-export function DocumentEditor({
-  doc,
-  onSave,
-  onDirtyChange,
-  saveSignal,
-  onSaveResult,
-}: DocumentEditorProps) {
+export const DocumentEditor = forwardRef<DocumentEditorHandle, DocumentEditorProps>(
+  function DocumentEditor({ doc, onSave, onDirtyChange }: DocumentEditorProps, ref) {
   const [title, setTitle] = useState(doc.title);
   const [subtitle, setSubtitle] = useState(doc.subtitle || "");
   const [metadata, setMetadata] = useState(doc.metadata);
@@ -38,7 +35,6 @@ export function DocumentEditor({
     index: number;
   } | null>(null);
   const [expandedText, setExpandedText] = useState("");
-  const [saveTrigger, setSaveTrigger] = useState(0);
 
   useEffect(() => {
     setTitle(doc.title);
@@ -53,15 +49,6 @@ export function DocumentEditor({
   useEffect(() => {
     onDirtyChange?.(isDirty);
   }, [isDirty, onDirtyChange]);
-
-  useEffect(() => {
-    if (saveSignal === undefined || saveSignal === saveTrigger) {
-      return;
-    }
-    setSaveTrigger(saveSignal);
-    const success = handleSave();
-    onSaveResult?.(success);
-  }, [saveSignal, saveTrigger]);
 
   const handleMetadataChange = (key: string, value: string) => {
     setMetadata({ ...metadata, [key]: value });
@@ -188,6 +175,14 @@ export function DocumentEditor({
     setIsDirty(false);
     return true;
   };
+
+  useImperativeHandle(
+    ref,
+    () => ({
+      save: handleSave,
+    }),
+    [handleSave]
+  );
 
   const handleSectionClick = (sectionId: string) => {
     setCurrentSectionId(sectionId);
@@ -511,4 +506,7 @@ export function DocumentEditor({
       ) : null}
     </div>
   );
-}
+  }
+);
+
+DocumentEditor.displayName = "DocumentEditor";

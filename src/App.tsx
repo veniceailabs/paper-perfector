@@ -1,13 +1,13 @@
 import { useEffect, useRef, useState } from "react";
 import { DocumentRenderer } from "./renderer/DocumentRenderer";
-import { DocumentEditor } from "./components/DocumentEditor";
+import { DocumentEditor, type DocumentEditorHandle } from "./components/DocumentEditor";
 import { StartScreen } from "./components/StartScreen";
 import { ShareModal } from "./components/ShareModal";
 import type { Document } from "./models/DocumentSchema";
 import { importDocumentFromFile } from "./utils/importers";
 import { exportToPdf } from "./utils/export";
 import { hashDocument } from "./utils/hash";
-import { useAutoSave, loadAutoSavedDocument, clearAutoSave } from "./hooks/useAutoSave";
+import { useAutoSave, loadAutoSavedDocument } from "./hooks/useAutoSave";
 import {
   getSharedDocumentFromUrl,
 } from "./utils/share";
@@ -31,11 +31,10 @@ export default function App() {
   const [theme, setTheme] = useState<"dark" | "light">("dark");
   const [printHash, setPrintHash] = useState<string>("");
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
-  const [saveSignal, setSaveSignal] = useState(0);
 
   const historyRef = useRef(history);
   const historyIndexRef = useRef(historyIndex);
-  const pendingActionRef = useRef<null | (() => void)>(null);
+  const editorRef = useRef<DocumentEditorHandle | null>(null);
 
   // Auto-save document
   useAutoSave(doc);
@@ -78,6 +77,11 @@ export default function App() {
     setHistoryIndex(index);
   };
 
+  const notifySaveError = () => {
+    setStatus("Fix errors before leaving.");
+    setTimeout(() => setStatus(null), 3000);
+  };
+
   const requestSafeNavigation = (action: () => void) => {
     if (!editMode || !hasUnsavedChanges) {
       action();
@@ -88,8 +92,13 @@ export default function App() {
       "You have unsaved changes. Save before leaving?"
     );
     if (shouldSave) {
-      pendingActionRef.current = action;
-      setSaveSignal((value) => value + 1);
+      const success = editorRef.current?.save();
+      if (success === false) {
+        notifySaveError();
+        return;
+      }
+      setHasUnsavedChanges(false);
+      action();
       return;
     }
 
@@ -154,22 +163,6 @@ export default function App() {
     setTimeout(() => setStatus(null), 2000);
   };
 
-  const handleSaveResult = (success: boolean) => {
-    if (!success) {
-      setStatus("Fix errors before leaving.");
-      setTimeout(() => setStatus(null), 3000);
-      pendingActionRef.current = null;
-      return;
-    }
-
-    setHasUnsavedChanges(false);
-    if (pendingActionRef.current) {
-      const action = pendingActionRef.current;
-      pendingActionRef.current = null;
-      action();
-    }
-  };
-
   const handleBack = () => {
     if (historyIndexRef.current <= 0) {
       return;
@@ -182,14 +175,6 @@ export default function App() {
       return;
     }
     requestSafeNavigation(() => goToHistory(historyIndexRef.current + 1));
-  };
-
-  const exitEditModeWithSave = () => {
-    if (!editMode) {
-      return;
-    }
-    pendingActionRef.current = () => setEditMode(false);
-    setSaveSignal((value) => value + 1);
   };
 
   if (!doc) {
@@ -265,14 +250,16 @@ export default function App() {
             type="button"
             onClick={() => {
               if (editMode) {
-                if (hasUnsavedChanges) {
-                  requestSafeNavigation(() => setEditMode(false));
+                const success = editorRef.current?.save();
+                if (success === false) {
+                  notifySaveError();
                   return;
                 }
-                exitEditModeWithSave();
-                return;
+                setHasUnsavedChanges(false);
+                setEditMode(false);
+              } else {
+                setEditMode(true);
               }
-              setEditMode(true);
             }}
           >
             {editMode ? "👁️ View" : "✏️ Edit"}
@@ -304,11 +291,10 @@ export default function App() {
       {status ? <div className="status">{status}</div> : null}
       {editMode ? (
         <DocumentEditor
+          ref={editorRef}
           doc={doc}
           onSave={handleDocSave}
           onDirtyChange={setHasUnsavedChanges}
-          saveSignal={saveSignal}
-          onSaveResult={handleSaveResult}
         />
       ) : (
         <DocumentRenderer doc={doc} printHash={printHash || undefined} />
