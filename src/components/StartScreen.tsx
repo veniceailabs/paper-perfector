@@ -9,12 +9,14 @@ interface StartScreenProps {
   onSelectDocument: (doc: Document) => void;
   onImport: (event: React.ChangeEvent<HTMLInputElement>) => void;
   onThemeChange: (theme: "light" | "dark") => void;
+  resumeDoc?: Document | null;
 }
 
 export function StartScreen({
   onSelectDocument,
   onImport,
   onThemeChange,
+  resumeDoc,
 }: StartScreenProps) {
   const [showPasteModal, setShowPasteModal] = useState(false);
   const [showThemeModal, setShowThemeModal] = useState(false);
@@ -153,6 +155,16 @@ export function StartScreen({
             <h2>Bring Your Own Content</h2>
           </div>
           <div className="start-grid start-grid-content">
+            {resumeDoc ? (
+              <div
+                className="start-card start-card-resume"
+                onClick={() => onSelectDocument(resumeDoc)}
+              >
+                <div className="card-icon">↩️</div>
+                <h3>Resume Last Document</h3>
+                <p>Pick up where you left off</p>
+              </div>
+            ) : null}
             {/* New Document */}
             <div
               className="start-card start-card-new"

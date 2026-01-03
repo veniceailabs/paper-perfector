@@ -98,6 +98,16 @@
   margin-bottom: 0;
 }
 
+.start-card-resume {
+  grid-column: 1 / -1;
+  border-color: rgba(74, 158, 255, 0.6);
+  background: linear-gradient(135deg, rgba(74, 158, 255, 0.15), rgba(15, 23, 42, 0.9));
+}
+
+.start-card-resume h3 {
+  color: #a5d8ff;
+}
+
 @media (max-width: 900px) {
   .start-grid-templates {
     grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
@@ -105,6 +115,10 @@
 
   .start-grid-content {
     grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  }
+
+  .start-card-resume {
+    grid-column: auto;
   }
 }
 

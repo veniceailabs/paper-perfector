@@ -13,14 +13,13 @@ import {
 } from "./utils/share";
 
 export default function App() {
-  const initialDoc = (() => {
-    const shared = getSharedDocumentFromUrl();
-    if (shared) return shared;
-
-    return loadAutoSavedDocument();
-  })();
+  const sharedDoc = getSharedDocumentFromUrl();
+  const initialDoc = sharedDoc ?? null;
 
   const [doc, setDoc] = useState<Document | null>(initialDoc);
+  const [resumeDoc, setResumeDoc] = useState<Document | null>(() =>
+    sharedDoc ? null : loadAutoSavedDocument()
+  );
   const [history, setHistory] = useState<Document[]>(() =>
     initialDoc ? [initialDoc] : []
   );
@@ -50,6 +49,12 @@ export default function App() {
   useEffect(() => {
     historyIndexRef.current = historyIndex;
   }, [historyIndex]);
+
+  useEffect(() => {
+    if (!doc) {
+      setResumeDoc(loadAutoSavedDocument());
+    }
+  }, [doc]);
 
   const pushHistory = (nextDoc: Document) => {
     setHistory((prev) => {
@@ -196,6 +201,7 @@ export default function App() {
           onSelectDocument={applyDocument}
           onImport={handleImport}
           onThemeChange={setTheme}
+          resumeDoc={resumeDoc}
         />
       </div>
     );
