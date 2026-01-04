@@ -25,6 +25,7 @@ import { replaceInDocument } from "./utils/search";
 import { fetchScholarResults } from "./utils/scholar";
 import { calculateDocumentStats } from "./utils/documentStats";
 import { PaperScoreModal } from "./components/PaperScoreModal";
+import { TrustCenterModal } from "./components/TrustCenterModal";
 import { quickstartGuide } from "./documents/quickstartGuide";
 
 export default function App() {
@@ -45,6 +46,7 @@ export default function App() {
   const [showFormatModal, setShowFormatModal] = useState(false);
   const [showMobilePreview, setShowMobilePreview] = useState(false);
   const [showScoreModal, setShowScoreModal] = useState(false);
+  const [showTrustCenter, setShowTrustCenter] = useState(false);
   const [theme, setTheme] = useState<"dark" | "light">("dark");
   const [printHash, setPrintHash] = useState<string>("");
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
@@ -214,6 +216,7 @@ export default function App() {
       { id: "format", label: "Format", description: "Fonts & spacing" },
       { id: "mobile", label: "Mobile Preview", description: "Device frame" },
       { id: "share", label: "Share", description: "Link + email" },
+      { id: "trust", label: "Trust Center", description: "Integrity tools" },
       { id: "import", label: "Import", description: "PDF, DOCX, Markdown" },
       { id: "export", label: "Export PDF", description: "Print-ready" },
       {
@@ -559,6 +562,9 @@ export default function App() {
       case "share":
         setShowShareModal(true);
         break;
+      case "trust":
+        setShowTrustCenter(true);
+        break;
       case "format":
         openFormatModal();
         break;
@@ -779,6 +785,13 @@ export default function App() {
           <button
             className="toolbar-button"
             type="button"
+            onClick={() => setShowTrustCenter(true)}
+          >
+            🛡️ Trust
+          </button>
+          <button
+            className="toolbar-button"
+            type="button"
             onClick={() => setShowMobilePreview(true)}
           >
             📱 Mobile
@@ -870,6 +883,9 @@ export default function App() {
       {showScoreModal && doc ? (
         <PaperScoreModal doc={doc} onClose={() => setShowScoreModal(false)} />
       ) : null}
+      {showTrustCenter && doc ? (
+        <TrustCenterModal doc={doc} onClose={() => setShowTrustCenter(false)} />
+      ) : null}
       {doc ? (
         <div className={`start-assistant ${showHelpAssistant ? "open" : ""}`}>
           {showHelpAssistant ? (
@@ -899,6 +915,9 @@ export default function App() {
                   }
                 >
                   Open Quickstart Guide
+                </button>
+                <button type="button" onClick={() => setShowTrustCenter(true)}>
+                  Trust Center
                 </button>
                 <button type="button" onClick={openFormatModal}>
                   Adjust format & spacing
