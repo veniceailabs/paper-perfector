@@ -54,3 +54,35 @@
   outline: 2px solid var(--accent-glow);
   outline-offset: 2px;
 }
+
+.format-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: flex-end;
+  margin-top: 6px;
+}
+
+.format-action-btn {
+  border: 1px solid var(--rule-color);
+  background: transparent;
+  color: var(--text-primary);
+  border-radius: 999px;
+  padding: 6px 14px;
+  font-size: 0.85em;
+  cursor: pointer;
+}
+
+.format-action-btn:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.format-action-btn.primary {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.format-action-btn.primary:hover {
+  background: var(--accent-faint);
+}

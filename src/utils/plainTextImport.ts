@@ -79,5 +79,8 @@ export function importFromPlainText(
     title,
     metadata,
     sections,
+    format: {
+      renderMarkdown: false,
+    },
   };
 }

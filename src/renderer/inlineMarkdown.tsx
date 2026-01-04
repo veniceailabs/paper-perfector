@@ -174,3 +174,27 @@ export function renderInlineMarkdown(
 
   return nodes;
 }
+
+export function renderPlainText(
+  text: string,
+  keyPrefix: string,
+  highlightQuery?: string
+): ReactNode[] {
+  const lines = text.split("\n");
+  const nodes: ReactNode[] = [];
+
+  lines.forEach((line, lineIndex) => {
+    if (lineIndex > 0) {
+      nodes.push(<br key={`${keyPrefix}-br-${lineIndex}`} />);
+    }
+    nodes.push(
+      ...renderHighlightedText(
+        line,
+        `${keyPrefix}-plain-${lineIndex}`,
+        highlightQuery
+      )
+    );
+  });
+
+  return nodes;
+}

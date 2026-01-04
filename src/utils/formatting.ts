@@ -11,6 +11,7 @@ export const formatPresets: Record<FormatPreset, DocumentFormat> = {
     paragraphSpacing: 12,
     showHeader: false,
     showPageNumbers: false,
+    renderMarkdown: true,
   },
   apa: {
     preset: "apa",
@@ -22,6 +23,7 @@ export const formatPresets: Record<FormatPreset, DocumentFormat> = {
     paragraphSpacing: 12,
     showHeader: true,
     showPageNumbers: true,
+    renderMarkdown: true,
   },
   mla: {
     preset: "mla",
@@ -33,6 +35,7 @@ export const formatPresets: Record<FormatPreset, DocumentFormat> = {
     paragraphSpacing: 12,
     showHeader: true,
     showPageNumbers: true,
+    renderMarkdown: true,
   },
   chicago: {
     preset: "chicago",
@@ -44,6 +47,7 @@ export const formatPresets: Record<FormatPreset, DocumentFormat> = {
     paragraphSpacing: 12,
     showHeader: true,
     showPageNumbers: true,
+    renderMarkdown: true,
   },
   custom: {
     preset: "custom",
@@ -55,6 +59,7 @@ export const formatPresets: Record<FormatPreset, DocumentFormat> = {
     paragraphSpacing: 12,
     showHeader: false,
     showPageNumbers: false,
+    renderMarkdown: true,
   },
 };
 
@@ -94,6 +99,36 @@ export const fontWeightOptions = [
 ];
 
 export const lineHeightOptions = [1, 1.15, 1.5, 2, 2.5];
+
+const FORMAT_DEFAULTS_KEY = "paper-perfector-format-defaults";
+
+export function loadSavedFormatDefaults(): DocumentFormat | null {
+  try {
+    const raw = localStorage.getItem(FORMAT_DEFAULTS_KEY);
+    if (!raw) {
+      return null;
+    }
+    const parsed = JSON.parse(raw) as DocumentFormat;
+    if (!parsed || typeof parsed !== "object") {
+      return null;
+    }
+    return parsed;
+  } catch {
+    return null;
+  }
+}
+
+export function saveFormatDefaults(format: DocumentFormat) {
+  try {
+    const normalized: DocumentFormat = {
+      ...format,
+      preset: format.preset ?? "default",
+    };
+    localStorage.setItem(FORMAT_DEFAULTS_KEY, JSON.stringify(normalized));
+  } catch {
+    // Ignore storage failures.
+  }
+}
 
 export function parseFontSize(value: string | undefined, fallback: string) {
   const target = value ?? fallback;

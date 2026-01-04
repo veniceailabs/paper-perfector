@@ -15,6 +15,8 @@ interface FormatControlsProps {
   format: DocumentFormat;
   onChange: (next: DocumentFormat) => void;
   compact?: boolean;
+  onReset?: () => void;
+  onSaveDefaults?: (format: DocumentFormat) => void;
 }
 
 const presetOptions: Array<{ value: FormatPreset; label: string }> = [
@@ -25,7 +27,13 @@ const presetOptions: Array<{ value: FormatPreset; label: string }> = [
   { value: "custom", label: "Custom" },
 ];
 
-export function FormatControls({ format, onChange, compact }: FormatControlsProps) {
+export function FormatControls({
+  format,
+  onChange,
+  compact,
+  onReset,
+  onSaveDefaults,
+}: FormatControlsProps) {
   const preset = format.preset ?? "default";
   const defaults = formatPresets[preset] ?? formatPresets.default;
   const sizeData = parseFontSize(format.fontSize, defaults.fontSize ?? "12pt");
@@ -41,6 +49,7 @@ export function FormatControls({ format, onChange, compact }: FormatControlsProp
   const showPageNumbersValue =
     format.showPageNumbers ?? defaults.showPageNumbers ?? false;
   const headerTextValue = format.headerText ?? "";
+  const renderMarkdownValue = format.renderMarkdown ?? defaults.renderMarkdown ?? true;
 
   const updateFormat = (partial: Partial<DocumentFormat>) => {
     onChange({
@@ -173,6 +182,19 @@ export function FormatControls({ format, onChange, compact }: FormatControlsProp
         <label className="format-toggle">
           <input
             type="checkbox"
+            checked={renderMarkdownValue}
+            onChange={(event) =>
+              updateFormat({ renderMarkdown: event.target.checked })
+            }
+          />
+          <span>Markdown formatting</span>
+        </label>
+      </div>
+
+      <div className="format-field">
+        <label className="format-toggle">
+          <input
+            type="checkbox"
             checked={showHeaderValue}
             onChange={(event) =>
               updateFormat({ showHeader: event.target.checked })
@@ -242,6 +264,25 @@ export function FormatControls({ format, onChange, compact }: FormatControlsProp
           </select>
         </div>
       </div>
+
+      {onReset || onSaveDefaults ? (
+        <div className="format-actions">
+          {onReset ? (
+            <button className="format-action-btn" type="button" onClick={onReset}>
+              Reset to Defaults
+            </button>
+          ) : null}
+          {onSaveDefaults ? (
+            <button
+              className="format-action-btn primary"
+              type="button"
+              onClick={() => onSaveDefaults(format)}
+            >
+              Save Defaults
+            </button>
+          ) : null}
+        </div>
+      ) : null}
     </div>
   );
 }

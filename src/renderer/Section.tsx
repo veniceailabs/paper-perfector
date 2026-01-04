@@ -1,7 +1,7 @@
 import type { Section as SectionType } from "../models/DocumentSchema";
 import MonoBlock from "./MonoBlock";
 import Divider from "./Divider";
-import { renderInlineMarkdown } from "./inlineMarkdown";
+import { renderInlineMarkdown, renderPlainText } from "./inlineMarkdown";
 
 const headingTags = {
   1: "h2",
@@ -15,14 +15,32 @@ export default function Section({
   body,
   monoBlocks,
   highlightQuery,
-}: SectionType & { highlightQuery?: string }) {
+  renderMarkdown = true,
+}: SectionType & { highlightQuery?: string; renderMarkdown?: boolean }) {
   const HeadingTag = headingTags[level];
   const listItemRegex = /^[-*+]\s+(.+)$/;
   const orderedItemRegex = /^\d+\.\s+(.+)$/;
   const dividerRegex = /^---$|^\*\*\*$|^___$/;
   const blockQuoteRegex = /^>\s?/;
+  const renderText = (text: string, keyPrefix: string) =>
+    renderMarkdown
+      ? renderInlineMarkdown(text, keyPrefix, highlightQuery)
+      : renderPlainText(text, keyPrefix, highlightQuery);
 
   const renderedBody = () => {
+    if (!renderMarkdown) {
+      return body.map((paragraph, index) => {
+        if (!paragraph.trim()) {
+          return <div className="paper-spacer" key={`${title}-spacer-${index}`} />;
+        }
+        return (
+          <p key={`${title}-${index}`}>
+            {renderText(paragraph, `${title}-${index}`)}
+          </p>
+        );
+      });
+    }
+
     const blocks: JSX.Element[] = [];
     let listBuffer: { type: "ul" | "ol"; items: string[] } | null = null;
 
@@ -32,11 +50,7 @@ export default function Section({
       }
       const items = listBuffer.items.map((item, itemIndex) => (
         <li key={`list-${keyIndex}-${itemIndex}`}>
-          {renderInlineMarkdown(
-            item,
-            `list-${keyIndex}-${itemIndex}`,
-            highlightQuery
-          )}
+          {renderText(item, `list-${keyIndex}-${itemIndex}`)}
         </li>
       ));
       blocks.push(
@@ -51,6 +65,13 @@ export default function Section({
 
     body.forEach((paragraph, index) => {
       const trimmed = paragraph.trim();
+
+      if (!trimmed) {
+        flushList(index);
+        blocks.push(<div className="paper-spacer" key={`${title}-spacer-${index}`} />);
+        return;
+      }
+
       const isDivider = dividerRegex.test(trimmed);
       const unorderedMatch = trimmed.match(listItemRegex);
       const orderedMatch = trimmed.match(orderedItemRegex);
@@ -89,7 +110,7 @@ export default function Section({
           .trim();
         blocks.push(
           <blockquote key={`blockquote-${index}`}>
-            {renderInlineMarkdown(cleaned, `${title}-quote-${index}`, highlightQuery)}
+            {renderText(cleaned, `${title}-quote-${index}`)}
           </blockquote>
         );
         return;
@@ -98,7 +119,7 @@ export default function Section({
       flushList(index);
       blocks.push(
         <p key={`${title}-${index}`}>
-          {renderInlineMarkdown(paragraph, `${title}-${index}`, highlightQuery)}
+          {renderText(paragraph, `${title}-${index}`)}
         </p>
       );
     });
@@ -110,7 +131,7 @@ export default function Section({
   return (
     <section className={`paper-section level-${level}`}>
       <HeadingTag>
-        {renderInlineMarkdown(title, `heading-${title}`, highlightQuery)}
+        {renderText(title, `heading-${title}`)}
       </HeadingTag>
       {renderedBody()}
       {monoBlocks?.map((block, index) => (

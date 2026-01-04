@@ -350,6 +350,14 @@ mark {
   margin: var(--paper-paragraph-spacing, 12px) 0;
 }
 
+.paper-canvas.plain-text p {
+  white-space: pre-wrap;
+}
+
+.paper-spacer {
+  height: calc(var(--paper-line-height, 1.65) * 1em);
+}
+
 .paper-header,
 .paper-footer {
   display: flex;

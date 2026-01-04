@@ -7,7 +7,7 @@ import Section from "./Section";
 import type { SearchScope } from "../models/Search";
 import { resolveFormat } from "../utils/formatting";
 import { formatReference, formatReferenceTitle } from "../utils/citations";
-import { renderHighlightedText } from "./inlineMarkdown";
+import { renderInlineMarkdown, renderPlainText, renderHighlightedText } from "./inlineMarkdown";
 import "../styles/DocumentLayout.css";
 
 export function DocumentRenderer({
@@ -24,6 +24,7 @@ export function DocumentRenderer({
   const [currentSectionId, setCurrentSectionId] = useState<string | undefined>();
   const resolvedFormat = resolveFormat(doc);
   const sources = doc.sources ?? [];
+  const renderMarkdown = resolvedFormat.renderMarkdown ?? true;
   const formatClass =
     resolvedFormat.preset !== "default" && resolvedFormat.preset !== "custom"
       ? `format-${resolvedFormat.preset}`
@@ -73,11 +74,24 @@ export function DocumentRenderer({
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
+  const renderText = (
+    text: string,
+    keyPrefix: string,
+    shouldHighlight?: boolean
+  ) => {
+    const query = shouldHighlight ? highlightQuery : undefined;
+    return renderMarkdown
+      ? renderInlineMarkdown(text, keyPrefix, query)
+      : renderPlainText(text, keyPrefix, query);
+  };
+
   return (
     <div className="document-container">
       <article
         id="document-top"
-        className={`paper-canvas ${formatClass}`.trim()}
+        className={`paper-canvas ${formatClass} ${
+          renderMarkdown ? "" : "plain-text"
+        }`.trim()}
         style={formatStyle}
       >
         {showHeader ? (
@@ -92,19 +106,11 @@ export function DocumentRenderer({
         ) : null}
         <header>
           <h1>
-            {renderHighlightedText(
-              doc.title,
-              "doc-title",
-              highlightScope?.title ? highlightQuery : undefined
-            )}
+            {renderText(doc.title, "doc-title", highlightScope?.title)}
           </h1>
           {doc.subtitle ? (
             <h2>
-              {renderHighlightedText(
-                doc.subtitle,
-                "doc-subtitle",
-                highlightScope?.title ? highlightQuery : undefined
-              )}
+              {renderText(doc.subtitle, "doc-subtitle", highlightScope?.title)}
             </h2>
           ) : null}
           <Divider />
@@ -119,6 +125,7 @@ export function DocumentRenderer({
             <Section
               {...section}
               highlightQuery={highlightScope?.body ? highlightQuery : undefined}
+              renderMarkdown={renderMarkdown}
             />
           </div>
         ))}

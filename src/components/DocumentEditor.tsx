@@ -12,7 +12,7 @@ import { TableOfContents } from "./TableOfContents";
 import { FormatControls } from "./FormatControls";
 import { importFromMarkdownText } from "../utils/markdownImport";
 import { documentToMarkdown } from "../utils/markdownExport";
-import { resolveFormat } from "../utils/formatting";
+import { formatPresets, resolveFormat } from "../utils/formatting";
 import {
   formatInTextCitation,
   formatReference,
@@ -37,10 +37,14 @@ interface DocumentEditorProps {
   doc: Document;
   onSave: (doc: Document) => void;
   onDirtyChange?: (isDirty: boolean) => void;
+  onSaveDefaults?: (format: DocumentFormat) => void;
 }
 
 export const DocumentEditor = forwardRef<DocumentEditorHandle, DocumentEditorProps>(
-  function DocumentEditor({ doc, onSave, onDirtyChange }: DocumentEditorProps, ref) {
+  function DocumentEditor(
+    { doc, onSave, onDirtyChange, onSaveDefaults }: DocumentEditorProps,
+    ref
+  ) {
   const [title, setTitle] = useState(doc.title);
   const [subtitle, setSubtitle] = useState(doc.subtitle || "");
   const [metadata, setMetadata] = useState(doc.metadata);
@@ -192,13 +196,24 @@ export const DocumentEditor = forwardRef<DocumentEditorHandle, DocumentEditorPro
   };
 
   const applyParsedDoc = (parsed: Document) => {
+    const mergedFormat = {
+      ...format,
+      ...(parsed.format ?? {}),
+    };
     setTitle(parsed.title);
     setSubtitle(parsed.subtitle ?? "");
     setMetadata(parsed.metadata);
     setSections(parsed.sections);
     setCurrentSectionId(parsed.sections[0]?.id || "");
-    setFormat(parsed.format ?? format);
+    setFormat(mergedFormat);
     setSources((prev) => parsed.sources ?? prev);
+  };
+
+  const handleResetFormat = () => {
+    const preset = format.preset ?? "default";
+    const defaults = formatPresets[preset] ?? formatPresets.default;
+    setFormat(defaults);
+    setIsDirty(true);
   };
 
   const handleSave = () => {
@@ -207,9 +222,13 @@ export const DocumentEditor = forwardRef<DocumentEditorHandle, DocumentEditorPro
       if (!parsed) {
         return false;
       }
+      const mergedFormat = {
+        ...format,
+        ...(parsed.format ?? {}),
+      };
       const withFormat = {
         ...parsed,
-        format: parsed.format ?? format,
+        format: mergedFormat,
         sources,
       };
       applyParsedDoc(withFormat);
@@ -928,6 +947,8 @@ export const DocumentEditor = forwardRef<DocumentEditorHandle, DocumentEditorPro
                   setFormat(nextFormat);
                   setIsDirty(true);
                 }}
+                onReset={handleResetFormat}
+                onSaveDefaults={onSaveDefaults}
                 compact={true}
               />
             </div>
@@ -949,6 +970,8 @@ export const DocumentEditor = forwardRef<DocumentEditorHandle, DocumentEditorPro
                 setFormat(nextFormat);
                 setIsDirty(true);
               }}
+              onReset={handleResetFormat}
+              onSaveDefaults={onSaveDefaults}
               compact={true}
             />
           </div>

@@ -151,5 +151,8 @@ export function buildDocumentFromLines(options: {
       Imported: new Date().toISOString().slice(0, 10),
     },
     sections,
+    format: {
+      renderMarkdown: false,
+    },
   } satisfies Document;
 }

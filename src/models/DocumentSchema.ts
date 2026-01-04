@@ -20,7 +20,7 @@ export type Source = {
 };
 
 export type DocumentFormat = {
-  preset: FormatPreset;
+  preset?: FormatPreset;
   fontFamily?: string;
   fontSize?: string;
   lineHeight?: number;
@@ -30,6 +30,7 @@ export type DocumentFormat = {
   headerText?: string;
   showHeader?: boolean;
   showPageNumbers?: boolean;
+  renderMarkdown?: boolean;
 };
 
 export type Document = {

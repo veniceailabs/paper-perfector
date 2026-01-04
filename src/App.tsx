@@ -20,7 +20,11 @@ import { useAutoSave, loadAutoSavedDocument } from "./hooks/useAutoSave";
 import {
   getSharedDocumentFromUrl,
 } from "./utils/share";
-import { resolveFormat } from "./utils/formatting";
+import {
+  loadSavedFormatDefaults,
+  resolveFormat,
+  saveFormatDefaults,
+} from "./utils/formatting";
 import { replaceInDocument } from "./utils/search";
 import { fetchScholarResults } from "./utils/scholar";
 import { calculateDocumentStats } from "./utils/documentStats";
@@ -53,6 +57,8 @@ export default function App() {
   const [formatModalValue, setFormatModalValue] = useState<DocumentFormat | null>(
     null
   );
+  const [savedFormatDefaults, setSavedFormatDefaults] =
+    useState<DocumentFormat | null>(() => loadSavedFormatDefaults());
   const [showSearchPanel, setShowSearchPanel] = useState(false);
   const [showHelpAssistant, setShowHelpAssistant] = useState(false);
   const [findQuery, setFindQuery] = useState("");
@@ -282,6 +288,27 @@ export default function App() {
     }
   };
 
+  const applySavedFormatDefaults = (nextDoc: Document) => {
+    if (!savedFormatDefaults) {
+      return nextDoc;
+    }
+    const preset = nextDoc.format?.preset;
+    if (preset && preset !== "default" && preset !== "custom") {
+      return nextDoc;
+    }
+    const overrides = { ...(nextDoc.format ?? {}) };
+    if (!preset || preset === "default" || preset === "custom") {
+      delete overrides.preset;
+    }
+    return {
+      ...nextDoc,
+      format: {
+        ...savedFormatDefaults,
+        ...overrides,
+      },
+    };
+  };
+
   const goToHistory = (index: number) => {
     const entry = historyRef.current[index];
     if (!entry) {
@@ -379,7 +406,7 @@ export default function App() {
 
       try {
         const result = await importDocumentFromFile(file);
-        applyDocument(result.document);
+        applyDocument(applySavedFormatDefaults(result.document));
         if (result.warnings.length > 0) {
           setStatus(result.warnings.join(" "));
         } else {
@@ -484,6 +511,13 @@ export default function App() {
   const handleDocSave = (updatedDoc: Document) => {
     applyDocument(updatedDoc);
     setStatus("Document saved!");
+    setTimeout(() => setStatus(null), 2000);
+  };
+
+  const handleSaveDefaultFormat = (format: DocumentFormat) => {
+    saveFormatDefaults(format);
+    setSavedFormatDefaults(format);
+    setStatus("Default format saved.");
     setTimeout(() => setStatus(null), 2000);
   };
 
@@ -680,7 +714,9 @@ export default function App() {
           </div>
         </div>
         <StartScreen
-          onSelectDocument={applyDocument}
+          onSelectDocument={(nextDoc) =>
+            applyDocument(applySavedFormatDefaults(nextDoc))
+          }
           onImport={handleImport}
           onThemeChange={setTheme}
         />
@@ -827,6 +863,7 @@ export default function App() {
           doc={doc}
           onSave={handleDocSave}
           onDirtyChange={setHasUnsavedChanges}
+          onSaveDefaults={handleSaveDefaultFormat}
         />
       ) : (
         <DocumentRenderer
