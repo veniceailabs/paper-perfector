@@ -8,11 +8,28 @@ export type Section = {
 
 export type FormatPreset = "default" | "apa" | "mla" | "chicago" | "custom";
 
+export type Source = {
+  id: string;
+  title: string;
+  authors: string[];
+  year?: number;
+  venue?: string;
+  url?: string;
+  pdfUrl?: string;
+  accessed?: string;
+};
+
 export type DocumentFormat = {
   preset: FormatPreset;
   fontFamily?: string;
   fontSize?: string;
   lineHeight?: number;
+  pageMargin?: string;
+  fontWeight?: number;
+  paragraphSpacing?: number;
+  headerText?: string;
+  showHeader?: boolean;
+  showPageNumbers?: boolean;
 };
 
 export type Document = {
@@ -21,4 +38,5 @@ export type Document = {
   metadata: Record<string, string>;
   sections: Section[];
   format?: DocumentFormat;
+  sources?: Source[];
 };

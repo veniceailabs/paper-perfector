@@ -1,8 +1,10 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Document } from "../models/DocumentSchema";
 import { samplePaper } from "../documents/samplePaper";
 import { templates } from "../documents/templates";
+import { quickstartGuide } from "../documents/quickstartGuide";
 import { importFromMarkdownText } from "../utils/markdownImport";
+import { importFromHtmlText } from "../utils/htmlImport";
 import "../styles/StartScreen.css";
 
 interface StartScreenProps {
@@ -21,6 +23,8 @@ export function StartScreen({
   const [markdownText, setMarkdownText] = useState("");
   const [markdownError, setMarkdownError] = useState<string | null>(null);
   const [pendingDoc, setPendingDoc] = useState<Document | null>(null);
+  const [assistantOpen, setAssistantOpen] = useState(false);
+  const importInputRef = useRef<HTMLInputElement>(null);
 
   const createBlankDocument = (): Document => {
     return {
@@ -76,14 +80,82 @@ export function StartScreen({
     setShowPasteModal(true);
   };
 
-  const handlePasteContinue = () => {
+  const openImportPicker = () => {
+    importInputRef.current?.click();
+  };
+
+  const handleSelectFromAssistant = (doc: Document) => {
+    setAssistantOpen(false);
+    onSelectDocument(doc);
+  };
+
+  const handlePasteContinue = async () => {
     if (!markdownText.trim()) {
-      setMarkdownError("Paste your markdown or text to continue.");
+      setMarkdownError("Paste your markdown, HTML, or text to continue.");
       return;
     }
 
+    const trimmed = markdownText.trim();
+    const isSingleUrl = /^(\S+)$/.test(trimmed);
+    const urlMatch = isSingleUrl
+      ? trimmed.match(/^(https?:\/\/\S+|file:\/\/\S+)$/i)
+      : null;
+    const looksLikeHtml = /<(html|body|head|h1|h2|h3|h4|p|div|section|article|ul|ol|li|table|a)\b/i.test(
+      trimmed
+    );
+
     try {
-      const doc = importFromMarkdownText(markdownText);
+      if (urlMatch) {
+        const url = urlMatch[1];
+        if (url.toLowerCase().startsWith("file://")) {
+          setMarkdownError(
+            "Local file links can’t be opened in the browser. Please use Import Document to select the HTML file."
+          );
+          openImportPicker();
+          return;
+        }
+
+        try {
+          const response = await fetch(url);
+          if (!response.ok) {
+            throw new Error("Unable to load that link.");
+          }
+          const contentType = response.headers.get("content-type") ?? "";
+          const payload = await response.text();
+          const filename = url.split("/").pop() ?? "linked-document.html";
+
+          const payloadLooksLikeHtml =
+            /<(html|body|head|h1|h2|h3|h4|p|div|section|article|ul|ol|li|table|a)\b/i.test(
+              payload
+            );
+          const doc =
+            contentType.includes("text/html") || payloadLooksLikeHtml
+              ? importFromHtmlText(payload, {
+                  sourceLabel: url,
+                  fileName: filename,
+                })
+              : importFromMarkdownText(payload, {
+                  sourceLabel: url,
+                  fileName: filename,
+                });
+          setPendingDoc(doc);
+          setShowPasteModal(false);
+          setShowThemeModal(true);
+          setMarkdownError(null);
+          return;
+        } catch (error) {
+          setMarkdownError(
+            error instanceof Error
+              ? `${error.message} Download the HTML and use Import Document if the site blocks access.`
+              : "Unable to load that link. Download the HTML and import it instead."
+          );
+          return;
+        }
+      }
+
+      const doc = looksLikeHtml
+        ? importFromHtmlText(trimmed, { sourceLabel: "Pasted HTML" })
+        : importFromMarkdownText(trimmed);
       setPendingDoc(doc);
       setShowPasteModal(false);
       setShowThemeModal(true);
@@ -187,7 +259,7 @@ export function StartScreen({
             >
               <div className="card-icon">🧾</div>
               <h3>Paste Text</h3>
-              <p>Paste markdown or plain text</p>
+              <p>Paste markdown, HTML, or a link</p>
             </div>
 
             {/* Import Document */}
@@ -196,6 +268,7 @@ export function StartScreen({
               <h3>Import Document</h3>
               <p>Load from HTML, PDF, Word, or Markdown</p>
             <input
+              ref={importInputRef}
               type="file"
               accept="text/html,.html,.htm,application/pdf,.pdf,image/*,text/markdown,.md,text/plain,.txt,application/vnd.openxmlformats-officedocument.wordprocessingml.document,.docx,.doc"
               onChange={onImport}
@@ -207,6 +280,13 @@ export function StartScreen({
 
         <div className="start-footer">
           <p>💡 Tip: You can import markdown, HTML, PDF, Word, or text files</p>
+          <button
+            className="start-guide-link"
+            type="button"
+            onClick={() => onSelectDocument(quickstartGuide)}
+          >
+            New here? Open the Quickstart Guide (export to PDF when ready)
+          </button>
         </div>
       </div>
 
@@ -214,14 +294,16 @@ export function StartScreen({
         <div className="start-modal-backdrop" role="dialog" aria-modal="true">
           <div className="start-modal">
             <div className="start-modal-header">
-              <h2>Paste Markdown or Text</h2>
-              <p>Paste markdown or plain text and keep the formatting intact.</p>
+              <h2>Paste Markdown, HTML, or Text</h2>
+              <p>
+                Paste markdown, HTML, plain text, or a link to an HTML page.
+              </p>
             </div>
             <textarea
               className="start-modal-textarea"
               value={markdownText}
               onChange={(event) => setMarkdownText(event.target.value)}
-              placeholder="Paste markdown or plain text here..."
+              placeholder="Paste markdown, HTML, plain text, or an HTML link here..."
               rows={14}
             />
             {markdownError ? (
@@ -287,6 +369,94 @@ export function StartScreen({
           </div>
         </div>
       ) : null}
+
+      <div className={`start-assistant ${assistantOpen ? "open" : ""}`}>
+        {assistantOpen ? (
+          <div className="assistant-panel">
+            <div className="assistant-header">
+              <div>
+                <strong>Paper Guide</strong>
+                <span>What do you want to make?</span>
+              </div>
+              <button
+                className="assistant-close"
+                type="button"
+                onClick={() => setAssistantOpen(false)}
+                aria-label="Close guide"
+              >
+                ✕
+              </button>
+            </div>
+            <div className="assistant-actions">
+              <button
+                type="button"
+                onClick={() => handleSelectFromAssistant(createBlankDocument())}
+              >
+                Blank Document
+              </button>
+              <button
+                type="button"
+                onClick={() => handleSelectFromAssistant(samplePaper)}
+              >
+                Sample Paper
+              </button>
+              <button
+                type="button"
+                onClick={() => handleSelectFromAssistant(templates.apa)}
+              >
+                APA Template
+              </button>
+              <button
+                type="button"
+                onClick={() => handleSelectFromAssistant(templates.mla)}
+              >
+                MLA Template
+              </button>
+              <button
+                type="button"
+                onClick={() => handleSelectFromAssistant(templates.chicago)}
+              >
+                Chicago Template
+              </button>
+              <button
+                type="button"
+                onClick={() => handleSelectFromAssistant(quickstartGuide)}
+              >
+                Quickstart Guide
+              </button>
+            </div>
+            <div className="assistant-footer">
+              <button
+                className="assistant-secondary"
+                type="button"
+                onClick={() => {
+                  setAssistantOpen(false);
+                  openPasteModal();
+                }}
+              >
+                Paste Text
+              </button>
+              <button
+                className="assistant-secondary"
+                type="button"
+                onClick={() => {
+                  setAssistantOpen(false);
+                  openImportPicker();
+                }}
+              >
+                Upload File
+              </button>
+            </div>
+          </div>
+        ) : null}
+        <button
+          className="assistant-toggle"
+          type="button"
+          onClick={() => setAssistantOpen((prev) => !prev)}
+        >
+          Need help?
+        </button>
+      </div>
     </div>
   );
 }

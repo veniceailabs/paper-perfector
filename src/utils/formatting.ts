@@ -6,30 +6,55 @@ export const formatPresets: Record<FormatPreset, DocumentFormat> = {
     fontFamily: "\"Google Sans\", system-ui, -apple-system, sans-serif",
     fontSize: "14.5px",
     lineHeight: 1.65,
+    pageMargin: "24mm",
+    fontWeight: 400,
+    paragraphSpacing: 12,
+    showHeader: false,
+    showPageNumbers: false,
   },
   apa: {
     preset: "apa",
     fontFamily: "\"Times New Roman\", Times, serif",
     fontSize: "12pt",
     lineHeight: 2,
+    pageMargin: "1in",
+    fontWeight: 400,
+    paragraphSpacing: 12,
+    showHeader: true,
+    showPageNumbers: true,
   },
   mla: {
     preset: "mla",
     fontFamily: "\"Times New Roman\", Times, serif",
     fontSize: "12pt",
     lineHeight: 2,
+    pageMargin: "1in",
+    fontWeight: 400,
+    paragraphSpacing: 12,
+    showHeader: true,
+    showPageNumbers: true,
   },
   chicago: {
     preset: "chicago",
     fontFamily: "\"Times New Roman\", Times, serif",
     fontSize: "12pt",
     lineHeight: 2,
+    pageMargin: "1in",
+    fontWeight: 400,
+    paragraphSpacing: 12,
+    showHeader: true,
+    showPageNumbers: true,
   },
   custom: {
     preset: "custom",
     fontFamily: "\"Google Sans\", system-ui, -apple-system, sans-serif",
     fontSize: "14.5px",
     lineHeight: 1.65,
+    pageMargin: "24mm",
+    fontWeight: 400,
+    paragraphSpacing: 12,
+    showHeader: false,
+    showPageNumbers: false,
   },
 };
 
@@ -37,6 +62,14 @@ export const fontOptions = [
   {
     label: "Google Sans",
     value: "\"Google Sans\", system-ui, -apple-system, sans-serif",
+  },
+  {
+    label: "Helvetica Neue",
+    value: "\"Helvetica Neue\", Helvetica, Arial, sans-serif",
+  },
+  {
+    label: "Helvetica",
+    value: "Helvetica, Arial, sans-serif",
   },
   {
     label: "Times New Roman",
@@ -50,6 +83,14 @@ export const fontOptions = [
     label: "Arial",
     value: "Arial, Helvetica, sans-serif",
   },
+];
+
+export const fontWeightOptions = [
+  { label: "Thin", value: 300 },
+  { label: "Regular", value: 400 },
+  { label: "Medium", value: 500 },
+  { label: "Semibold", value: 600 },
+  { label: "Bold", value: 700 },
 ];
 
 export const lineHeightOptions = [1, 1.15, 1.5, 2, 2.5];
@@ -67,6 +108,22 @@ export function parseFontSize(value: string | undefined, fallback: string) {
 }
 
 export function formatFontSize(size: number, unit: "pt" | "px") {
+  return `${size}${unit}`;
+}
+
+export function parsePageMargin(value: string | undefined, fallback: string) {
+  const target = value ?? fallback;
+  const match = target.match(/^(\d+(?:\.\d+)?)(mm|in)$/);
+  if (!match) {
+    return { size: 24, unit: "mm" as const };
+  }
+  return {
+    size: Number(match[1]),
+    unit: match[2] as "mm" | "in",
+  };
+}
+
+export function formatPageMargin(size: number, unit: "mm" | "in") {
   return `${size}${unit}`;
 }
 

@@ -8,11 +8,48 @@ const headingMap: Record<string, Section["level"]> = {
 };
 
 function normalizeText(text: string) {
-  return text.replace(/\s+/g, " ").trim();
+  return text
+    .replace(/\r\n/g, "\n")
+    .replace(/[ \t]+/g, " ")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+}
+
+function serializeNode(node: Node): string {
+  if (node.nodeType === Node.TEXT_NODE) {
+    return node.textContent ?? "";
+  }
+
+  if (node.nodeType !== Node.ELEMENT_NODE) {
+    return "";
+  }
+
+  const element = node as Element;
+  const tag = element.tagName.toLowerCase();
+
+  if (tag === "a") {
+    const href = element.getAttribute("href") ?? "";
+    const label = element.textContent?.trim() ?? "";
+    if (!href) {
+      return label;
+    }
+    const display = label || href;
+    return `[${display}](${href})`;
+  }
+
+  if (tag === "br") {
+    return "\n";
+  }
+
+  let content = "";
+  element.childNodes.forEach((child) => {
+    content += serializeNode(child);
+  });
+  return content;
 }
 
 function elementText(element: Element) {
-  return normalizeText(element.textContent ?? "");
+  return normalizeText(serializeNode(element));
 }
 
 function listToParagraphs(list: HTMLUListElement | HTMLOListElement) {
@@ -22,20 +59,31 @@ function listToParagraphs(list: HTMLUListElement | HTMLOListElement) {
     .map((text) => `- ${text}`);
 }
 
-export async function importFromHtml(file: File): Promise<Document> {
-  const html = await file.text();
+type HtmlImportOptions = {
+  sourceLabel?: string;
+  fileName?: string;
+};
+
+function importFromHtmlText(
+  html: string,
+  options: HtmlImportOptions = {}
+): Document {
   const parser = new DOMParser();
   const doc = parser.parseFromString(html, "text/html");
   const body = doc.body;
 
   const titleElement = body.querySelector("h1") ?? doc.querySelector("title");
-  const title = elementText(titleElement ?? body) ||
-    file.name.replace(/\.[^.]+$/, "");
+  const fallbackTitle =
+    options.fileName?.replace(/\.[^.]+$/, "") ?? "Untitled Document";
+  const title = elementText(titleElement ?? body) || fallbackTitle;
 
   const subtitleElement = body.querySelector("h2");
   const subtitle = subtitleElement ? elementText(subtitleElement) : undefined;
 
-  const metadata: Record<string, string> = { Source: file.name };
+  const metadata: Record<string, string> = {};
+  if (options.sourceLabel) {
+    metadata.Source = options.sourceLabel;
+  }
   doc.querySelectorAll("meta[name][content]").forEach((meta) => {
     metadata[meta.getAttribute("name") ?? ""] =
       meta.getAttribute("content") ?? "";
@@ -118,3 +166,13 @@ export async function importFromHtml(file: File): Promise<Document> {
     sections,
   };
 }
+
+export async function importFromHtml(file: File): Promise<Document> {
+  const html = await file.text();
+  return importFromHtmlText(html, {
+    sourceLabel: file.name,
+    fileName: file.name,
+  });
+}
+
+export { importFromHtmlText };

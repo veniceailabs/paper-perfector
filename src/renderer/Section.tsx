@@ -20,6 +20,7 @@ export default function Section({
   const listItemRegex = /^[-*+]\s+(.+)$/;
   const orderedItemRegex = /^\d+\.\s+(.+)$/;
   const dividerRegex = /^---$|^\*\*\*$|^___$/;
+  const blockQuoteRegex = /^>\s?/;
 
   const renderedBody = () => {
     const blocks: JSX.Element[] = [];
@@ -53,6 +54,7 @@ export default function Section({
       const isDivider = dividerRegex.test(trimmed);
       const unorderedMatch = trimmed.match(listItemRegex);
       const orderedMatch = trimmed.match(orderedItemRegex);
+      const isBlockQuote = blockQuoteRegex.test(trimmed);
 
       if (isDivider) {
         flushList(index);
@@ -75,6 +77,21 @@ export default function Section({
           listBuffer = { type: "ol", items: [] };
         }
         listBuffer.items.push(orderedMatch[1]);
+        return;
+      }
+
+      if (isBlockQuote) {
+        flushList(index);
+        const cleaned = paragraph
+          .split("\n")
+          .map((line) => line.replace(blockQuoteRegex, ""))
+          .join("\n")
+          .trim();
+        blocks.push(
+          <blockquote key={`blockquote-${index}`}>
+            {renderInlineMarkdown(cleaned, `${title}-quote-${index}`, highlightQuery)}
+          </blockquote>
+        );
         return;
       }
 

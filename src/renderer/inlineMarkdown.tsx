@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 
 const inlineRegex =
-  /(\*\*[^*]+\*\*|`[^`]+`|\*[^*]+\*|_[^_]+_|~~[^~]+~~|<u>[^<]+<\/u>|<s>[^<]+<\/s>|<del>[^<]+<\/del>)/;
+  /(\[[^\]]+\]\([^)]+\)|\*\*[^*]+\*\*|`[^`]+`|\*[^*]+\*|_[^_]+_|~~[^~]+~~|<u>[^<]+<\/u>|<s>[^<]+<\/s>|<del>[^<]+<\/del>)/;
 
 function escapeRegExp(value: string) {
   return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
@@ -106,7 +106,29 @@ function renderInlineMarkdownLine(
       highlightQuery
     );
 
-    if (token.startsWith("**")) {
+    if (token.startsWith("[") && token.includes("](")) {
+      const linkMatch = token.match(/^\[([^\]]+)\]\(([^)]+)\)$/);
+      if (linkMatch) {
+        const [, label, href] = linkMatch;
+        nodes.push(
+          <a key={key} href={href} target="_blank" rel="noreferrer">
+            {renderHighlightedText(
+              label,
+              `${keyPrefix}-link-${tokenIndex}`,
+              highlightQuery
+            )}
+          </a>
+        );
+      } else {
+        nodes.push(
+          ...renderHighlightedText(
+            token,
+            `${keyPrefix}-plain-${tokenIndex}`,
+            highlightQuery
+          )
+        );
+      }
+    } else if (token.startsWith("**")) {
       nodes.push(<strong key={key}>{highlightedContent}</strong>);
     } else if (token.startsWith("`")) {
       nodes.push(<code key={key}>{content}</code>);

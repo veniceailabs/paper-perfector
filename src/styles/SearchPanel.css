@@ -282,6 +282,40 @@
   flex-wrap: wrap;
 }
 
+.saved-sources {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.saved-source {
+  border: 1px solid var(--rule-color);
+  border-radius: 12px;
+  padding: 10px 12px;
+  background: var(--bg-primary);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.saved-source-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 12px;
+}
+
+.saved-source-meta span {
+  color: var(--text-secondary);
+  font-size: 11px;
+}
+
+.saved-source-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
 .search-panel-action {
   border: 1px solid var(--rule-color);
   background: var(--bg-primary);

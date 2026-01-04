@@ -6,7 +6,7 @@ import { ShareModal } from "./components/ShareModal";
 import { MobilePreviewModal } from "./components/MobilePreviewModal";
 import { FormatModal } from "./components/FormatModal";
 import { SearchPanel } from "./components/SearchPanel";
-import type { Document, DocumentFormat } from "./models/DocumentSchema";
+import type { Document, DocumentFormat, Source } from "./models/DocumentSchema";
 import type { ScholarResult } from "./models/Scholar";
 import {
   defaultSearchScope,
@@ -23,6 +23,9 @@ import {
 import { resolveFormat } from "./utils/formatting";
 import { replaceInDocument } from "./utils/search";
 import { fetchScholarResults } from "./utils/scholar";
+import { calculateDocumentStats } from "./utils/documentStats";
+import { PaperScoreModal } from "./components/PaperScoreModal";
+import { quickstartGuide } from "./documents/quickstartGuide";
 
 export default function App() {
   const sharedDoc = getSharedDocumentFromUrl();
@@ -41,6 +44,7 @@ export default function App() {
   const [showShareModal, setShowShareModal] = useState(false);
   const [showFormatModal, setShowFormatModal] = useState(false);
   const [showMobilePreview, setShowMobilePreview] = useState(false);
+  const [showScoreModal, setShowScoreModal] = useState(false);
   const [theme, setTheme] = useState<"dark" | "light">("dark");
   const [printHash, setPrintHash] = useState<string>("");
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
@@ -48,6 +52,7 @@ export default function App() {
     null
   );
   const [showSearchPanel, setShowSearchPanel] = useState(false);
+  const [showHelpAssistant, setShowHelpAssistant] = useState(false);
   const [findQuery, setFindQuery] = useState("");
   const [replaceValue, setReplaceValue] = useState("");
   const [searchScope, setSearchScope] = useState<SearchScope>(defaultSearchScope);
@@ -177,6 +182,14 @@ export default function App() {
 
     return results;
   }, [doc, findQuery, searchScope]);
+
+  const docStats = useMemo(() => {
+    if (!doc) {
+      return null;
+    }
+    const format = resolveFormat(doc);
+    return calculateDocumentStats(doc, format.lineHeight ?? 1.5);
+  }, [doc]);
 
   const appActions = useMemo(
     () => [
@@ -396,6 +409,73 @@ export default function App() {
       setPrintHash("");
       exportToPdf(doc.title);
     }
+  };
+
+  const upsertSource = (current: Source[], source: Source) => {
+    const exists = current.some(
+      (item) =>
+        item.id === source.id || (item.title === source.title && item.year === source.year)
+    );
+    if (exists) {
+      return current;
+    }
+    return [...current, source];
+  };
+
+  const handleSaveSource = (source: Source) => {
+    if (!doc) {
+      return;
+    }
+    if (editMode && editorRef.current) {
+      editorRef.current.addSource(source);
+      setHasUnsavedChanges(true);
+      setStatus("Source saved.");
+      setTimeout(() => setStatus(null), 2000);
+      return;
+    }
+    applyDocument({
+      ...doc,
+      sources: upsertSource(doc.sources ?? [], source),
+    });
+    setStatus("Source saved.");
+    setTimeout(() => setStatus(null), 2000);
+  };
+
+  const handleRemoveSource = (sourceId: string) => {
+    if (!doc) {
+      return;
+    }
+    if (editMode && editorRef.current) {
+      editorRef.current.removeSource(sourceId);
+      setHasUnsavedChanges(true);
+      return;
+    }
+    applyDocument({
+      ...doc,
+      sources: (doc.sources ?? []).filter((source) => source.id !== sourceId),
+    });
+  };
+
+  const handleInsertCitation = (source: Source) => {
+    if (!editMode || !editorRef.current) {
+      setStatus("Open Edit mode and click inside your text to insert a citation.");
+      setTimeout(() => setStatus(null), 2500);
+      return;
+    }
+    const inserted = editorRef.current.insertCitation(source);
+    if (!inserted) {
+      setStatus("Click inside your text first, then try again.");
+      setTimeout(() => setStatus(null), 2500);
+    }
+  };
+
+  const handleInsertReference = (source: Source) => {
+    if (!editMode || !editorRef.current) {
+      setStatus("Open Edit mode to insert references.");
+      setTimeout(() => setStatus(null), 2500);
+      return;
+    }
+    editorRef.current.insertReference(source);
   };
 
   const handleDocSave = (updatedDoc: Document) => {
@@ -619,19 +699,6 @@ export default function App() {
             Paper Perfector
           </button>
           <button
-            className="toolbar-button toolbar-home toolbar-nav"
-            type="button"
-            onClick={() => {
-              requestSafeNavigation(() => {
-                setDoc(null);
-                setEditMode(false);
-              });
-            }}
-            title="Back to start screen"
-          >
-            Home
-          </button>
-          <button
             className="toolbar-button toolbar-nav"
             type="button"
             onClick={handleBack}
@@ -658,6 +725,19 @@ export default function App() {
           </button>
         </div>
         <div className="toolbar-actions">
+          <button
+            className="toolbar-button toolbar-home toolbar-nav"
+            type="button"
+            onClick={() => {
+              requestSafeNavigation(() => {
+                setDoc(null);
+                setEditMode(false);
+              });
+            }}
+            title="Back to start screen"
+          >
+            Home
+          </button>
           <label className="file-upload">
             Import
             <input
@@ -692,6 +772,13 @@ export default function App() {
           <button
             className="toolbar-button"
             type="button"
+            onClick={() => setShowScoreModal(true)}
+          >
+            🎓 Score
+          </button>
+          <button
+            className="toolbar-button"
+            type="button"
             onClick={() => setShowMobilePreview(true)}
           >
             📱 Mobile
@@ -713,6 +800,14 @@ export default function App() {
         </div>
       </div>
       {status ? <div className="status">{status}</div> : null}
+      {docStats ? (
+        <div className="document-stats">
+          <span>Words: {docStats.words.toLocaleString()}</span>
+          <span>Characters: {docStats.characters.toLocaleString()}</span>
+          <span>Pages (est.): {docStats.pages}</span>
+          <span>Read time: {docStats.readMinutes} min</span>
+        </div>
+      ) : null}
       {editMode ? (
         <DocumentEditor
           ref={editorRef}
@@ -759,12 +854,75 @@ export default function App() {
           scholarError={scholarError}
           selectedScholarId={selectedScholarId}
           onSelectScholar={setSelectedScholarId}
+          savedSources={doc.sources ?? []}
+          onSaveSource={handleSaveSource}
+          onInsertCitation={handleInsertCitation}
+          onInsertReference={handleInsertReference}
+          onRemoveSource={handleRemoveSource}
+          canInsert={editMode}
           onReplaceNext={() => handleReplace(false)}
           onReplaceAll={() => handleReplace(true)}
           actions={appActions}
           onAction={handleAppAction}
           onClose={() => setShowSearchPanel(false)}
         />
+      ) : null}
+      {showScoreModal && doc ? (
+        <PaperScoreModal doc={doc} onClose={() => setShowScoreModal(false)} />
+      ) : null}
+      {doc ? (
+        <div className={`start-assistant ${showHelpAssistant ? "open" : ""}`}>
+          {showHelpAssistant ? (
+            <div className="assistant-panel">
+              <div className="assistant-header">
+                <div>
+                  <strong>Paper Guide</strong>
+                  <span>What do you need right now?</span>
+                </div>
+                <button
+                  className="assistant-close"
+                  type="button"
+                  onClick={() => setShowHelpAssistant(false)}
+                  aria-label="Close guide"
+                >
+                  ✕
+                </button>
+              </div>
+              <div className="assistant-actions">
+                <button type="button" onClick={() => setShowScoreModal(true)}>
+                  Score my paper
+                </button>
+                <button
+                  type="button"
+                  onClick={() =>
+                    requestSafeNavigation(() => applyDocument(quickstartGuide))
+                  }
+                >
+                  Open Quickstart Guide
+                </button>
+                <button type="button" onClick={openFormatModal}>
+                  Adjust format & spacing
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setEditMode((prev) => !prev)}
+                >
+                  {editMode ? "Switch to view" : "Open editor"}
+                </button>
+                <button type="button" onClick={handleExportPdf}>
+                  Export PDF
+                </button>
+              </div>
+            </div>
+          ) : null}
+          <button
+            className="assistant-toggle"
+            type="button"
+            onClick={() => setShowHelpAssistant((prev) => !prev)}
+          >
+            Need help?
+          </button>
+        </div>
       ) : null}
     </div>
   );

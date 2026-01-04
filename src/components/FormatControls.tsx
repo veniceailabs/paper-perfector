@@ -2,8 +2,11 @@ import type { DocumentFormat, FormatPreset } from "../models/DocumentSchema";
 import {
   formatFontSize,
   formatPresets,
+  fontWeightOptions,
   fontOptions,
+  formatPageMargin,
   lineHeightOptions,
+  parsePageMargin,
   parseFontSize,
 } from "../utils/formatting";
 import "../styles/FormatControls.css";
@@ -27,6 +30,17 @@ export function FormatControls({ format, onChange, compact }: FormatControlsProp
   const defaults = formatPresets[preset] ?? formatPresets.default;
   const sizeData = parseFontSize(format.fontSize, defaults.fontSize ?? "12pt");
   const lineHeightValue = format.lineHeight ?? defaults.lineHeight ?? 1.5;
+  const marginData = parsePageMargin(
+    format.pageMargin,
+    defaults.pageMargin ?? "24mm"
+  );
+  const fontWeightValue = format.fontWeight ?? defaults.fontWeight ?? 400;
+  const paragraphSpacingValue =
+    format.paragraphSpacing ?? defaults.paragraphSpacing ?? 12;
+  const showHeaderValue = format.showHeader ?? defaults.showHeader ?? false;
+  const showPageNumbersValue =
+    format.showPageNumbers ?? defaults.showPageNumbers ?? false;
+  const headerTextValue = format.headerText ?? "";
 
   const updateFormat = (partial: Partial<DocumentFormat>) => {
     onChange({
@@ -67,6 +81,22 @@ export function FormatControls({ format, onChange, compact }: FormatControlsProp
         >
           {fontOptions.map((option) => (
             <option key={option.value} value={option.value}>
+              {option.label}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      <div className="format-field">
+        <label>Weight</label>
+        <select
+          value={fontWeightValue.toString()}
+          onChange={(event) =>
+            updateFormat({ fontWeight: Number(event.target.value) })
+          }
+        >
+          {fontWeightOptions.map((option) => (
+            <option key={option.value} value={option.value.toString()}>
               {option.label}
             </option>
           ))}
@@ -121,6 +151,96 @@ export function FormatControls({ format, onChange, compact }: FormatControlsProp
             </option>
           ))}
         </select>
+      </div>
+
+      <div className="format-field">
+        <label>Paragraph Spacing</label>
+        <input
+          type="number"
+          min={4}
+          max={32}
+          step={1}
+          value={paragraphSpacingValue}
+          onChange={(event) =>
+            updateFormat({
+              paragraphSpacing: Number(event.target.value),
+            })
+          }
+        />
+      </div>
+
+      <div className="format-field">
+        <label className="format-toggle">
+          <input
+            type="checkbox"
+            checked={showHeaderValue}
+            onChange={(event) =>
+              updateFormat({ showHeader: event.target.checked })
+            }
+          />
+          <span>Show header (running head)</span>
+        </label>
+      </div>
+
+      <div className="format-field">
+        <label>Header text</label>
+        <input
+          type="text"
+          value={headerTextValue}
+          onChange={(event) => updateFormat({ headerText: event.target.value })}
+          placeholder="Running head"
+        />
+      </div>
+
+      <div className="format-field">
+        <label className="format-toggle">
+          <input
+            type="checkbox"
+            checked={showPageNumbersValue}
+            onChange={(event) =>
+              updateFormat({ showPageNumbers: event.target.checked })
+            }
+          />
+          <span>Show page numbers</span>
+        </label>
+      </div>
+
+      <div className="format-field format-field-row">
+        <div className="format-field">
+          <label>Margin</label>
+          <input
+            type="number"
+            min={4}
+            max={40}
+            step={0.5}
+            value={marginData.size}
+            onChange={(event) =>
+              updateFormat({
+                pageMargin: formatPageMargin(
+                  Number(event.target.value),
+                  marginData.unit
+                ),
+              })
+            }
+          />
+        </div>
+        <div className="format-field">
+          <label>Unit</label>
+          <select
+            value={marginData.unit}
+            onChange={(event) =>
+              updateFormat({
+                pageMargin: formatPageMargin(
+                  marginData.size,
+                  event.target.value as "mm" | "in"
+                ),
+              })
+            }
+          >
+            <option value="mm">mm</option>
+            <option value="in">in</option>
+          </select>
+        </div>
       </div>
     </div>
   );

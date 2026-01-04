@@ -279,19 +279,38 @@ mark {
   font-size: 13px;
 }
 
+.document-stats {
+  margin: 12px auto 0;
+  max-width: 1300px;
+  padding: 10px 16px;
+  border-radius: 10px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--rule-color);
+  color: var(--text-secondary);
+  font-size: 13px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  justify-content: center;
+}
+
 .paper-canvas {
   background: var(--bg-primary);
   color: var(--text-primary);
   max-width: 900px;
+  padding: var(--paper-margin, 24mm);
+  padding-top: calc(var(--paper-margin, 24mm) + var(--paper-header-height, 0px));
+  padding-bottom: calc(var(--paper-margin, 24mm) + var(--paper-footer-height, 0px));
   font-family: var(--paper-font-family, "Google Sans", system-ui, -apple-system, sans-serif);
   font-size: var(--paper-font-size, 14.5px);
+  font-weight: var(--paper-font-weight, 400);
   line-height: var(--paper-line-height, 1.65);
 }
 
 /* Legacy fallback for DocumentEditor view */
 .editor-container .paper-canvas {
   margin: 32px auto 0;
-  padding: 64px 48px 120px;
+  padding: var(--paper-margin, 24mm);
 }
 
 .paper-canvas h1 {
@@ -328,7 +347,37 @@ mark {
 .paper-canvas p {
   font-size: 1em;
   line-height: inherit;
-  margin: 12px 0;
+  margin: var(--paper-paragraph-spacing, 12px) 0;
+}
+
+.paper-header,
+.paper-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.75em;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+}
+
+.paper-header {
+  margin-bottom: 18px;
+}
+
+.paper-footer {
+  margin-top: 18px;
+}
+
+.paper-header-text {
+  max-width: 60%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.page-number::after {
+  content: "1";
 }
 
 .paper-canvas p code,
@@ -344,7 +393,8 @@ mark {
 
 .paper-canvas ul,
 .paper-canvas ol {
-  margin: 12px 0 16px;
+  margin: var(--paper-paragraph-spacing, 12px) 0
+    calc(var(--paper-paragraph-spacing, 12px) + 4px);
   padding-left: 24px;
 }
 
@@ -352,6 +402,26 @@ mark {
   font-size: 1em;
   line-height: inherit;
   margin-bottom: 8px;
+}
+
+.paper-canvas blockquote {
+  margin: var(--paper-paragraph-spacing, 12px) 0;
+  padding: 12px 18px;
+  border-left: 3px solid var(--rule-color);
+  background: var(--bg-secondary);
+  color: var(--text-secondary);
+  font-style: italic;
+}
+
+.reference-list {
+  padding-left: 24px;
+  margin-top: 12px;
+}
+
+.reference-list li {
+  margin-bottom: 10px;
+  padding-left: 16px;
+  text-indent: -16px;
 }
 
 .divider {
@@ -492,7 +562,7 @@ mark {
 
 @media print {
   @page {
-    margin: 12mm;
+    margin: 0;
   }
 
   * {
@@ -505,10 +575,12 @@ mark {
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
     background: var(--bg-primary) !important;
+    counter-reset: page;
   }
 
   .toolbar,
   .status,
+  .document-stats,
   .hash-footnote {
     display: none !important;
   }
@@ -530,10 +602,28 @@ mark {
   }
 
   .paper-canvas {
-    padding: 14mm;
+    padding: var(--paper-margin, 24mm);
+    padding-top: calc(var(--paper-margin, 24mm) + var(--paper-header-height, 0px));
+    padding-bottom: calc(var(--paper-margin, 24mm) + var(--paper-footer-height, 0px));
     margin: 0;
     max-width: none;
     width: 100%;
+  }
+
+  .paper-header,
+  .paper-footer {
+    position: fixed;
+    left: var(--paper-margin, 24mm);
+    right: var(--paper-margin, 24mm);
+    z-index: 2;
+  }
+
+  .paper-header {
+    top: var(--paper-margin, 24mm);
+  }
+
+  .paper-footer {
+    bottom: var(--paper-margin, 24mm);
   }
 
   .paper-section,
@@ -578,3 +668,6 @@ mark {
     display: block;
   }
 }
+  .page-number::after {
+    content: counter(page);
+  }

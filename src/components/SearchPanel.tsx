@@ -1,5 +1,6 @@
 import type { ScholarResult } from "../models/Scholar";
 import type { SearchResult, SearchScope } from "../models/Search";
+import type { Source } from "../models/DocumentSchema";
 import "../styles/SearchPanel.css";
 
 type AppAction = {
@@ -26,6 +27,12 @@ type SearchPanelProps = {
   scholarError?: string | null;
   selectedScholarId: string | null;
   onSelectScholar: (id: string) => void;
+  savedSources: Source[];
+  onSaveSource: (source: Source) => void;
+  onInsertCitation: (source: Source) => void;
+  onInsertReference: (source: Source) => void;
+  onRemoveSource: (sourceId: string) => void;
+  canInsert: boolean;
   onReplaceNext: () => void;
   onReplaceAll: () => void;
   actions: AppAction[];
@@ -62,6 +69,12 @@ export function SearchPanel({
   scholarError,
   selectedScholarId,
   onSelectScholar,
+  savedSources,
+  onSaveSource,
+  onInsertCitation,
+  onInsertReference,
+  onRemoveSource,
+  canInsert,
   onReplaceNext,
   onReplaceAll,
   actions,
@@ -75,6 +88,20 @@ export function SearchPanel({
   const hasQuery = findQuery.trim().length > 0;
   const selectedScholar =
     scholarResults.find((result) => result.id === selectedScholarId) ?? null;
+  const mapScholarToSource = (result: ScholarResult): Source => ({
+    id: result.id,
+    title: result.title,
+    authors: result.authors,
+    year: result.year,
+    venue: result.venue,
+    url: result.url,
+    pdfUrl: result.pdfUrl,
+  });
+  const savedSourceIds = new Set(savedSources.map((source) => source.id));
+  const selectedSource = selectedScholar ? mapScholarToSource(selectedScholar) : null;
+  const isSelectedSaved = selectedSource
+    ? savedSourceIds.has(selectedSource.id)
+    : false;
 
   return (
     <div className="search-panel-backdrop" onClick={onClose} role="presentation">
@@ -290,6 +317,36 @@ export function SearchPanel({
                 </p>
               )}
               <div className="scholar-detail-actions">
+                {selectedSource ? (
+                  <button
+                    type="button"
+                    className="search-panel-button"
+                    onClick={() => onSaveSource(selectedSource)}
+                    disabled={isSelectedSaved}
+                  >
+                    {isSelectedSaved ? "Saved" : "Save Source"}
+                  </button>
+                ) : null}
+                {selectedSource ? (
+                  <button
+                    type="button"
+                    className="search-panel-button"
+                    onClick={() => onInsertCitation(selectedSource)}
+                    disabled={!canInsert}
+                  >
+                    Insert Citation
+                  </button>
+                ) : null}
+                {selectedSource ? (
+                  <button
+                    type="button"
+                    className="search-panel-button"
+                    onClick={() => onInsertReference(selectedSource)}
+                    disabled={!canInsert}
+                  >
+                    Insert Reference
+                  </button>
+                ) : null}
                 {selectedScholar.pdfUrl ? (
                   <a
                     className="search-panel-button"
@@ -313,6 +370,55 @@ export function SearchPanel({
               </div>
             </div>
           ) : null}
+        </section>
+
+        <section className="search-panel-section">
+          <h3>Saved Sources</h3>
+          {savedSources.length === 0 ? (
+            <div className="search-panel-empty">
+              No sources saved yet. Save one from Scholar search.
+            </div>
+          ) : (
+            <div className="saved-sources">
+              {savedSources.map((source) => (
+                <div key={source.id} className="saved-source">
+                  <div className="saved-source-meta">
+                    <strong>{source.title}</strong>
+                    <span>
+                      {[source.authors[0], source.year, source.venue]
+                        .filter(Boolean)
+                        .join(" • ")}
+                    </span>
+                  </div>
+                  <div className="saved-source-actions">
+                    <button
+                      type="button"
+                      className="search-panel-button"
+                      onClick={() => onInsertCitation(source)}
+                      disabled={!canInsert}
+                    >
+                      Cite
+                    </button>
+                    <button
+                      type="button"
+                      className="search-panel-button"
+                      onClick={() => onInsertReference(source)}
+                      disabled={!canInsert}
+                    >
+                      Reference
+                    </button>
+                    <button
+                      type="button"
+                      className="search-panel-button"
+                      onClick={() => onRemoveSource(source.id)}
+                    >
+                      Remove
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </section>
 
         <section className="search-panel-section">

@@ -23,6 +23,23 @@ const metadataRegex = /^\*\*([^*]+)\*\*\s*:\s*(.+)$/;
 const inlineMarkdownRegex =
   /(\*\*[^*]+\*\*|`[^`]+`|\*[^*]+\*|_[^_]+_|~~[^~]+~~|<u>[^<]+<\/u>|<s>[^<]+<\/s>|<del>[^<]+<\/del>)/;
 const linkRegex = /\[[^\]]+\]\([^)]+\)/;
+const htmlAnchorRegex =
+  /<a\s+[^>]*href\s*=\s*(?:"([^"]+)"|'([^']+)'|([^\s>]+))[^>]*>([\s\S]*?)<\/a>/gi;
+
+function normalizeHtmlAnchors(text: string) {
+  return text.replace(
+    htmlAnchorRegex,
+    (_match, doubleHref, singleHref, bareHref, inner) => {
+      const href = doubleHref ?? singleHref ?? bareHref ?? "";
+      const label = String(inner ?? "").replace(/<[^>]+>/g, "").trim();
+      const fallbackLabel = label || href;
+      if (!href) {
+        return fallbackLabel;
+      }
+      return `[${fallbackLabel}](${href})`;
+    }
+  );
+}
 
 function looksLikeMarkdown(text: string) {
   const trimmed = text.trim();
@@ -64,14 +81,18 @@ export function importFromMarkdownText(
   text: string,
   options: MarkdownImportOptions = {}
 ): Document {
-  if (!looksLikeMarkdown(text)) {
-    return importFromPlainText(text, {
+  const normalizedText = normalizeHtmlAnchors(text);
+  if (!looksLikeMarkdown(normalizedText)) {
+    return importFromPlainText(normalizedText, {
       sourceLabel: options.sourceLabel,
       fileName: options.fileName,
     });
   }
 
-  const lines = text.replace(/\r\n/g, "\n").split("\n").map(normalizeLine);
+  const lines = normalizedText
+    .replace(/\r\n/g, "\n")
+    .split("\n")
+    .map(normalizeLine);
   const metadata: Record<string, string> = {};
 
   if (options.sourceLabel) {

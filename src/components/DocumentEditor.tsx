@@ -4,15 +4,20 @@ import {
   useImperativeHandle,
   useRef,
   useState,
-  type KeyboardEvent,
+  type KeyboardEvent as ReactKeyboardEvent,
 } from "react";
-import type { Document, DocumentFormat } from "../models/DocumentSchema";
+import type { Document, DocumentFormat, Source } from "../models/DocumentSchema";
 import type { SearchScope } from "../models/Search";
 import { TableOfContents } from "./TableOfContents";
 import { FormatControls } from "./FormatControls";
 import { importFromMarkdownText } from "../utils/markdownImport";
 import { documentToMarkdown } from "../utils/markdownExport";
 import { resolveFormat } from "../utils/formatting";
+import {
+  formatInTextCitation,
+  formatReference,
+  formatReferenceTitle,
+} from "../utils/citations";
 import { replaceInDocument, replaceInText } from "../utils/search";
 import "../styles/DocumentEditor.css";
 
@@ -22,6 +27,10 @@ export type DocumentEditorHandle = {
   getFormat: () => DocumentFormat | undefined;
   replaceAll: (query: string, replacement: string, scope: SearchScope) => number;
   replaceNext: (query: string, replacement: string, scope: SearchScope) => number;
+  addSource: (source: Source) => void;
+  removeSource: (sourceId: string) => void;
+  insertCitation: (source: Source) => boolean;
+  insertReference: (source: Source) => void;
 };
 
 interface DocumentEditorProps {
@@ -36,6 +45,7 @@ export const DocumentEditor = forwardRef<DocumentEditorHandle, DocumentEditorPro
   const [subtitle, setSubtitle] = useState(doc.subtitle || "");
   const [metadata, setMetadata] = useState(doc.metadata);
   const [sections, setSections] = useState(doc.sections);
+  const [sources, setSources] = useState<Source[]>(doc.sources ?? []);
   const [currentSectionId, setCurrentSectionId] = useState<string>(
     sections[0]?.id || ""
   );
@@ -52,6 +62,15 @@ export const DocumentEditor = forwardRef<DocumentEditorHandle, DocumentEditorPro
   } | null>(null);
   const [expandedText, setExpandedText] = useState("");
   const markdownTextareaRef = useRef<HTMLTextAreaElement | null>(null);
+  const lastFocusRef = useRef<
+    | { type: "markdown"; element: HTMLTextAreaElement }
+    | { type: "paragraph"; sectionId: string; index: number; element: HTMLTextAreaElement }
+    | { type: "title"; element: HTMLInputElement }
+    | { type: "subtitle"; element: HTMLInputElement }
+    | { type: "metadata"; key: string; element: HTMLInputElement }
+    | { type: "section-title"; sectionId: string; element: HTMLInputElement }
+    | null
+  >(null);
 
   useEffect(() => {
     setTitle(doc.title);
@@ -60,6 +79,7 @@ export const DocumentEditor = forwardRef<DocumentEditorHandle, DocumentEditorPro
     setSections(doc.sections);
     setCurrentSectionId(doc.sections[0]?.id || "");
     setFormat(resolveFormat(doc));
+    setSources(doc.sources ?? []);
     setIsDirty(false);
     setMarkdownError(null);
   }, [doc]);
@@ -69,13 +89,13 @@ export const DocumentEditor = forwardRef<DocumentEditorHandle, DocumentEditorPro
   }, [isDirty, onDirtyChange]);
 
   const handleMetadataChange = (key: string, value: string) => {
-    setMetadata({ ...metadata, [key]: value });
+    setMetadata((prev) => ({ ...prev, [key]: value }));
     setIsDirty(true);
   };
 
   const handleSectionBodyChange = (sectionId: string, bodyIndex: number, text: string) => {
-    setSections(
-      sections.map((section) => {
+    setSections((prev) =>
+      prev.map((section) => {
         if (section.id === sectionId) {
           const newBody = [...section.body];
           newBody[bodyIndex] = text;
@@ -88,8 +108,8 @@ export const DocumentEditor = forwardRef<DocumentEditorHandle, DocumentEditorPro
   };
 
   const handleSectionTitleChange = (sectionId: string, text: string) => {
-    setSections(
-      sections.map((section) => {
+    setSections((prev) =>
+      prev.map((section) => {
         if (section.id === sectionId) {
           return { ...section, title: text };
         }
@@ -100,8 +120,8 @@ export const DocumentEditor = forwardRef<DocumentEditorHandle, DocumentEditorPro
   };
 
   const addParagraphToSection = (sectionId: string) => {
-    setSections(
-      sections.map((section) => {
+    setSections((prev) =>
+      prev.map((section) => {
         if (section.id === sectionId) {
           return { ...section, body: [...section.body, ""] };
         }
@@ -112,8 +132,8 @@ export const DocumentEditor = forwardRef<DocumentEditorHandle, DocumentEditorPro
   };
 
   const removeParagraphFromSection = (sectionId: string, bodyIndex: number) => {
-    setSections(
-      sections.map((section) => {
+    setSections((prev) =>
+      prev.map((section) => {
         if (section.id === sectionId) {
           return { ...section, body: section.body.filter((_, i) => i !== bodyIndex) };
         }
@@ -125,8 +145,8 @@ export const DocumentEditor = forwardRef<DocumentEditorHandle, DocumentEditorPro
 
   const addSection = () => {
     const newId = `section-${Date.now()}`;
-    setSections([
-      ...sections,
+    setSections((prev) => [
+      ...prev,
       {
         id: newId,
         level: 2,
@@ -139,7 +159,7 @@ export const DocumentEditor = forwardRef<DocumentEditorHandle, DocumentEditorPro
   };
 
   const removeSection = (sectionId: string) => {
-    setSections(sections.filter((s) => s.id !== sectionId));
+    setSections((prev) => prev.filter((section) => section.id !== sectionId));
     setIsDirty(true);
   };
 
@@ -149,6 +169,7 @@ export const DocumentEditor = forwardRef<DocumentEditorHandle, DocumentEditorPro
     metadata,
     sections,
     format,
+    sources,
   });
 
   const syncMarkdownDraft = () => {
@@ -177,6 +198,7 @@ export const DocumentEditor = forwardRef<DocumentEditorHandle, DocumentEditorPro
     setSections(parsed.sections);
     setCurrentSectionId(parsed.sections[0]?.id || "");
     setFormat(parsed.format ?? format);
+    setSources((prev) => parsed.sources ?? prev);
   };
 
   const handleSave = () => {
@@ -188,6 +210,7 @@ export const DocumentEditor = forwardRef<DocumentEditorHandle, DocumentEditorPro
       const withFormat = {
         ...parsed,
         format: parsed.format ?? format,
+        sources,
       };
       applyParsedDoc(withFormat);
       onSave(withFormat);
@@ -199,6 +222,18 @@ export const DocumentEditor = forwardRef<DocumentEditorHandle, DocumentEditorPro
     setIsDirty(false);
     return true;
   };
+
+  useEffect(() => {
+    const handleKeyDown = (event: globalThis.KeyboardEvent) => {
+      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "s") {
+        event.preventDefault();
+        handleSave();
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [handleSave]);
 
   useImperativeHandle(
     ref,
@@ -213,8 +248,12 @@ export const DocumentEditor = forwardRef<DocumentEditorHandle, DocumentEditorPro
         runReplace(query, replacement, scope, true),
       replaceNext: (query, replacement, scope) =>
         runReplace(query, replacement, scope, false),
+      addSource,
+      removeSource,
+      insertCitation,
+      insertReference,
     }),
-    [handleSave, format, markdownDraft, editorMode]
+    [handleSave, format, markdownDraft, editorMode, sources]
   );
 
   const handleSectionClick = (sectionId: string) => {
@@ -251,6 +290,196 @@ export const DocumentEditor = forwardRef<DocumentEditorHandle, DocumentEditorPro
     );
     closeParagraphExpand();
   };
+
+  const insertTextAtCursor = (text: string) => {
+    const activeField = lastFocusRef.current;
+    if (!activeField) {
+      return false;
+    }
+
+    const applyInsertion = (
+      element: HTMLInputElement | HTMLTextAreaElement,
+      value: string,
+      apply: (nextValue: string) => void
+    ) => {
+      const start = element.selectionStart ?? value.length;
+      const end = element.selectionEnd ?? value.length;
+      const nextValue = `${value.slice(0, start)}${text}${value.slice(end)}`;
+      apply(nextValue);
+      requestAnimationFrame(() => {
+        element.focus();
+        const cursor = start + text.length;
+        element.setSelectionRange(cursor, cursor);
+      });
+    };
+
+    if (activeField.type === "markdown") {
+      const textarea = activeField.element;
+      if (!textarea) {
+        return false;
+      }
+      applyInsertion(textarea, markdownDraft, (next) => {
+        setMarkdownDraft(next);
+        setIsDirty(true);
+      });
+      return true;
+    }
+
+    if (activeField.type === "paragraph") {
+      const textarea = activeField.element;
+      if (!textarea) {
+        return false;
+      }
+      applyInsertion(textarea, textarea.value, (next) =>
+        handleSectionBodyChange(activeField.sectionId, activeField.index, next)
+      );
+      return true;
+    }
+
+    if (activeField.type === "section-title") {
+      const input = activeField.element;
+      if (!input) {
+        return false;
+      }
+      applyInsertion(input, input.value, (next) =>
+        handleSectionTitleChange(activeField.sectionId, next)
+      );
+      return true;
+    }
+
+    if (activeField.type === "metadata") {
+      const input = activeField.element;
+      if (!input) {
+        return false;
+      }
+      applyInsertion(input, input.value, (next) =>
+        handleMetadataChange(activeField.key, next)
+      );
+      return true;
+    }
+
+    if (activeField.type === "title") {
+      const input = activeField.element;
+      if (!input) {
+        return false;
+      }
+      applyInsertion(input, input.value, (next) => {
+        setTitle(next);
+        setIsDirty(true);
+      });
+      return true;
+    }
+
+    if (activeField.type === "subtitle") {
+      const input = activeField.element;
+      if (!input) {
+        return false;
+      }
+      applyInsertion(input, input.value, (next) => {
+        setSubtitle(next);
+        setIsDirty(true);
+      });
+      return true;
+    }
+
+    return false;
+  };
+
+  const addSource = (source: Source) => {
+    setSources((prev) => {
+      const exists = prev.some(
+        (item) =>
+          item.id === source.id ||
+          (item.title === source.title && item.year === source.year)
+      );
+      if (exists) {
+        return prev;
+      }
+      return [...prev, source];
+    });
+    setIsDirty(true);
+  };
+
+  const removeSource = (sourceId: string) => {
+    setSources((prev) => prev.filter((source) => source.id !== sourceId));
+    setIsDirty(true);
+  };
+
+  const insertCitation = (source: Source) => {
+    const citation = formatInTextCitation(source, format.preset);
+    return insertTextAtCursor(` ${citation} `);
+  };
+
+  const insertReference = (source: Source) => {
+    const reference = formatReference(source, format.preset);
+    const referenceTitle = formatReferenceTitle(format.preset);
+    setSections((prev) => {
+      const existingIndex = prev.findIndex((section) =>
+        /references|bibliography|works cited/i.test(section.title)
+      );
+      if (existingIndex >= 0) {
+        const next = [...prev];
+        const target = next[existingIndex];
+        const updatedBody = [...target.body, reference];
+        next[existingIndex] = { ...target, body: updatedBody };
+        return next;
+      }
+      return [
+        ...prev,
+        {
+          id: `references-${Date.now()}`,
+          level: 1,
+          title: referenceTitle,
+          body: [reference],
+        },
+      ];
+    });
+    setIsDirty(true);
+  };
+
+  const renderSourcesPanel = (compact: boolean) => (
+    <div className={`editor-sources-panel ${compact ? "compact" : ""}`}>
+      <h4>Sources</h4>
+      {sources.length === 0 ? (
+        <p className="editor-sources-empty">
+          Save sources from Scholar search to cite them here.
+        </p>
+      ) : (
+        <div className="editor-sources-list">
+          {sources.map((source) => (
+            <div key={source.id} className="editor-source-item">
+              <div className="editor-source-meta">
+                <strong>{source.title}</strong>
+                <span>
+                  {[source.authors[0], source.year, source.venue]
+                    .filter(Boolean)
+                    .join(" • ")}
+                </span>
+              </div>
+              <div className="editor-source-actions">
+                <button type="button" onClick={() => insertCitation(source)}>
+                  Cite
+                </button>
+                <button type="button" onClick={() => insertReference(source)}>
+                  Reference
+                </button>
+                <button
+                  type="button"
+                  className="danger"
+                  onClick={() => removeSource(source.id)}
+                >
+                  Remove
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+      <p className="editor-sources-hint">
+        Click inside your text first, then press Cite to insert an in-text citation.
+      </p>
+    </div>
+  );
 
   const isMarkdownMode = editorMode === "markdown";
   const wrapSelection = (
@@ -364,7 +593,7 @@ export const DocumentEditor = forwardRef<DocumentEditorHandle, DocumentEditorPro
   );
 
   const handleFormatShortcut = (
-    event: KeyboardEvent<HTMLTextAreaElement>,
+    event: ReactKeyboardEvent<HTMLTextAreaElement>,
     onApply: (before: string, after?: string) => void
   ) => {
     if (!event.metaKey && !event.ctrlKey) {
@@ -488,6 +717,7 @@ export const DocumentEditor = forwardRef<DocumentEditorHandle, DocumentEditorPro
           <>
             <div className="editor-header" id="editor-top">
           <input
+            id="editor-title"
             type="text"
             className="editor-title"
             value={title}
@@ -495,15 +725,22 @@ export const DocumentEditor = forwardRef<DocumentEditorHandle, DocumentEditorPro
               setTitle(e.target.value);
               setIsDirty(true);
             }}
+            onFocus={(event) => {
+              lastFocusRef.current = { type: "title", element: event.currentTarget };
+            }}
             placeholder="Document Title"
           />
           <input
+            id="editor-subtitle"
             type="text"
             className="editor-subtitle"
             value={subtitle}
             onChange={(e) => {
               setSubtitle(e.target.value);
               setIsDirty(true);
+            }}
+            onFocus={(event) => {
+              lastFocusRef.current = { type: "subtitle", element: event.currentTarget };
             }}
             placeholder="Subtitle (optional)"
           />
@@ -519,6 +756,13 @@ export const DocumentEditor = forwardRef<DocumentEditorHandle, DocumentEditorPro
                       type="text"
                       value={value}
                       onChange={(e) => handleMetadataChange(key, e.target.value)}
+                      onFocus={(event) => {
+                        lastFocusRef.current = {
+                          type: "metadata",
+                          key,
+                          element: event.currentTarget,
+                        };
+                      }}
                     />
                   </div>
                 ))}
@@ -544,6 +788,13 @@ export const DocumentEditor = forwardRef<DocumentEditorHandle, DocumentEditorPro
                       onChange={(e) =>
                         handleSectionTitleChange(section.id, e.target.value)
                       }
+                      onFocus={(event) => {
+                        lastFocusRef.current = {
+                          type: "section-title",
+                          sectionId: section.id,
+                          element: event.currentTarget,
+                        };
+                      }}
                       placeholder="Section Title"
                     />
                     <button
@@ -571,6 +822,14 @@ export const DocumentEditor = forwardRef<DocumentEditorHandle, DocumentEditorPro
                               e.target.value
                             )
                           }
+                          onFocus={(event) => {
+                            lastFocusRef.current = {
+                              type: "paragraph",
+                              sectionId: section.id,
+                              index: idx,
+                              element: event.currentTarget,
+                            };
+                          }}
                           onKeyDown={(event) =>
                             handleFormatShortcut(event, (before, after) =>
                               applyFormatToParagraph(section.id, idx, before, after)
@@ -630,6 +889,9 @@ export const DocumentEditor = forwardRef<DocumentEditorHandle, DocumentEditorPro
                 setMarkdownDraft(event.target.value);
                 setIsDirty(true);
               }}
+              onFocus={(event) => {
+                lastFocusRef.current = { type: "markdown", element: event.currentTarget };
+              }}
               onKeyDown={(event) =>
                 handleFormatShortcut(event, applyFormatToMarkdown)
               }
@@ -669,6 +931,7 @@ export const DocumentEditor = forwardRef<DocumentEditorHandle, DocumentEditorPro
                 compact={true}
               />
             </div>
+            {renderSourcesPanel(true)}
           </div>
         )}
       </div>
@@ -689,6 +952,7 @@ export const DocumentEditor = forwardRef<DocumentEditorHandle, DocumentEditorPro
               compact={true}
             />
           </div>
+          {renderSourcesPanel(false)}
           <div className="editor-tips">
             <h4>Tips</h4>
             <ul>
