@@ -17,7 +17,12 @@ export function FormatModal({ format, onChange, onClose }: FormatModalProps) {
             <h2>Document Formatting</h2>
             <p>Choose a format preset or customize typography.</p>
           </div>
-          <button className="format-modal-close" type="button" onClick={onClose}>
+          <button
+            className="format-modal-close"
+            type="button"
+            onClick={onClose}
+            data-tip="Close the format panel."
+          >
             ✕
           </button>
         </div>

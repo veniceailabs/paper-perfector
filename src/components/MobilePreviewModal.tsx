@@ -33,7 +33,12 @@ export function MobilePreviewModal({ doc, onClose }: MobilePreviewModalProps) {
             <h2>Mobile Preview</h2>
             <p>Check the document layout on a phone before export.</p>
           </div>
-          <button className="mobile-preview-close" type="button" onClick={onClose}>
+          <button
+            className="mobile-preview-close"
+            type="button"
+            onClick={onClose}
+            data-tip="Close the mobile preview."
+          >
             ✕
           </button>
         </div>
@@ -43,6 +48,7 @@ export function MobilePreviewModal({ doc, onClose }: MobilePreviewModalProps) {
             className={`mobile-preview-toggle ${device === "iphone" ? "active" : ""}`}
             type="button"
             onClick={() => setDevice("iphone")}
+            data-tip="Preview on an iPhone-sized frame."
           >
             iPhone
           </button>
@@ -50,6 +56,7 @@ export function MobilePreviewModal({ doc, onClose }: MobilePreviewModalProps) {
             className={`mobile-preview-toggle ${device === "android" ? "active" : ""}`}
             type="button"
             onClick={() => setDevice("android")}
+            data-tip="Preview on an Android-sized frame."
           >
             Android
           </button>

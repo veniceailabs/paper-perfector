@@ -6,6 +6,7 @@ import { ShareModal } from "./components/ShareModal";
 import { MobilePreviewModal } from "./components/MobilePreviewModal";
 import { FormatModal } from "./components/FormatModal";
 import { ExportChecklistModal } from "./components/ExportChecklistModal";
+import { HoverTip } from "./components/HoverTip";
 import { SearchPanel } from "./components/SearchPanel";
 import type { Document, DocumentFormat, Source } from "./models/DocumentSchema";
 import type { ScholarResult } from "./models/Scholar";
@@ -723,6 +724,7 @@ export default function App() {
               className="brand brand-button"
               type="button"
               onClick={() => setDoc(null)}
+              data-tip="Return to the Paper Perfector home screen."
             >
               Paper Perfector
             </button>
@@ -731,6 +733,7 @@ export default function App() {
                 className="toolbar-button toolbar-resume"
                 type="button"
                 onClick={() => applyDocument(resumeDoc)}
+                data-tip="Resume your last auto-saved document."
               >
                 ↩️ Resume
               </button>
@@ -741,6 +744,7 @@ export default function App() {
               className="toolbar-button"
               type="button"
               onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+              data-tip="Switch between light and dark background themes."
             >
               {theme === "dark" ? "☀️ Light" : "🌙 Dark"} Mode
             </button>
@@ -770,6 +774,7 @@ export default function App() {
                 setEditMode(false);
               });
             }}
+            data-tip="Go back to the start screen."
           >
             Paper Perfector
           </button>
@@ -778,7 +783,7 @@ export default function App() {
             type="button"
             onClick={handleBack}
             disabled={historyIndex <= 0}
-            title="Back"
+            data-tip="Go back to the previous document state."
           >
             ← Back
           </button>
@@ -787,7 +792,7 @@ export default function App() {
             type="button"
             onClick={handleForward}
             disabled={historyIndex >= history.length - 1}
-            title="Forward"
+            data-tip="Go forward to the next document state."
           >
             Forward →
           </button>
@@ -795,6 +800,7 @@ export default function App() {
             className="toolbar-button toolbar-nav"
             type="button"
             onClick={() => setShowSearchPanel(true)}
+            data-tip="Search the document or jump to app actions."
           >
             🔍 Search
           </button>
@@ -809,11 +815,14 @@ export default function App() {
                 setEditMode(false);
               });
             }}
-            title="Back to start screen"
+            data-tip="Return to the home screen."
           >
             Home
           </button>
-          <label className="file-upload">
+          <label
+            className="file-upload"
+            data-tip="Import HTML, PDF, Word, Markdown, text, or images."
+          >
             Import
             <input
               ref={importInputRef}
@@ -826,7 +835,7 @@ export default function App() {
             className="toolbar-button"
             type="button"
             onClick={() => setShowShareModal(true)}
-            title="Share this document"
+            data-tip="Share a link or send the PDF via email."
           >
             🔗 Share
           </button>
@@ -834,6 +843,7 @@ export default function App() {
             className={`toolbar-button ${editMode ? "active" : ""}`}
             type="button"
             onClick={handleToggleEditMode}
+            data-tip={editMode ? "Return to view mode." : "Edit and format your paper."}
           >
             {editMode ? "👁️ View" : "✏️ Edit"}
           </button>
@@ -841,6 +851,7 @@ export default function App() {
             className="toolbar-button"
             type="button"
             onClick={openFormatModal}
+            data-tip="Adjust fonts, margins, spacing, and formatting."
           >
             Aa Format
           </button>
@@ -848,6 +859,7 @@ export default function App() {
             className="toolbar-button"
             type="button"
             onClick={() => setShowScoreModal(true)}
+            data-tip="Get an academic score and feedback."
           >
             🎓 Score
           </button>
@@ -855,6 +867,7 @@ export default function App() {
             className="toolbar-button"
             type="button"
             onClick={() => setShowTrustCenter(true)}
+            data-tip="Open integrity and proof-of-process tools."
           >
             🛡️ Trust
           </button>
@@ -862,6 +875,7 @@ export default function App() {
             className="toolbar-button"
             type="button"
             onClick={() => setShowMobilePreview(true)}
+            data-tip="Preview the document inside a mobile device frame."
           >
             📱 Mobile
           </button>
@@ -869,6 +883,7 @@ export default function App() {
             className="toolbar-button"
             type="button"
             onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+            data-tip="Switch between light and dark background themes."
           >
             {theme === "dark" ? "☀️ Light" : "🌙 Dark"} Mode
           </button>
@@ -876,6 +891,7 @@ export default function App() {
             className="toolbar-button"
             type="button"
             onClick={openExportChecklist}
+            data-tip="Open the export checklist and generate a PDF."
           >
             📥 Export PDF
           </button>
@@ -985,7 +1001,11 @@ export default function App() {
                 </button>
               </div>
               <div className="assistant-actions">
-                <button type="button" onClick={() => setShowScoreModal(true)}>
+                <button
+                  type="button"
+                  onClick={() => setShowScoreModal(true)}
+                  data-tip="Get an academic score and feedback."
+                >
                   Score my paper
                 </button>
                 <button
@@ -993,22 +1013,36 @@ export default function App() {
                   onClick={() =>
                     requestSafeNavigation(() => applyDocument(quickstartGuide))
                   }
+                  data-tip="Open the quickstart guide."
                 >
                   Open Quickstart Guide
                 </button>
-                <button type="button" onClick={() => setShowTrustCenter(true)}>
+                <button
+                  type="button"
+                  onClick={() => setShowTrustCenter(true)}
+                  data-tip="Open integrity and proof-of-process tools."
+                >
                   Trust Center
                 </button>
-                <button type="button" onClick={openFormatModal}>
+                <button
+                  type="button"
+                  onClick={openFormatModal}
+                  data-tip="Adjust fonts, spacing, margins, and formatting."
+                >
                   Adjust format & spacing
                 </button>
                 <button
                   type="button"
                   onClick={() => setEditMode((prev) => !prev)}
+                  data-tip={editMode ? "Return to view mode." : "Open the editor."}
                 >
                   {editMode ? "Switch to view" : "Open editor"}
                 </button>
-                <button type="button" onClick={handleExportPdf}>
+                <button
+                  type="button"
+                  onClick={handleExportPdf}
+                  data-tip="Export the current document as PDF."
+                >
                   Export PDF
                 </button>
               </div>
@@ -1018,11 +1052,13 @@ export default function App() {
             className="assistant-toggle"
             type="button"
             onClick={() => setShowHelpAssistant((prev) => !prev)}
+            data-tip="Open the help assistant for quick actions."
           >
             Need help?
           </button>
         </div>
       ) : null}
+      <HoverTip />
     </div>
   );
 }

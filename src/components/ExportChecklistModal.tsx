@@ -62,7 +62,12 @@ export function ExportChecklistModal({
             <h2>Pre-Export Checklist</h2>
             <p>Confirm formatting before generating your PDF.</p>
           </div>
-          <button className="export-modal-close" type="button" onClick={onClose}>
+          <button
+            className="export-modal-close"
+            type="button"
+            onClick={onClose}
+            data-tip="Close the checklist."
+          >
             X
           </button>
         </div>
@@ -107,10 +112,18 @@ export function ExportChecklistModal({
         ) : null}
 
         <div className="export-modal-actions">
-          <button className="export-modal-button secondary" onClick={onClose}>
+          <button
+            className="export-modal-button secondary"
+            onClick={onClose}
+            data-tip="Return to editing."
+          >
             Back
           </button>
-          <button className="export-modal-button primary" onClick={onConfirm}>
+          <button
+            className="export-modal-button primary"
+            onClick={onConfirm}
+            data-tip="Generate the PDF with current settings."
+          >
             Export PDF
           </button>
         </div>

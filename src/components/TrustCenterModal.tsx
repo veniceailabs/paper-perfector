@@ -112,7 +112,12 @@ export function TrustCenterModal({ doc, onClose }: TrustCenterModalProps) {
             <h2>Trust Center</h2>
             <p>Proof of process, integrity tooling, and exportable artifacts.</p>
           </div>
-          <button className="trust-center-close" type="button" onClick={onClose}>
+          <button
+            className="trust-center-close"
+            type="button"
+            onClick={onClose}
+            data-tip="Close Trust Center."
+          >
             ✕
           </button>
         </header>
@@ -151,6 +156,7 @@ export function TrustCenterModal({ doc, onClose }: TrustCenterModalProps) {
                   `${doc.title.replace(/[/\\?%*:|"<>]/g, "-")}-proof-pack.json`
                 )
               }
+              data-tip="Download proof-of-process data for verification."
             >
               Download Proof Pack (JSON)
             </button>
@@ -179,6 +185,7 @@ export function TrustCenterModal({ doc, onClose }: TrustCenterModalProps) {
               type="button"
               className="trust-center-button"
               onClick={handleCopyStatement}
+              data-tip="Copy the AI disclosure statement."
             >
               Copy Statement
             </button>

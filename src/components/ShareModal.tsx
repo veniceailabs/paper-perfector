@@ -93,7 +93,12 @@ export function ShareModal({ doc, onClose }: ShareModalProps) {
             <h2>Share Paper</h2>
             <p>Send a link or post it to your platform.</p>
           </div>
-          <button className="share-modal-close" type="button" onClick={onClose}>
+          <button
+            className="share-modal-close"
+            type="button"
+            onClick={onClose}
+            data-tip="Close the share dialog."
+          >
             X
           </button>
         </div>
@@ -109,7 +114,12 @@ export function ShareModal({ doc, onClose }: ShareModalProps) {
               readOnly
               onFocus={(event) => event.currentTarget.select()}
             />
-            <button className="share-link-button" type="button" onClick={handleCopy}>
+            <button
+              className="share-link-button"
+              type="button"
+              onClick={handleCopy}
+              data-tip="Copy the share link to your clipboard."
+            >
               Copy
             </button>
           </div>
@@ -117,7 +127,12 @@ export function ShareModal({ doc, onClose }: ShareModalProps) {
         </div>
 
         {canNativeShare ? (
-          <button className="share-native" type="button" onClick={handleNativeShare}>
+          <button
+            className="share-native"
+            type="button"
+            onClick={handleNativeShare}
+            data-tip="Open your device share sheet."
+          >
             Share via device
           </button>
         ) : null}
@@ -128,6 +143,7 @@ export function ShareModal({ doc, onClose }: ShareModalProps) {
             type="button"
             onClick={handleEmail}
             disabled={isEmailing}
+            data-tip="Generate a PDF and open an email draft."
           >
             Email PDF
           </button>
@@ -141,6 +157,7 @@ export function ShareModal({ doc, onClose }: ShareModalProps) {
                 )}&url=${encodeURIComponent(shareUrl)}`
               )
             }
+            data-tip="Share on X (Twitter)."
           >
             X Post
           </button>
@@ -154,6 +171,7 @@ export function ShareModal({ doc, onClose }: ShareModalProps) {
                 )}`
               )
             }
+            data-tip="Share on LinkedIn."
           >
             in LinkedIn
           </button>
@@ -167,6 +185,7 @@ export function ShareModal({ doc, onClose }: ShareModalProps) {
                 )}`
               )
             }
+            data-tip="Share on WhatsApp."
           >
             WhatsApp
           </button>

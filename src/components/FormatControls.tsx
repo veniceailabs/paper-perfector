@@ -61,7 +61,10 @@ export function FormatControls({
 
   return (
     <div className={`format-controls ${compact ? "compact" : ""}`}>
-      <div className="format-field">
+      <div
+        className="format-field"
+        data-tip="Choose a style preset or switch to custom."
+      >
         <label>Preset</label>
         <select
           value={preset}
@@ -82,7 +85,7 @@ export function FormatControls({
         </select>
       </div>
 
-      <div className="format-field">
+      <div className="format-field" data-tip="Select the font family.">
         <label>Font</label>
         <select
           value={format.fontFamily ?? defaults.fontFamily}
@@ -96,7 +99,7 @@ export function FormatControls({
         </select>
       </div>
 
-      <div className="format-field">
+      <div className="format-field" data-tip="Select the font weight.">
         <label>Weight</label>
         <select
           value={fontWeightValue.toString()}
@@ -113,7 +116,7 @@ export function FormatControls({
       </div>
 
       <div className="format-field format-field-row">
-        <div className="format-field">
+        <div className="format-field" data-tip="Set the font size.">
           <label>Size</label>
           <input
             type="number"
@@ -128,7 +131,7 @@ export function FormatControls({
             }
           />
         </div>
-        <div className="format-field">
+        <div className="format-field" data-tip="Choose pt or px sizing.">
           <label>Unit</label>
           <select
             value={sizeData.unit}
@@ -144,7 +147,7 @@ export function FormatControls({
         </div>
       </div>
 
-      <div className="format-field">
+      <div className="format-field" data-tip="Set line spacing for the paper.">
         <label>Line Spacing</label>
         <select
           value={lineHeightValue.toString()}
@@ -162,7 +165,10 @@ export function FormatControls({
         </select>
       </div>
 
-      <div className="format-field">
+      <div
+        className="format-field"
+        data-tip="Adjust spacing between paragraphs."
+      >
         <label>Paragraph Spacing</label>
         <input
           type="number"
@@ -178,7 +184,7 @@ export function FormatControls({
         />
       </div>
 
-      <div className="format-field">
+      <div className="format-field" data-tip="Toggle running head visibility.">
         <label className="format-toggle">
           <input
             type="checkbox"
@@ -196,7 +202,10 @@ export function FormatControls({
         </p>
       </div>
 
-      <div className="format-field">
+      <div
+        className="format-field"
+        data-tip="Choose between markdown formatting or plain text rendering."
+      >
         <label className="format-toggle">
           <input
             type="checkbox"
@@ -209,7 +218,7 @@ export function FormatControls({
         </label>
       </div>
 
-      <div className="format-field">
+      <div className="format-field" data-tip="Set the running head text.">
         <label>Header text</label>
         <input
           type="text"
@@ -219,7 +228,7 @@ export function FormatControls({
         />
       </div>
 
-      <div className="format-field">
+      <div className="format-field" data-tip="Toggle page numbers on export.">
         <label className="format-toggle">
           <input
             type="checkbox"
@@ -233,7 +242,7 @@ export function FormatControls({
       </div>
 
       <div className="format-field format-field-row">
-        <div className="format-field">
+        <div className="format-field" data-tip="Set page margins.">
           <label>Margin</label>
           <input
             type="number"
@@ -251,7 +260,7 @@ export function FormatControls({
             }
           />
         </div>
-        <div className="format-field">
+        <div className="format-field" data-tip="Choose mm or in.">
           <label>Unit</label>
           <select
             value={marginData.unit}
@@ -273,7 +282,12 @@ export function FormatControls({
       {onReset || onSaveDefaults ? (
         <div className="format-actions">
           {onReset ? (
-            <button className="format-action-btn" type="button" onClick={onReset}>
+            <button
+              className="format-action-btn"
+              type="button"
+              onClick={onReset}
+              data-tip="Reset to the selected preset defaults."
+            >
               Reset to Defaults
             </button>
           ) : null}
@@ -282,6 +296,7 @@ export function FormatControls({
               className="format-action-btn primary"
               type="button"
               onClick={() => onSaveDefaults(format)}
+              data-tip="Save these settings for new documents."
             >
               Save Defaults
             </button>

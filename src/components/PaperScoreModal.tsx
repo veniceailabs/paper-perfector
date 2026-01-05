@@ -23,7 +23,12 @@ export function PaperScoreModal({ doc, onClose }: PaperScoreModalProps) {
             <h2>Professor Score</h2>
             <p>Elite review of structure, depth, and evidence.</p>
           </div>
-          <button className="paper-score-close" type="button" onClick={onClose}>
+          <button
+            className="paper-score-close"
+            type="button"
+            onClick={onClose}
+            data-tip="Close the score report."
+          >
             ✕
           </button>
         </div>

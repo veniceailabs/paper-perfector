@@ -468,7 +468,10 @@ export const DocumentEditor = forwardRef<DocumentEditorHandle, DocumentEditorPro
   };
 
   const renderSourcesPanel = (compact: boolean) => (
-    <div className={`editor-sources-panel ${compact ? "compact" : ""}`}>
+    <div
+      className={`editor-sources-panel ${compact ? "compact" : ""}`}
+      data-tip="Manage sources saved from Scholar search."
+    >
       <h4>Sources</h4>
       {sources.length === 0 ? (
         <p className="editor-sources-empty">
@@ -487,16 +490,25 @@ export const DocumentEditor = forwardRef<DocumentEditorHandle, DocumentEditorPro
                 </span>
               </div>
               <div className="editor-source-actions">
-                <button type="button" onClick={() => insertCitation(source)}>
+                <button
+                  type="button"
+                  onClick={() => insertCitation(source)}
+                  data-tip="Insert an in-text citation at your cursor."
+                >
                   Cite
                 </button>
-                <button type="button" onClick={() => insertReference(source)}>
+                <button
+                  type="button"
+                  onClick={() => insertReference(source)}
+                  data-tip="Add this source to your references section."
+                >
                   Reference
                 </button>
                 <button
                   type="button"
                   className="danger"
                   onClick={() => removeSource(source.id)}
+                  data-tip="Remove this source from the list."
                 >
                   Remove
                 </button>
@@ -588,7 +600,7 @@ export const DocumentEditor = forwardRef<DocumentEditorHandle, DocumentEditorPro
         className="format-toolbar-button"
         onClick={() => onApply("**")}
         aria-label="Bold"
-        title="Bold"
+        data-tip="Bold text"
       >
         <span className="format-toolbar-bold">B</span>
       </button>
@@ -597,7 +609,7 @@ export const DocumentEditor = forwardRef<DocumentEditorHandle, DocumentEditorPro
         className="format-toolbar-button"
         onClick={() => onApply("*")}
         aria-label="Italic"
-        title="Italic"
+        data-tip="Italic text"
       >
         <span className="format-toolbar-italic">I</span>
       </button>
@@ -606,7 +618,7 @@ export const DocumentEditor = forwardRef<DocumentEditorHandle, DocumentEditorPro
         className="format-toolbar-button"
         onClick={() => onApply("<u>", "</u>")}
         aria-label="Underline"
-        title="Underline"
+        data-tip="Underline text"
       >
         <span className="format-toolbar-underline">U</span>
       </button>
@@ -615,7 +627,7 @@ export const DocumentEditor = forwardRef<DocumentEditorHandle, DocumentEditorPro
         className="format-toolbar-button"
         onClick={() => onApply("~~")}
         aria-label="Strikethrough"
-        title="Strikethrough"
+        data-tip="Strikethrough text"
       >
         <span className="format-toolbar-strike">S</span>
       </button>
@@ -766,7 +778,10 @@ export const DocumentEditor = forwardRef<DocumentEditorHandle, DocumentEditorPro
 
   return (
     <div className={`editor-container ${isMarkdownMode ? "markdown" : ""}`}>
-      <aside className="editor-sidebar editor-sidebar-left">
+      <aside
+        className="editor-sidebar editor-sidebar-left"
+        data-tip="Jump between sections of your paper."
+      >
         <TableOfContents
           sections={sections}
           currentSectionId={currentSectionId}
@@ -775,7 +790,7 @@ export const DocumentEditor = forwardRef<DocumentEditorHandle, DocumentEditorPro
         />
       </aside>
 
-      <div className="editor-main">
+      <div className="editor-main" data-tip="Edit your paper content here.">
         <div className="editor-toolbar">
           <div className="editor-toolbar-left">
             <div className="editor-mode-toggle">
@@ -795,6 +810,7 @@ export const DocumentEditor = forwardRef<DocumentEditorHandle, DocumentEditorPro
                   applyParsedDoc(parsed);
                   setEditorMode("structured");
                 }}
+                data-tip="Edit with structured sections and fields."
               >
                 Structured
               </button>
@@ -810,6 +826,7 @@ export const DocumentEditor = forwardRef<DocumentEditorHandle, DocumentEditorPro
                   syncMarkdownDraft();
                   setEditorMode("markdown");
                 }}
+                data-tip="Edit freely in markdown or plain text."
               >
                 Freeform
               </button>
@@ -825,7 +842,12 @@ export const DocumentEditor = forwardRef<DocumentEditorHandle, DocumentEditorPro
               <span>{saveStatus}</span>
               <span>{savedTimeLabel}</span>
             </div>
-            <button className="save-btn" type="button" onClick={handleSave}>
+            <button
+              className="save-btn"
+              type="button"
+              onClick={handleSave}
+              data-tip="Save the latest edits to your document."
+            >
               💾 Save Changes
             </button>
           </div>
@@ -833,7 +855,11 @@ export const DocumentEditor = forwardRef<DocumentEditorHandle, DocumentEditorPro
 
         {editorMode === "structured" ? (
           <>
-            <div className="editor-header" id="editor-top">
+            <div
+              className="editor-header"
+              id="editor-top"
+              data-tip="Update the title and subtitle of your paper."
+            >
           <input
             id="editor-title"
             type="text"
@@ -847,6 +873,7 @@ export const DocumentEditor = forwardRef<DocumentEditorHandle, DocumentEditorPro
               lastFocusRef.current = { type: "title", element: event.currentTarget };
             }}
             placeholder="Document Title"
+            data-tip="The main title of your paper."
           />
           <input
             id="editor-subtitle"
@@ -861,6 +888,7 @@ export const DocumentEditor = forwardRef<DocumentEditorHandle, DocumentEditorPro
               lastFocusRef.current = { type: "subtitle", element: event.currentTarget };
             }}
             placeholder="Subtitle (optional)"
+            data-tip="Optional subtitle or running head."
           />
           {showFormatLock ? (
             <div className="format-lock-row">
@@ -873,11 +901,18 @@ export const DocumentEditor = forwardRef<DocumentEditorHandle, DocumentEditorPro
           ) : null}
             </div>
 
-            <div className="editor-metadata">
+            <div
+              className="editor-metadata"
+              data-tip="Fill in author, date, and classification details."
+            >
               <h3>Metadata</h3>
               <div className="metadata-grid">
                 {Object.entries(metadata).map(([key, value]) => (
-                  <div key={key} className="metadata-field">
+                  <div
+                    key={key}
+                    className="metadata-field"
+                    data-tip={`Edit ${key} information.`}
+                  >
                     <label>{key}</label>
                     <input
                       type="text"
@@ -896,7 +931,10 @@ export const DocumentEditor = forwardRef<DocumentEditorHandle, DocumentEditorPro
               </div>
             </div>
 
-            <div className="editor-sections">
+            <div
+              className="editor-sections"
+              data-tip="Organize the body of your paper into sections."
+            >
               <h3>Sections</h3>
               {sections.map((section) => (
                 <div
@@ -906,6 +944,7 @@ export const DocumentEditor = forwardRef<DocumentEditorHandle, DocumentEditorPro
                     currentSectionId === section.id ? "active" : ""
                   }`}
                   onMouseEnter={() => setCurrentSectionId(section.id)}
+                  data-tip="Edit this section’s title and paragraphs."
                 >
                   <div className="section-header">
                     <input
@@ -923,11 +962,12 @@ export const DocumentEditor = forwardRef<DocumentEditorHandle, DocumentEditorPro
                         };
                       }}
                       placeholder="Section Title"
+                      data-tip="Edit the section heading."
                     />
                     <button
                       className="remove-section-btn"
                       onClick={() => removeSection(section.id)}
-                      title="Remove section"
+                      data-tip="Remove this section."
                     >
                       ✕
                     </button>
@@ -964,6 +1004,7 @@ export const DocumentEditor = forwardRef<DocumentEditorHandle, DocumentEditorPro
                           }
                           placeholder="Enter paragraph text..."
                           rows={Math.max(2, Math.ceil(paragraph.length / 60))}
+                          data-tip="Write or paste your paragraph here."
                         />
                         <div className="paragraph-actions">
                           <button
@@ -972,6 +1013,7 @@ export const DocumentEditor = forwardRef<DocumentEditorHandle, DocumentEditorPro
                             onClick={() =>
                               openParagraphExpand(section.id, idx, paragraph)
                             }
+                            data-tip="Open a larger editor for this paragraph."
                           >
                             Expand
                           </button>
@@ -981,7 +1023,7 @@ export const DocumentEditor = forwardRef<DocumentEditorHandle, DocumentEditorPro
                               onClick={() =>
                                 removeParagraphFromSection(section.id, idx)
                               }
-                              title="Remove paragraph"
+                              data-tip="Delete this paragraph."
                             >
                               Remove
                             </button>
@@ -994,13 +1036,18 @@ export const DocumentEditor = forwardRef<DocumentEditorHandle, DocumentEditorPro
                   <button
                     className="add-paragraph-btn"
                     onClick={() => addParagraphToSection(section.id)}
+                    data-tip="Add a new paragraph to this section."
                   >
                     + Add Paragraph
                   </button>
                 </div>
               ))}
 
-              <button className="add-section-btn" onClick={addSection}>
+              <button
+                className="add-section-btn"
+                onClick={addSection}
+                data-tip="Add a new section to your paper."
+              >
                 + Add Section
               </button>
             </div>
@@ -1033,12 +1080,17 @@ export const DocumentEditor = forwardRef<DocumentEditorHandle, DocumentEditorPro
               }
               placeholder="# Title\n\n## Subtitle\n\n**Author:** Name\n\n## Section\n\nWrite freely here..."
               rows={22}
+              data-tip="Freeform editor. Paste markdown or plain text here."
             />
             {markdownError ? (
               <div className="editor-markdown-error">{markdownError}</div>
             ) : null}
             <div className="editor-markdown-actions">
-              <button className="save-btn" onClick={handleSave}>
+              <button
+                className="save-btn"
+                onClick={handleSave}
+                data-tip="Save the latest edits to your document."
+              >
                 💾 Save Changes
               </button>
               <button
@@ -1052,11 +1104,15 @@ export const DocumentEditor = forwardRef<DocumentEditorHandle, DocumentEditorPro
                   applyParsedDoc(parsed);
                   setEditorMode("structured");
                 }}
+                data-tip="Switch back to structured editing."
               >
                 Switch to Structured
               </button>
             </div>
-            <div className="editor-format-panel compact">
+            <div
+              className="editor-format-panel compact"
+              data-tip="Adjust fonts, spacing, margins, and formatting."
+            >
               <h4>Formatting</h4>
               <FormatControls
                 format={format}
@@ -1074,6 +1130,7 @@ export const DocumentEditor = forwardRef<DocumentEditorHandle, DocumentEditorPro
                 className={`editor-alert ${
                   citationAudit.missingSources.length > 0 ? "warning" : "ok"
                 }`}
+                data-tip="Check if saved sources are cited in the text."
               >
                 <strong>Citation check</strong>
                 <span>
@@ -1090,7 +1147,10 @@ export const DocumentEditor = forwardRef<DocumentEditorHandle, DocumentEditorPro
                 ) : null}
               </div>
             ) : null}
-            <div className="editor-notes-panel">
+            <div
+              className="editor-notes-panel"
+              data-tip="Professor notes highlight improvements before export."
+            >
               <h4>Professor Notes</h4>
               <ul>
                 {professorNotes.map((note) => (
@@ -1104,8 +1164,15 @@ export const DocumentEditor = forwardRef<DocumentEditorHandle, DocumentEditorPro
       </div>
 
       {editorMode === "structured" ? (
-        <div className="editor-sidebar editor-sidebar-right">
-          <button className="save-btn" onClick={handleSave}>
+        <div
+          className="editor-sidebar editor-sidebar-right"
+          data-tip="Formatting, sources, and guidance live here."
+        >
+          <button
+            className="save-btn"
+            onClick={handleSave}
+            data-tip="Save the latest edits to your document."
+          >
             💾 Save Changes
           </button>
           {citationAudit && citationAudit.totalSources > 0 ? (
@@ -1113,6 +1180,7 @@ export const DocumentEditor = forwardRef<DocumentEditorHandle, DocumentEditorPro
               className={`editor-alert ${
                 citationAudit.missingSources.length > 0 ? "warning" : "ok"
               }`}
+              data-tip="Check if saved sources are cited in the text."
             >
               <strong>Citation check</strong>
               <span>
@@ -1129,7 +1197,10 @@ export const DocumentEditor = forwardRef<DocumentEditorHandle, DocumentEditorPro
               ) : null}
             </div>
           ) : null}
-          <div className="editor-format-panel">
+          <div
+            className="editor-format-panel"
+            data-tip="Adjust fonts, spacing, margins, and formatting."
+          >
             <h4>Formatting</h4>
             <FormatControls
               format={format}
@@ -1143,7 +1214,10 @@ export const DocumentEditor = forwardRef<DocumentEditorHandle, DocumentEditorPro
             />
           </div>
           {renderSourcesPanel(false)}
-          <div className="editor-notes-panel">
+          <div
+            className="editor-notes-panel"
+            data-tip="Professor notes highlight improvements before export."
+          >
             <h4>Professor Notes</h4>
             <ul>
               {professorNotes.map((note) => (
@@ -1151,7 +1225,7 @@ export const DocumentEditor = forwardRef<DocumentEditorHandle, DocumentEditorPro
               ))}
             </ul>
           </div>
-          <div className="editor-tips">
+          <div className="editor-tips" data-tip="Quick reminders for editing.">
             <h4>Tips</h4>
             <ul>
               <li>Click "Save Changes" to update the document</li>
@@ -1180,6 +1254,7 @@ export const DocumentEditor = forwardRef<DocumentEditorHandle, DocumentEditorPro
                 className="editor-modal-close"
                 type="button"
                 onClick={closeParagraphExpand}
+                data-tip="Close the expanded editor."
               >
                 X
               </button>
@@ -1189,12 +1264,14 @@ export const DocumentEditor = forwardRef<DocumentEditorHandle, DocumentEditorPro
               value={expandedText}
               onChange={(event) => setExpandedText(event.target.value)}
               rows={16}
+              data-tip="Edit the paragraph in a larger view."
             />
             <div className="editor-modal-actions">
               <button
                 className="editor-modal-button secondary"
                 type="button"
                 onClick={closeParagraphExpand}
+                data-tip="Discard changes and close."
               >
                 Cancel
               </button>
@@ -1202,6 +1279,7 @@ export const DocumentEditor = forwardRef<DocumentEditorHandle, DocumentEditorPro
                 className="editor-modal-button primary"
                 type="button"
                 onClick={applyExpandedText}
+                data-tip="Apply changes to the paragraph."
               >
                 Apply
               </button>

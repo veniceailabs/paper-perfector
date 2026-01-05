@@ -197,6 +197,7 @@ export function StartScreen({
             <div
               className="start-card start-card-example"
               onClick={() => onSelectDocument(templates.apa)}
+              data-tip="Start an APA 7th Edition template with the right margins and spacing."
             >
               <div className="card-icon">📑</div>
               <h3>APA Format</h3>
@@ -207,6 +208,7 @@ export function StartScreen({
             <div
               className="start-card start-card-example"
               onClick={() => onSelectDocument(templates.mla)}
+              data-tip="Start an MLA 9th Edition template with the right margins and spacing."
             >
               <div className="card-icon">📄</div>
               <h3>MLA Format</h3>
@@ -217,6 +219,7 @@ export function StartScreen({
             <div
               className="start-card start-card-example"
               onClick={() => onSelectDocument(templates.chicago)}
+              data-tip="Start a Chicago 17th Edition template with headings and bibliography."
             >
               <div className="card-icon">📋</div>
               <h3>Chicago Style</h3>
@@ -236,6 +239,7 @@ export function StartScreen({
             <div
               className="start-card start-card-new"
               onClick={() => onSelectDocument(createBlankDocument())}
+              data-tip="Start from a clean page with a default layout."
             >
               <div className="card-icon">📝</div>
               <h3>Blank Document</h3>
@@ -246,6 +250,7 @@ export function StartScreen({
             <div
               className="start-card start-card-example"
               onClick={() => onSelectDocument(samplePaper)}
+              data-tip="Open a polished sample paper to see formatting in action."
             >
               <div className="card-icon">📚</div>
               <h3>Sample Paper</h3>
@@ -256,6 +261,7 @@ export function StartScreen({
             <div
               className="start-card start-card-paste"
               onClick={openPasteModal}
+              data-tip="Paste markdown, HTML, or text and keep the formatting."
             >
               <div className="card-icon">🧾</div>
               <h3>Paste Text</h3>
@@ -263,7 +269,10 @@ export function StartScreen({
             </div>
 
             {/* Import Document */}
-            <label className="start-card start-card-import">
+            <label
+              className="start-card start-card-import"
+              data-tip="Import HTML, PDF, Word, Markdown, or text files."
+            >
               <div className="card-icon">📤</div>
               <h3>Import Document</h3>
               <p>Load from HTML, PDF, Word, or Markdown</p>
@@ -284,6 +293,7 @@ export function StartScreen({
             className="start-guide-link"
             type="button"
             onClick={() => onSelectDocument(quickstartGuide)}
+            data-tip="Open a quickstart guide you can export as a PDF."
           >
             New here? Open the Quickstart Guide (export to PDF when ready)
           </button>
@@ -305,6 +315,7 @@ export function StartScreen({
               onChange={(event) => setMarkdownText(event.target.value)}
               placeholder="Paste markdown, HTML, plain text, or an HTML link here..."
               rows={14}
+              data-tip="Paste content here. Use plain text for exact spacing."
             />
             {markdownError ? (
               <div className="start-modal-error">{markdownError}</div>
@@ -314,6 +325,7 @@ export function StartScreen({
                 className="start-modal-button secondary"
                 type="button"
                 onClick={() => setShowPasteModal(false)}
+                data-tip="Close without importing."
               >
                 Cancel
               </button>
@@ -321,6 +333,7 @@ export function StartScreen({
                 className="start-modal-button primary"
                 type="button"
                 onClick={handlePasteContinue}
+                data-tip="Convert the pasted content into a new paper."
               >
                 Continue
               </button>
@@ -341,6 +354,7 @@ export function StartScreen({
                 className="start-theme-card"
                 type="button"
                 onClick={() => handleThemeSelect("light")}
+                data-tip="Choose a light background for printing or reading."
               >
                 <span className="theme-swatch theme-swatch-light" />
                 <span>Light</span>
@@ -349,6 +363,7 @@ export function StartScreen({
                 className="start-theme-card"
                 type="button"
                 onClick={() => handleThemeSelect("dark")}
+                data-tip="Choose a dark background for screen review."
               >
                 <span className="theme-swatch theme-swatch-dark" />
                 <span>Dark</span>
@@ -362,6 +377,7 @@ export function StartScreen({
                   setShowThemeModal(false);
                   setShowPasteModal(true);
                 }}
+                data-tip="Go back to edit the pasted content."
               >
                 Back
               </button>
@@ -391,36 +407,42 @@ export function StartScreen({
               <button
                 type="button"
                 onClick={() => handleSelectFromAssistant(createBlankDocument())}
+                data-tip="Start a new blank document."
               >
                 Blank Document
               </button>
               <button
                 type="button"
                 onClick={() => handleSelectFromAssistant(samplePaper)}
+                data-tip="Open the sample paper."
               >
                 Sample Paper
               </button>
               <button
                 type="button"
                 onClick={() => handleSelectFromAssistant(templates.apa)}
+                data-tip="Open APA 7th Edition template."
               >
                 APA Template
               </button>
               <button
                 type="button"
                 onClick={() => handleSelectFromAssistant(templates.mla)}
+                data-tip="Open MLA 9th Edition template."
               >
                 MLA Template
               </button>
               <button
                 type="button"
                 onClick={() => handleSelectFromAssistant(templates.chicago)}
+                data-tip="Open Chicago 17th Edition template."
               >
                 Chicago Template
               </button>
               <button
                 type="button"
                 onClick={() => handleSelectFromAssistant(quickstartGuide)}
+                data-tip="Open the quickstart guide."
               >
                 Quickstart Guide
               </button>
@@ -433,6 +455,7 @@ export function StartScreen({
                   setAssistantOpen(false);
                   openPasteModal();
                 }}
+                data-tip="Paste markdown, HTML, or text."
               >
                 Paste Text
               </button>
@@ -443,6 +466,7 @@ export function StartScreen({
                   setAssistantOpen(false);
                   openImportPicker();
                 }}
+                data-tip="Upload a file to import."
               >
                 Upload File
               </button>
@@ -453,6 +477,7 @@ export function StartScreen({
           className="assistant-toggle"
           type="button"
           onClick={() => setAssistantOpen((prev) => !prev)}
+          data-tip="Open the guide to choose a starting point."
         >
           Need help?
         </button>

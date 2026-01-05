@@ -152,6 +152,7 @@ export function SearchPanel({
                 className="search-panel-clear"
                 onClick={() => onFindQueryChange("")}
                 aria-label="Clear search"
+                data-tip="Clear the current search query."
               >
                 Clear
               </button>
@@ -166,6 +167,7 @@ export function SearchPanel({
                   searchScope[key] ? "active" : ""
                 }`}
                 onClick={() => handleScopeToggle(key)}
+                data-tip={`Toggle search in ${scopeLabels[key].toLowerCase()}.`}
               >
                 {scopeLabels[key]}
               </button>
@@ -217,6 +219,7 @@ export function SearchPanel({
               className="search-panel-button"
               onClick={onReplaceNext}
               disabled={!hasQuery}
+              data-tip="Replace the next match."
             >
               Replace Next
             </button>
@@ -225,6 +228,7 @@ export function SearchPanel({
               className="search-panel-button primary"
               onClick={onReplaceAll}
               disabled={!hasQuery}
+              data-tip="Replace every match in the selected scope."
             >
               Replace All
             </button>
@@ -255,6 +259,7 @@ export function SearchPanel({
               type="button"
               className="search-panel-button primary"
               onClick={onScholarSearch}
+              data-tip="Search scholarly sources."
             >
               Search
             </button>
@@ -323,6 +328,7 @@ export function SearchPanel({
                     className="search-panel-button"
                     onClick={() => onSaveSource(selectedSource)}
                     disabled={isSelectedSaved}
+                    data-tip="Save this source to your bibliography list."
                   >
                     {isSelectedSaved ? "Saved" : "Save Source"}
                   </button>
@@ -333,6 +339,7 @@ export function SearchPanel({
                     className="search-panel-button"
                     onClick={() => onInsertCitation(selectedSource)}
                     disabled={!canInsert}
+                    data-tip="Insert an in-text citation at the cursor."
                   >
                     Insert Citation
                   </button>
@@ -343,6 +350,7 @@ export function SearchPanel({
                     className="search-panel-button"
                     onClick={() => onInsertReference(selectedSource)}
                     disabled={!canInsert}
+                    data-tip="Add this source to your references section."
                   >
                     Insert Reference
                   </button>
@@ -353,6 +361,7 @@ export function SearchPanel({
                     href={selectedScholar.pdfUrl}
                     target="_blank"
                     rel="noopener noreferrer"
+                    data-tip="Open the PDF in a new tab."
                   >
                     Open PDF
                   </a>
@@ -363,6 +372,7 @@ export function SearchPanel({
                     href={selectedScholar.url}
                     target="_blank"
                     rel="noopener noreferrer"
+                    data-tip="Open the source link in a new tab."
                   >
                     Source Link
                   </a>
@@ -396,6 +406,7 @@ export function SearchPanel({
                       className="search-panel-button"
                       onClick={() => onInsertCitation(source)}
                       disabled={!canInsert}
+                      data-tip="Insert an in-text citation."
                     >
                       Cite
                     </button>
@@ -404,6 +415,7 @@ export function SearchPanel({
                       className="search-panel-button"
                       onClick={() => onInsertReference(source)}
                       disabled={!canInsert}
+                      data-tip="Add this source to references."
                     >
                       Reference
                     </button>
@@ -411,6 +423,7 @@ export function SearchPanel({
                       type="button"
                       className="search-panel-button"
                       onClick={() => onRemoveSource(source.id)}
+                      data-tip="Remove this saved source."
                     >
                       Remove
                     </button>
@@ -431,6 +444,7 @@ export function SearchPanel({
                 className="search-panel-action"
                 onClick={() => onAction(action.id)}
                 disabled={action.disabled}
+                data-tip={action.description ?? action.label}
               >
                 <span className="action-label">{action.label}</span>
                 {action.description ? (
