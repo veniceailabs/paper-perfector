@@ -841,6 +841,32 @@ export default function App() {
           >
             Paper Perfector
           </button>
+          <button
+            className="toolbar-button toolbar-nav"
+            type="button"
+            onClick={handleBack}
+            disabled={historyIndex <= 0}
+            data-tip="Go back to the previous document state."
+          >
+            ← Back
+          </button>
+          <button
+            className="toolbar-button toolbar-nav"
+            type="button"
+            onClick={handleForward}
+            disabled={historyIndex >= history.length - 1}
+            data-tip="Go forward to the next document state."
+          >
+            Forward →
+          </button>
+          <button
+            className="toolbar-button toolbar-nav"
+            type="button"
+            onClick={() => setShowSearchPanel(true)}
+            data-tip="Search the document or jump to app actions."
+          >
+            🔍 Search
+          </button>
         </div>
         <div className="toolbar-actions">
           <button
@@ -911,42 +937,6 @@ export default function App() {
             </button>
             {showToolbarMenu ? (
               <div className="toolbar-menu-panel">
-                <button
-                  className="toolbar-menu-item"
-                  type="button"
-                  onClick={() => {
-                    handleBack();
-                    setShowToolbarMenu(false);
-                  }}
-                  disabled={historyIndex <= 0}
-                  data-tip="Go back to the previous document state."
-                >
-                  ← Back
-                </button>
-                <button
-                  className="toolbar-menu-item"
-                  type="button"
-                  onClick={() => {
-                    handleForward();
-                    setShowToolbarMenu(false);
-                  }}
-                  disabled={historyIndex >= history.length - 1}
-                  data-tip="Go forward to the next document state."
-                >
-                  Forward →
-                </button>
-                <button
-                  className="toolbar-menu-item"
-                  type="button"
-                  onClick={() => {
-                    setShowSearchPanel(true);
-                    setShowToolbarMenu(false);
-                  }}
-                  data-tip="Search the document or jump to app actions."
-                >
-                  🔍 Search
-                </button>
-                <div className="toolbar-menu-divider" />
                 <button
                   className="toolbar-menu-item"
                   type="button"
