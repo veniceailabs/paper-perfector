@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import type { Document } from "../models/DocumentSchema";
 import { calculateDocumentStats } from "../utils/documentStats";
-import { resolveFormat } from "../utils/formatting";
+import { formatPresetLabel, resolveFormat } from "../utils/formatting";
 import { formatReference, formatReferenceTitle } from "../utils/citations";
 import { hashDocument } from "../utils/hash";
 import "../styles/TrustCenterModal.css";
@@ -56,7 +56,9 @@ export function TrustCenterModal({ doc, onClose }: TrustCenterModalProps) {
 
   const resolvedFormat = resolveFormat(doc);
   const stats = calculateDocumentStats(doc, resolvedFormat.lineHeight ?? 1.5);
-  const referenceTitle = formatReferenceTitle(resolvedFormat.preset);
+  const citationStyle = (resolvedFormat.preset ?? "default") as const;
+  const referenceTitle = formatReferenceTitle(citationStyle);
+  const formatLabel = formatPresetLabel(citationStyle);
 
   useEffect(() => {
     let active = true;
@@ -90,7 +92,7 @@ export function TrustCenterModal({ doc, onClose }: TrustCenterModalProps) {
       hash: hash ?? null,
       sources: sources.map((source) => ({
         ...source,
-        formatted: formatReference(source, resolvedFormat.preset),
+        formatted: formatReference(source, citationStyle),
       })),
       aiUseStatement: aiStatement,
     };
@@ -133,7 +135,7 @@ export function TrustCenterModal({ doc, onClose }: TrustCenterModalProps) {
               </div>
               <div>
                 <span className="metric-label">Format</span>
-                <strong>{resolvedFormat.preset.toUpperCase()}</strong>
+                <strong>{formatLabel.toUpperCase()}</strong>
               </div>
             </div>
             <div className="trust-center-hash">

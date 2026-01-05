@@ -162,6 +162,27 @@ export function formatPageMargin(size: number, unit: "mm" | "in") {
   return `${size}${unit}`;
 }
 
+export function formatPresetLabel(preset?: FormatPreset) {
+  if (preset === "apa") return "APA 7th";
+  if (preset === "mla") return "MLA 9th";
+  if (preset === "chicago") return "Chicago 17th";
+  if (preset === "custom") return "Custom";
+  return "Default";
+}
+
+export function formatSummary(format: DocumentFormat) {
+  const fontSize = format.fontSize ?? "12pt";
+  const margin = format.pageMargin ?? "24mm";
+  const spacing = format.lineHeight ?? 1.5;
+  const spacingLabel =
+    spacing >= 1.9
+      ? "Double-spaced"
+      : spacing <= 1.15
+        ? "Single-spaced"
+        : `${spacing}x spacing`;
+  return `${fontSize} • ${margin} margins • ${spacingLabel}`;
+}
+
 function inferPresetFromDoc(doc: Document): FormatPreset {
   if (doc.format?.preset) {
     return doc.format.preset;

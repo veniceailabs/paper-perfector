@@ -5,7 +5,7 @@ import Divider from "./Divider";
 import MetaBlock from "./MetaBlock";
 import Section from "./Section";
 import type { SearchScope } from "../models/Search";
-import { resolveFormat } from "../utils/formatting";
+import { formatPresetLabel, formatSummary, resolveFormat } from "../utils/formatting";
 import { formatReference, formatReferenceTitle } from "../utils/citations";
 import { renderInlineMarkdown, renderPlainText, renderHighlightedText } from "./inlineMarkdown";
 import "../styles/DocumentLayout.css";
@@ -25,9 +25,14 @@ export function DocumentRenderer({
   const resolvedFormat = resolveFormat(doc);
   const sources = doc.sources ?? [];
   const renderMarkdown = resolvedFormat.renderMarkdown ?? true;
+  const activePreset = resolvedFormat.preset ?? "default";
+  const showFormatLock =
+    activePreset === "apa" || activePreset === "mla" || activePreset === "chicago";
+  const formatLabel = formatPresetLabel(activePreset);
+  const formatDetails = formatSummary(resolvedFormat);
   const formatClass =
-    resolvedFormat.preset !== "default" && resolvedFormat.preset !== "custom"
-      ? `format-${resolvedFormat.preset}`
+    activePreset !== "default" && activePreset !== "custom"
+      ? `format-${activePreset}`
       : "";
   const showHeader = resolvedFormat.showHeader ?? false;
   const showPageNumbers = resolvedFormat.showPageNumbers ?? false;
@@ -35,7 +40,8 @@ export function DocumentRenderer({
     resolvedFormat.headerText?.trim() || doc.title.toUpperCase();
   const headerHeight = showHeader ? "32px" : "0px";
   const footerHeight = showPageNumbers ? "28px" : "0px";
-  const referenceTitle = formatReferenceTitle(resolvedFormat.preset);
+  const citationStyle = activePreset;
+  const referenceTitle = formatReferenceTitle(citationStyle);
   const hasReferenceSection = doc.sections.some((section) =>
     /references|bibliography|works cited/i.test(section.title)
   );
@@ -113,6 +119,13 @@ export function DocumentRenderer({
               {renderText(doc.subtitle, "doc-subtitle", highlightScope?.title)}
             </h2>
           ) : null}
+          {showFormatLock ? (
+            <div className="format-lock">
+              <span className="format-lock-label">Format Lock</span>
+              <strong>{formatLabel}</strong>
+              <span className="format-lock-meta">{formatDetails}</span>
+            </div>
+          ) : null}
           <Divider />
           <MetaBlock
             data={doc.metadata}
@@ -136,7 +149,7 @@ export function DocumentRenderer({
               {sources.map((source) => (
                 <li key={source.id}>
                   {renderHighlightedText(
-                    formatReference(source, resolvedFormat.preset),
+                    formatReference(source, citationStyle),
                     `ref-${source.id}`,
                     highlightScope?.body ? highlightQuery : undefined
                   )}

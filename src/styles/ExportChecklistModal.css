@@ -1,0 +1,141 @@
+.export-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(6, 8, 20, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 40;
+  padding: 24px;
+}
+
+.export-modal {
+  width: min(560px, 100%);
+  background: var(--bg-secondary);
+  border: 1px solid var(--rule-color);
+  border-radius: 16px;
+  padding: 24px;
+  color: var(--text-primary);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.4);
+}
+
+.export-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.export-modal-header h2 {
+  margin: 0;
+  font-size: 1.2em;
+}
+
+.export-modal-header p {
+  margin: 6px 0 0;
+  color: var(--text-secondary);
+  font-size: 0.9em;
+}
+
+.export-modal-close {
+  border: 1px solid var(--rule-color);
+  background: transparent;
+  color: var(--text-primary);
+  border-radius: 999px;
+  padding: 6px 10px;
+  cursor: pointer;
+}
+
+.export-checklist {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 16px;
+  display: grid;
+  gap: 12px;
+}
+
+.export-checklist li {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  border-radius: 12px;
+  border: 1px solid var(--rule-color);
+  background: var(--bg-primary);
+  font-size: 0.9em;
+}
+
+.export-checklist li strong {
+  display: block;
+  font-size: 0.95em;
+  color: var(--text-primary);
+}
+
+.export-checklist li span {
+  color: var(--text-secondary);
+}
+
+.export-checklist li.ok {
+  border-color: rgba(34, 197, 94, 0.4);
+}
+
+.export-checklist li.warning {
+  border-color: rgba(224, 122, 63, 0.4);
+}
+
+.export-check-icon {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--rule-color);
+  background: var(--bg-secondary);
+  font-weight: 700;
+}
+
+.export-warning {
+  padding: 12px 14px;
+  border-radius: 10px;
+  border: 1px solid rgba(224, 122, 63, 0.4);
+  background: rgba(224, 122, 63, 0.08);
+  font-size: 0.9em;
+  color: var(--text-secondary);
+  margin-bottom: 16px;
+}
+
+.export-modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+.export-modal-button {
+  border-radius: 999px;
+  border: 1px solid var(--rule-color);
+  background: transparent;
+  color: var(--text-primary);
+  padding: 8px 18px;
+  font-size: 0.95em;
+  cursor: pointer;
+}
+
+.export-modal-button.primary {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.export-modal-button.primary:hover {
+  background: var(--accent-faint);
+}
+
+.export-modal-button.secondary:hover,
+.export-modal-close:hover {
+  border-color: var(--text-secondary);
+}
+
+[data-theme="light"] .export-modal-backdrop {
+  background: rgba(241, 245, 249, 0.85);
+}

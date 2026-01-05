@@ -189,6 +189,11 @@ export function FormatControls({
           />
           <span>Markdown formatting</span>
         </label>
+        <p className="format-hint">
+          {renderMarkdownValue
+            ? "Markdown on: **bold**, *italics*, lists, and links."
+            : "Plain text: preserves spacing and treats formatting literally."}
+        </p>
       </div>
 
       <div className="format-field">

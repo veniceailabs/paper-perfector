@@ -234,6 +234,11 @@ mark {
   font-size: 13px;
   font-weight: 500;
   cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 44px;
 }
 
 .toolbar-button.toolbar-nav {
@@ -342,6 +347,35 @@ mark {
   margin: 20px 0 10px;
   line-height: 1.25;
   color: var(--text-secondary);
+}
+
+.format-lock {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--rule-color);
+  background: var(--bg-secondary);
+  font-size: 12px;
+  color: var(--text-secondary);
+  flex-wrap: wrap;
+}
+
+.format-lock strong {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.format-lock-label {
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 10px;
+  color: var(--text-muted);
+}
+
+.format-lock-meta {
+  color: var(--text-muted);
 }
 
 .paper-canvas p {
@@ -557,6 +591,7 @@ mark {
   .file-upload {
     padding: 6px 12px;
     font-size: 12px;
+    min-height: 44px;
   }
 
   .paper-canvas {
@@ -606,6 +641,10 @@ mark {
 
   .document-sidebar,
   .table-of-contents {
+    display: none !important;
+  }
+
+  .format-lock {
     display: none !important;
   }
 

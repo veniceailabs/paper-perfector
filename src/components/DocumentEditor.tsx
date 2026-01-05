@@ -12,13 +12,20 @@ import { TableOfContents } from "./TableOfContents";
 import { FormatControls } from "./FormatControls";
 import { importFromMarkdownText } from "../utils/markdownImport";
 import { documentToMarkdown } from "../utils/markdownExport";
-import { formatPresets, resolveFormat } from "../utils/formatting";
+import {
+  formatPresetLabel,
+  formatSummary,
+  formatPresets,
+  resolveFormat,
+} from "../utils/formatting";
 import {
   formatInTextCitation,
   formatReference,
   formatReferenceTitle,
 } from "../utils/citations";
 import { replaceInDocument, replaceInText } from "../utils/search";
+import { auditCitationCoverage } from "../utils/citationAudit";
+import { calculateDocumentStats } from "../utils/documentStats";
 import "../styles/DocumentEditor.css";
 
 export type DocumentEditorHandle = {
@@ -65,6 +72,7 @@ export const DocumentEditor = forwardRef<DocumentEditorHandle, DocumentEditorPro
     index: number;
   } | null>(null);
   const [expandedText, setExpandedText] = useState("");
+  const [lastSavedAt, setLastSavedAt] = useState<Date | null>(null);
   const markdownTextareaRef = useRef<HTMLTextAreaElement | null>(null);
   const lastFocusRef = useRef<
     | { type: "markdown"; element: HTMLTextAreaElement }
@@ -86,6 +94,7 @@ export const DocumentEditor = forwardRef<DocumentEditorHandle, DocumentEditorPro
     setSources(doc.sources ?? []);
     setIsDirty(false);
     setMarkdownError(null);
+    setLastSavedAt(null);
   }, [doc]);
 
   useEffect(() => {
@@ -234,11 +243,13 @@ export const DocumentEditor = forwardRef<DocumentEditorHandle, DocumentEditorPro
       applyParsedDoc(withFormat);
       onSave(withFormat);
       setIsDirty(false);
+      setLastSavedAt(new Date());
       return true;
     }
 
     onSave(buildStructuredDoc());
     setIsDirty(false);
+    setLastSavedAt(new Date());
     return true;
   };
 
@@ -425,13 +436,13 @@ export const DocumentEditor = forwardRef<DocumentEditorHandle, DocumentEditorPro
   };
 
   const insertCitation = (source: Source) => {
-    const citation = formatInTextCitation(source, format.preset);
+    const citation = formatInTextCitation(source, citationStyle);
     return insertTextAtCursor(` ${citation} `);
   };
 
   const insertReference = (source: Source) => {
-    const reference = formatReference(source, format.preset);
-    const referenceTitle = formatReferenceTitle(format.preset);
+    const reference = formatReference(source, citationStyle);
+    const referenceTitle = formatReferenceTitle(citationStyle);
     setSections((prev) => {
       const existingIndex = prev.findIndex((section) =>
         /references|bibliography|works cited/i.test(section.title)
@@ -669,6 +680,90 @@ export const DocumentEditor = forwardRef<DocumentEditorHandle, DocumentEditorPro
     return result.count;
   };
 
+  const activePreset = format.preset ?? "default";
+  const showFormatLock =
+    activePreset === "apa" ||
+    activePreset === "mla" ||
+    activePreset === "chicago";
+  const citationStyle = activePreset;
+  const formatLockLabel = formatPresetLabel(activePreset);
+  const formatLockSummary = formatSummary(format);
+  const saveStatus = isDirty
+    ? "Unsaved changes"
+    : lastSavedAt
+      ? "All changes saved"
+      : "Not saved yet";
+  const savedTimeLabel = lastSavedAt
+    ? `Saved ${lastSavedAt.toLocaleTimeString([], {
+        hour: "2-digit",
+        minute: "2-digit",
+      })}`
+    : "Use Save Changes to update";
+
+  const activeDocForNotes = (() => {
+    if (editorMode === "markdown") {
+      try {
+        return importFromMarkdownText(markdownDraft);
+      } catch {
+        return null;
+      }
+    }
+    return buildStructuredDoc();
+  })();
+
+  const citationAudit = activeDocForNotes
+    ? auditCitationCoverage(activeDocForNotes, format)
+    : null;
+  const docStats = activeDocForNotes
+    ? calculateDocumentStats(activeDocForNotes, format.lineHeight ?? 1.5)
+    : null;
+  const professorNotes = (() => {
+    if (!activeDocForNotes) {
+      return ["Finish a section to unlock guidance."];
+    }
+    const notes: string[] = [];
+    const sectionsToCheck = activeDocForNotes.sections;
+    const intro =
+      sectionsToCheck.find((section) =>
+        /introduction|overview/i.test(section.title)
+      ) ?? sectionsToCheck[0];
+    const introText = intro?.body.join(" ") ?? "";
+    const hasThesis = /(thesis|argument|hypothesis|research question)/i.test(
+      introText
+    );
+    const hasConclusion = sectionsToCheck.some((section) =>
+      /conclusion/i.test(section.title)
+    );
+
+    if (!hasThesis) {
+      notes.push("Add a clear thesis statement in your opening section.");
+    }
+    if (!hasConclusion) {
+      notes.push("Include a conclusion section to synthesize your argument.");
+    }
+    if (docStats && docStats.words < 500) {
+      notes.push("Draft is short; expand analysis and add supporting evidence.");
+    }
+    if (citationAudit && citationAudit.totalSources === 0) {
+      notes.push("Add scholarly sources to support key claims.");
+    }
+    if (citationAudit && citationAudit.missingSources.length > 0) {
+      notes.push("Some sources are missing in-text citations.");
+    }
+
+    if (notes.length === 0) {
+      notes.push("Structure looks strong. Focus on clarity and flow.");
+    }
+
+    return notes;
+  })();
+
+  const missingCitationPreview = citationAudit
+    ? citationAudit.missingSources
+        .slice(0, 2)
+        .map((source) => source.title || source.authors[0] || "Untitled source")
+    : [];
+
   return (
     <div className={`editor-container ${isMarkdownMode ? "markdown" : ""}`}>
       <aside className="editor-sidebar editor-sidebar-left">
@@ -726,6 +821,10 @@ export const DocumentEditor = forwardRef<DocumentEditorHandle, DocumentEditorPro
             </span>
           </div>
           <div className="editor-toolbar-right">
+            <div className={`save-status ${isDirty ? "dirty" : ""}`}>
+              <span>{saveStatus}</span>
+              <span>{savedTimeLabel}</span>
+            </div>
             <button className="save-btn" type="button" onClick={handleSave}>
               💾 Save Changes
             </button>
@@ -763,6 +862,15 @@ export const DocumentEditor = forwardRef<DocumentEditorHandle, DocumentEditorPro
             }}
             placeholder="Subtitle (optional)"
           />
+          {showFormatLock ? (
+            <div className="format-lock-row">
+              <div className="format-lock">
+                <span className="format-lock-label">Format Lock</span>
+                <strong>{formatLockLabel}</strong>
+                <span className="format-lock-meta">{formatLockSummary}</span>
+              </div>
+            </div>
+          ) : null}
             </div>
 
             <div className="editor-metadata">
@@ -900,6 +1008,15 @@ export const DocumentEditor = forwardRef<DocumentEditorHandle, DocumentEditorPro
         ) : (
           <div className="editor-markdown">
             {renderFormatToolbar(applyFormatToMarkdown)}
+            {showFormatLock ? (
+              <div className="format-lock-row">
+                <div className="format-lock">
+                  <span className="format-lock-label">Format Lock</span>
+                  <strong>{formatLockLabel}</strong>
+                  <span className="format-lock-meta">{formatLockSummary}</span>
+                </div>
+              </div>
+            ) : null}
             <textarea
               className="editor-markdown-textarea"
               ref={markdownTextareaRef}
@@ -952,6 +1069,35 @@ export const DocumentEditor = forwardRef<DocumentEditorHandle, DocumentEditorPro
                 compact={true}
               />
             </div>
+            {citationAudit && citationAudit.totalSources > 0 ? (
+              <div
+                className={`editor-alert ${
+                  citationAudit.missingSources.length > 0 ? "warning" : "ok"
+                }`}
+              >
+                <strong>Citation check</strong>
+                <span>
+                  {citationAudit.missingSources.length > 0
+                    ? `${citationAudit.missingSources.length} source${
+                        citationAudit.missingSources.length === 1 ? "" : "s"
+                      } missing in-text citations.`
+                    : "All saved sources appear in the text."}
+                </span>
+                {missingCitationPreview.length > 0 ? (
+                  <span className="editor-alert-detail">
+                    Missing: {missingCitationPreview.join(", ")}
+                  </span>
+                ) : null}
+              </div>
+            ) : null}
+            <div className="editor-notes-panel">
+              <h4>Professor Notes</h4>
+              <ul>
+                {professorNotes.map((note) => (
+                  <li key={note}>{note}</li>
+                ))}
+              </ul>
+            </div>
             {renderSourcesPanel(true)}
           </div>
         )}
@@ -962,6 +1108,27 @@ export const DocumentEditor = forwardRef<DocumentEditorHandle, DocumentEditorPro
           <button className="save-btn" onClick={handleSave}>
             💾 Save Changes
           </button>
+          {citationAudit && citationAudit.totalSources > 0 ? (
+            <div
+              className={`editor-alert ${
+                citationAudit.missingSources.length > 0 ? "warning" : "ok"
+              }`}
+            >
+              <strong>Citation check</strong>
+              <span>
+                {citationAudit.missingSources.length > 0
+                  ? `${citationAudit.missingSources.length} source${
+                      citationAudit.missingSources.length === 1 ? "" : "s"
+                    } missing in-text citations.`
+                  : "All saved sources appear in the text."}
+              </span>
+              {missingCitationPreview.length > 0 ? (
+                <span className="editor-alert-detail">
+                  Missing: {missingCitationPreview.join(", ")}
+                </span>
+              ) : null}
+            </div>
+          ) : null}
           <div className="editor-format-panel">
             <h4>Formatting</h4>
             <FormatControls
@@ -976,6 +1143,14 @@ export const DocumentEditor = forwardRef<DocumentEditorHandle, DocumentEditorPro
             />
           </div>
           {renderSourcesPanel(false)}
+          <div className="editor-notes-panel">
+            <h4>Professor Notes</h4>
+            <ul>
+              {professorNotes.map((note) => (
+                <li key={note}>{note}</li>
+              ))}
+            </ul>
+          </div>
           <div className="editor-tips">
             <h4>Tips</h4>
             <ul>

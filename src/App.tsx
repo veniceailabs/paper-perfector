@@ -5,6 +5,7 @@ import { StartScreen } from "./components/StartScreen";
 import { ShareModal } from "./components/ShareModal";
 import { MobilePreviewModal } from "./components/MobilePreviewModal";
 import { FormatModal } from "./components/FormatModal";
+import { ExportChecklistModal } from "./components/ExportChecklistModal";
 import { SearchPanel } from "./components/SearchPanel";
 import type { Document, DocumentFormat, Source } from "./models/DocumentSchema";
 import type { ScholarResult } from "./models/Scholar";
@@ -48,6 +49,7 @@ export default function App() {
   const [status, setStatus] = useState<string | null>(null);
   const [showShareModal, setShowShareModal] = useState(false);
   const [showFormatModal, setShowFormatModal] = useState(false);
+  const [showExportChecklist, setShowExportChecklist] = useState(false);
   const [showMobilePreview, setShowMobilePreview] = useState(false);
   const [showScoreModal, setShowScoreModal] = useState(false);
   const [showTrustCenter, setShowTrustCenter] = useState(false);
@@ -429,6 +431,20 @@ export default function App() {
   const handleExportPdf = async () => {
     if (!doc) return;
 
+    if (editMode && hasUnsavedChanges) {
+      const shouldSave = window.confirm(
+        "Save your latest edits before exporting?"
+      );
+      if (shouldSave) {
+        const success = editorRef.current?.save();
+        if (success === false) {
+          notifySaveError();
+          return;
+        }
+        setHasUnsavedChanges(false);
+      }
+    }
+
     try {
       const hash = await hashDocument(doc);
       setPrintHash(hash);
@@ -439,6 +455,23 @@ export default function App() {
       setPrintHash("");
       exportToPdf(doc.title);
     }
+  };
+
+  const openExportChecklist = () => {
+    if (editMode && hasUnsavedChanges) {
+      const shouldSave = window.confirm(
+        "Save your latest edits before reviewing the export checklist?"
+      );
+      if (shouldSave) {
+        const success = editorRef.current?.save();
+        if (success === false) {
+          notifySaveError();
+          return;
+        }
+        setHasUnsavedChanges(false);
+      }
+    }
+    setShowExportChecklist(true);
   };
 
   const upsertSource = (current: Source[], source: Source) => {
@@ -609,7 +642,7 @@ export default function App() {
         setTheme(theme === "dark" ? "light" : "dark");
         break;
       case "export":
-        handleExportPdf();
+        openExportChecklist();
         break;
       case "import":
         handleOpenImport();
@@ -842,7 +875,7 @@ export default function App() {
           <button
             className="toolbar-button"
             type="button"
-            onClick={handleExportPdf}
+            onClick={openExportChecklist}
           >
             📥 Export PDF
           </button>
@@ -875,6 +908,16 @@ export default function App() {
       )}
       {showShareModal && doc ? (
         <ShareModal doc={doc} onClose={() => setShowShareModal(false)} />
+      ) : null}
+      {showExportChecklist && doc ? (
+        <ExportChecklistModal
+          doc={doc}
+          onClose={() => setShowExportChecklist(false)}
+          onConfirm={() => {
+            setShowExportChecklist(false);
+            handleExportPdf();
+          }}
+        />
       ) : null}
       {showFormatModal && formatModalValue ? (
         <FormatModal
