@@ -5,18 +5,28 @@ import { templates } from "../documents/templates";
 import { quickstartGuide } from "../documents/quickstartGuide";
 import { importFromMarkdownText } from "../utils/markdownImport";
 import { importFromHtmlText } from "../utils/htmlImport";
+import type { SavedDocument } from "../utils/library";
+import { useFocusTrap } from "../hooks/useFocusTrap";
 import "../styles/StartScreen.css";
 
 interface StartScreenProps {
   onSelectDocument: (doc: Document) => void;
   onImport: (event: React.ChangeEvent<HTMLInputElement>) => void;
   onThemeChange: (theme: "light" | "dark") => void;
+  savedDocuments: SavedDocument[];
+  onOpenSavedDocument: (id: string) => void;
+  onDeleteSavedDocument: (id: string) => void;
+  onExportSavedDocument: (doc: Document, docId?: string) => void;
 }
 
 export function StartScreen({
   onSelectDocument,
   onImport,
   onThemeChange,
+  savedDocuments,
+  onOpenSavedDocument,
+  onDeleteSavedDocument,
+  onExportSavedDocument,
 }: StartScreenProps) {
   const [showPasteModal, setShowPasteModal] = useState(false);
   const [showThemeModal, setShowThemeModal] = useState(false);
@@ -25,6 +35,8 @@ export function StartScreen({
   const [pendingDoc, setPendingDoc] = useState<Document | null>(null);
   const [assistantOpen, setAssistantOpen] = useState(false);
   const importInputRef = useRef<HTMLInputElement>(null);
+  const pasteModalRef = useRef<HTMLDivElement | null>(null);
+  const themeModalRef = useRef<HTMLDivElement | null>(null);
 
   const createBlankDocument = (): Document => {
     return {
@@ -87,6 +99,33 @@ export function StartScreen({
   const handleSelectFromAssistant = (doc: Document) => {
     setAssistantOpen(false);
     onSelectDocument(doc);
+  };
+
+  const orderedSavedDocuments = [...savedDocuments].sort((a, b) =>
+    b.updatedAt.localeCompare(a.updatedAt)
+  );
+
+  const formatSavedAt = (value: string) => {
+    try {
+      const date = new Date(value);
+      return date.toLocaleDateString(undefined, {
+        year: "numeric",
+        month: "short",
+        day: "numeric",
+      });
+    } catch {
+      return value;
+    }
+  };
+
+  const handleDeleteSaved = (entry: SavedDocument) => {
+    const confirmed = window.confirm(
+      `Delete "${entry.title}" from your library? This cannot be undone.`
+    );
+    if (!confirmed) {
+      return;
+    }
+    onDeleteSavedDocument(entry.id);
   };
 
   const handlePasteContinue = async () => {
@@ -177,6 +216,9 @@ export function StartScreen({
     setShowThemeModal(false);
   };
 
+  useFocusTrap(pasteModalRef, () => setShowPasteModal(false));
+  useFocusTrap(themeModalRef, () => setShowThemeModal(false));
+
   return (
     <div className="start-screen">
       <div className="start-container">
@@ -184,6 +226,58 @@ export function StartScreen({
           <h1>Paper Perfector</h1>
           <p>Create and format professional documents</p>
         </div>
+
+        {orderedSavedDocuments.length > 0 ? (
+          <div className="start-section">
+            <div className="start-section-header">
+              <div className="start-section-title">
+                <h2>My Documents</h2>
+                <span className="start-section-tag">Library</span>
+              </div>
+              <span className="start-section-count">
+                {orderedSavedDocuments.length} saved
+              </span>
+            </div>
+            <div className="start-grid start-grid-saved">
+              {orderedSavedDocuments.map((entry) => (
+                <div key={entry.id} className="start-card start-card-saved">
+                  <div className="saved-card-header">
+                    <h3>{entry.title}</h3>
+                    <span>Saved {formatSavedAt(entry.updatedAt)}</span>
+                  </div>
+                  <p>
+                    Versions: {entry.versions.length} · Created{" "}
+                    {formatSavedAt(entry.createdAt)}
+                  </p>
+                  <div className="saved-card-actions">
+                    <button
+                      type="button"
+                      onClick={() => onOpenSavedDocument(entry.id)}
+                      data-tip="Open this saved document."
+                    >
+                      Open
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => onExportSavedDocument(entry.doc, entry.id)}
+                      data-tip="Download a .ppdoc file."
+                    >
+                      Export .ppdoc
+                    </button>
+                    <button
+                      type="button"
+                      className="danger"
+                      onClick={() => handleDeleteSaved(entry)}
+                      data-tip="Remove this document from the library."
+                    >
+                      Delete
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        ) : null}
 
         <div className="start-section">
           <div className="start-section-header">
@@ -271,7 +365,7 @@ export function StartScreen({
             {/* Import Document */}
             <label
               className="start-card start-card-import"
-              data-tip="Import HTML, PDF, Word, Markdown, or text files."
+              data-tip="Import .ppdoc, HTML, PDF, Word, Markdown, or text files."
             >
               <div className="card-icon">📤</div>
               <h3>Import Document</h3>
@@ -279,7 +373,7 @@ export function StartScreen({
             <input
               ref={importInputRef}
               type="file"
-              accept="text/html,.html,.htm,application/pdf,.pdf,image/*,text/markdown,.md,text/plain,.txt,application/vnd.openxmlformats-officedocument.wordprocessingml.document,.docx,.doc"
+              accept="text/html,.html,.htm,application/pdf,.pdf,image/*,text/markdown,.md,text/plain,.txt,application/vnd.openxmlformats-officedocument.wordprocessingml.document,.docx,.doc,.ppdoc"
               onChange={onImport}
               style={{ display: "none" }}
             />
@@ -288,7 +382,7 @@ export function StartScreen({
         </div>
 
         <div className="start-footer">
-          <p>💡 Tip: You can import markdown, HTML, PDF, Word, or text files</p>
+          <p>💡 Tip: You can import .ppdoc, markdown, HTML, PDF, Word, or text files</p>
           <button
             className="start-guide-link"
             type="button"
@@ -302,7 +396,7 @@ export function StartScreen({
 
       {showPasteModal ? (
         <div className="start-modal-backdrop" role="dialog" aria-modal="true">
-          <div className="start-modal">
+          <div className="start-modal" ref={pasteModalRef} tabIndex={-1}>
             <div className="start-modal-header">
               <h2>Paste Markdown, HTML, or Text</h2>
               <p>
@@ -344,7 +438,7 @@ export function StartScreen({
 
       {showThemeModal ? (
         <div className="start-modal-backdrop" role="dialog" aria-modal="true">
-          <div className="start-modal">
+          <div className="start-modal" ref={themeModalRef} tabIndex={-1}>
             <div className="start-modal-header">
               <h2>Choose Paper Theme</h2>
               <p>Select a background before opening your document.</p>

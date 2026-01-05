@@ -10,6 +10,9 @@ type OpenAlexWork = {
   id?: string;
   display_name?: string;
   publication_year?: number;
+  ids?: {
+    doi?: string;
+  };
   primary_location?: {
     landing_page_url?: string;
     pdf_url?: string | null;
@@ -54,6 +57,7 @@ function mapWork(work: OpenAlexWork): ScholarResult {
         .filter((name): name is string => Boolean(name)) ?? [],
     year: work.publication_year,
     venue: work.primary_location?.source?.display_name,
+    doi: work.ids?.doi,
     url: work.primary_location?.landing_page_url,
     pdfUrl: work.open_access?.oa_url ?? work.primary_location?.pdf_url ?? undefined,
     abstract: decodeAbstract(work.abstract_inverted_index),
@@ -65,7 +69,7 @@ export async function fetchScholarResults(query: string) {
     search: query,
     "per-page": "8",
     select:
-      "id,display_name,publication_year,primary_location,open_access,authorships,abstract_inverted_index",
+      "id,display_name,publication_year,ids,primary_location,open_access,authorships,abstract_inverted_index",
   });
 
   const response = await fetch(`https://api.openalex.org/works?${params.toString()}`);

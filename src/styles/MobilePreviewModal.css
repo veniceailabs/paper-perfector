@@ -183,7 +183,6 @@
     --device-max-height: min(var(--device-height-base), calc(100vh - 220px));
     margin: 0 auto;
   }
-  }
 }
 
 [data-theme="light"] .mobile-preview-modal {

@@ -1,10 +1,14 @@
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import type { Document } from "../models/DocumentSchema";
 import { encodeDocumentToUrl, emailDocument } from "../utils/share";
+import { downloadTextFile } from "../utils/download";
+import { serializePaperDoc } from "../utils/paperDoc";
+import { useFocusTrap } from "../hooks/useFocusTrap";
 import "../styles/ShareModal.css";
 
 type ShareModalProps = {
   doc: Document;
+  docId?: string | null;
   onClose: () => void;
 };
 
@@ -34,7 +38,8 @@ async function copyToClipboard(text: string) {
   return success;
 }
 
-export function ShareModal({ doc, onClose }: ShareModalProps) {
+export function ShareModal({ doc, docId, onClose }: ShareModalProps) {
+  const modalRef = useRef<HTMLDivElement | null>(null);
   const shareUrl = useMemo(() => encodeDocumentToUrl(doc), [doc]);
   const [copyStatus, setCopyStatus] = useState<string | null>(null);
   const [emailStatus, setEmailStatus] = useState<string | null>(null);
@@ -42,6 +47,15 @@ export function ShareModal({ doc, onClose }: ShareModalProps) {
   const canNativeShare = supportsNativeShare();
 
   const shareText = `Paper Perfector - ${doc.title}`;
+  const shareTooLong = shareUrl.length > 1800;
+
+  const sanitizeFileName = (name: string) =>
+    name.replace(/[/\\?%*:|"<>]/g, "-").trim() || "document";
+
+  const handleDownload = () => {
+    const fileName = `${sanitizeFileName(doc.title)}.ppdoc`;
+    downloadTextFile(serializePaperDoc(doc, docId ?? undefined), fileName);
+  };
 
   const handleCopy = async () => {
     const success = await copyToClipboard(shareUrl);
@@ -85,9 +99,16 @@ export function ShareModal({ doc, onClose }: ShareModalProps) {
     window.open(url, "_blank", "noopener,noreferrer");
   };
 
+  useFocusTrap(modalRef, onClose);
+
   return (
     <div className="share-modal-backdrop" role="dialog" aria-modal="true" onClick={onClose}>
-      <div className="share-modal" onClick={(event) => event.stopPropagation()}>
+      <div
+        className="share-modal"
+        ref={modalRef}
+        tabIndex={-1}
+        onClick={(event) => event.stopPropagation()}
+      >
         <div className="share-modal-header">
           <div>
             <h2>Share Paper</h2>
@@ -123,8 +144,22 @@ export function ShareModal({ doc, onClose }: ShareModalProps) {
               Copy
             </button>
           </div>
+          {shareTooLong ? (
+            <div className="share-warning">
+              Share links can be too long for some apps. Use a .ppdoc file instead.
+            </div>
+          ) : null}
           {copyStatus ? <div className="share-status">{copyStatus}</div> : null}
         </div>
+
+        <button
+          className="share-native"
+          type="button"
+          onClick={handleDownload}
+          data-tip="Download a Paper Perfector document file."
+        >
+          Download .ppdoc
+        </button>
 
         {canNativeShare ? (
           <button

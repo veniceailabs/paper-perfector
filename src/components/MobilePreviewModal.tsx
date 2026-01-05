@@ -1,6 +1,7 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { Document } from "../models/DocumentSchema";
 import { DocumentRenderer } from "../renderer/DocumentRenderer";
+import { useFocusTrap } from "../hooks/useFocusTrap";
 import "../styles/MobilePreviewModal.css";
 
 type DeviceType = "iphone" | "android";
@@ -11,6 +12,7 @@ interface MobilePreviewModalProps {
 }
 
 export function MobilePreviewModal({ doc, onClose }: MobilePreviewModalProps) {
+  const modalRef = useRef<HTMLDivElement | null>(null);
   const [device, setDevice] = useState<DeviceType>("iphone");
 
   useEffect(() => {
@@ -22,10 +24,14 @@ export function MobilePreviewModal({ doc, onClose }: MobilePreviewModalProps) {
     }
   }, []);
 
+  useFocusTrap(modalRef, onClose);
+
   return (
     <div className="mobile-preview-backdrop" role="dialog" aria-modal="true" onClick={onClose}>
       <div
         className="mobile-preview-modal"
+        ref={modalRef}
+        tabIndex={-1}
         onClick={(event) => event.stopPropagation()}
       >
         <div className="mobile-preview-header">

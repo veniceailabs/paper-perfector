@@ -2,6 +2,7 @@ import {
   forwardRef,
   useEffect,
   useImperativeHandle,
+  useMemo,
   useRef,
   useState,
   type KeyboardEvent as ReactKeyboardEvent,
@@ -18,12 +19,21 @@ import {
   formatPresets,
   resolveFormat,
 } from "../utils/formatting";
+import { clearDraft, loadDraft } from "../utils/draft";
+import { useDraftAutoSave } from "../hooks/useDraftAutoSave";
+import { useFocusTrap } from "../hooks/useFocusTrap";
 import {
   formatInTextCitation,
   formatReference,
   formatReferenceTitle,
 } from "../utils/citations";
-import { replaceInDocument, replaceInText } from "../utils/search";
+import {
+  replaceInDocument,
+  replaceInText,
+  replaceNextInDocument,
+  replaceNextInText,
+  type ReplaceCursor,
+} from "../utils/search";
 import { auditCitationCoverage } from "../utils/citationAudit";
 import { calculateDocumentStats } from "../utils/documentStats";
 import "../styles/DocumentEditor.css";
@@ -42,6 +52,7 @@ export type DocumentEditorHandle = {
 
 interface DocumentEditorProps {
   doc: Document;
+  docId?: string | null;
   onSave: (doc: Document) => void;
   onDirtyChange?: (isDirty: boolean) => void;
   onSaveDefaults?: (format: DocumentFormat) => void;
@@ -49,7 +60,7 @@ interface DocumentEditorProps {
 
 export const DocumentEditor = forwardRef<DocumentEditorHandle, DocumentEditorProps>(
   function DocumentEditor(
-    { doc, onSave, onDirtyChange, onSaveDefaults }: DocumentEditorProps,
+    { doc, docId, onSave, onDirtyChange, onSaveDefaults }: DocumentEditorProps,
     ref
   ) {
   const [title, setTitle] = useState(doc.title);
@@ -73,7 +84,12 @@ export const DocumentEditor = forwardRef<DocumentEditorHandle, DocumentEditorPro
   } | null>(null);
   const [expandedText, setExpandedText] = useState("");
   const [lastSavedAt, setLastSavedAt] = useState<Date | null>(null);
+  const [replaceCursor, setReplaceCursor] = useState<ReplaceCursor | null>(null);
+  const [replaceTextCursor, setReplaceTextCursor] = useState<number | null>(null);
   const markdownTextareaRef = useRef<HTMLTextAreaElement | null>(null);
+  const restoredDraftRef = useRef<string | null>(null);
+  const replaceSignatureRef = useRef<string>("");
+  const expandedModalRef = useRef<HTMLDivElement | null>(null);
   const lastFocusRef = useRef<
     | { type: "markdown"; element: HTMLTextAreaElement }
     | { type: "paragraph"; sectionId: string; index: number; element: HTMLTextAreaElement }
@@ -95,7 +111,36 @@ export const DocumentEditor = forwardRef<DocumentEditorHandle, DocumentEditorPro
     setIsDirty(false);
     setMarkdownError(null);
     setLastSavedAt(null);
+    restoredDraftRef.current = null;
+    replaceSignatureRef.current = "";
+    setReplaceCursor(null);
+    setReplaceTextCursor(null);
   }, [doc]);
+
+  useEffect(() => {
+    if (!docId || restoredDraftRef.current === docId) {
+      return;
+    }
+    const draft = loadDraft(docId);
+    if (!draft) {
+      restoredDraftRef.current = docId;
+      return;
+    }
+    restoredDraftRef.current = docId;
+    setTitle(draft.doc.title);
+    setSubtitle(draft.doc.subtitle ?? "");
+    setMetadata(draft.doc.metadata);
+    setSections(draft.doc.sections);
+    setCurrentSectionId(draft.doc.sections[0]?.id || "");
+    setFormat(resolveFormat(draft.doc));
+    setSources(draft.doc.sources ?? []);
+    setIsDirty(true);
+    setLastSavedAt(null);
+    setEditorMode(draft.mode);
+    if (draft.mode === "markdown") {
+      setMarkdownDraft(draft.markdown ?? "");
+    }
+  }, [docId]);
 
   useEffect(() => {
     onDirtyChange?.(isDirty);
@@ -185,6 +230,19 @@ export const DocumentEditor = forwardRef<DocumentEditorHandle, DocumentEditorPro
     sources,
   });
 
+  const draftSnapshot = useMemo(
+    () => buildStructuredDoc(),
+    [format, metadata, sections, sources, subtitle, title]
+  );
+
+  useDraftAutoSave({
+    docId,
+    doc: draftSnapshot,
+    mode: editorMode,
+    markdown: editorMode === "markdown" ? markdownDraft : undefined,
+    enabled: isDirty,
+  });
+
   const syncMarkdownDraft = () => {
     const snapshot = buildStructuredDoc();
     setMarkdownDraft(documentToMarkdown(snapshot));
@@ -244,12 +302,18 @@ export const DocumentEditor = forwardRef<DocumentEditorHandle, DocumentEditorPro
       onSave(withFormat);
       setIsDirty(false);
       setLastSavedAt(new Date());
+      if (docId) {
+        clearDraft(docId);
+      }
       return true;
     }
 
     onSave(buildStructuredDoc());
     setIsDirty(false);
     setLastSavedAt(new Date());
+    if (docId) {
+      clearDraft(docId);
+    }
     return true;
   };
 
@@ -664,32 +728,77 @@ export const DocumentEditor = forwardRef<DocumentEditorHandle, DocumentEditorPro
     scope: SearchScope,
     replaceAll: boolean
   ) => {
+    const trimmedQuery = query.trim();
+    const signature = JSON.stringify({
+      query: trimmedQuery,
+      replacement,
+      scope,
+      mode: editorMode,
+    });
+    if (signature !== replaceSignatureRef.current) {
+      replaceSignatureRef.current = signature;
+      setReplaceCursor(null);
+      setReplaceTextCursor(null);
+    }
+
     if (editorMode === "markdown") {
-      const result = replaceInText(
+      if (replaceAll) {
+        const result = replaceInText(markdownDraft, query, replacement, true);
+        if (result.count > 0) {
+          setMarkdownDraft(result.value);
+          setIsDirty(true);
+        }
+        setReplaceTextCursor(null);
+        return result.count;
+      }
+
+      const result = replaceNextInText(
         markdownDraft,
         query,
         replacement,
-        replaceAll
+        replaceTextCursor
       );
       if (result.count > 0) {
         setMarkdownDraft(result.value);
         setIsDirty(true);
+        setReplaceTextCursor(result.cursorOffset);
+      } else {
+        setReplaceTextCursor(null);
       }
       return result.count;
     }
 
-    const result = replaceInDocument(
+    if (replaceAll) {
+      const result = replaceInDocument(
+        buildStructuredDoc(),
+        query,
+        replacement,
+        scope,
+        true
+      );
+      if (result.count > 0) {
+        applyParsedDoc(result.doc);
+        setIsDirty(true);
+      }
+      setReplaceCursor(null);
+      return result.count;
+    }
+
+    const nextResult = replaceNextInDocument(
       buildStructuredDoc(),
       query,
       replacement,
       scope,
-      replaceAll
+      replaceCursor
     );
-    if (result.count > 0) {
-      applyParsedDoc(result.doc);
+    if (nextResult.count > 0) {
+      applyParsedDoc(nextResult.doc);
       setIsDirty(true);
+      setReplaceCursor(nextResult.cursor);
+    } else {
+      setReplaceCursor(null);
     }
-    return result.count;
+    return nextResult.count;
   };
 
   const activePreset = format.preset ?? "default";
@@ -775,6 +884,8 @@ export const DocumentEditor = forwardRef<DocumentEditorHandle, DocumentEditorPro
         .slice(0, 2)
         .map((source) => source.title || source.authors[0] || "Untitled source")
     : [];
+
+  useFocusTrap(expandedModalRef, closeParagraphExpand);
 
   return (
     <div className={`editor-container ${isMarkdownMode ? "markdown" : ""}`}>
@@ -1246,6 +1357,8 @@ export const DocumentEditor = forwardRef<DocumentEditorHandle, DocumentEditorPro
         >
           <div
             className="editor-modal"
+            ref={expandedModalRef}
+            tabIndex={-1}
             onClick={(event) => event.stopPropagation()}
           >
             <div className="editor-modal-header">

@@ -1,6 +1,8 @@
+import { useRef } from "react";
 import type { ScholarResult } from "../models/Scholar";
 import type { SearchResult, SearchScope } from "../models/Search";
 import type { Source } from "../models/DocumentSchema";
+import { useFocusTrap } from "../hooks/useFocusTrap";
 import "../styles/SearchPanel.css";
 
 type AppAction = {
@@ -81,6 +83,10 @@ export function SearchPanel({
   onAction,
   onClose,
 }: SearchPanelProps) {
+  const panelRef = useRef<HTMLElement | null>(null);
+
+  useFocusTrap(panelRef, onClose);
+
   const handleScopeToggle = (key: keyof SearchScope) => {
     onSearchScopeChange({ ...searchScope, [key]: !searchScope[key] });
   };
@@ -94,6 +100,7 @@ export function SearchPanel({
     authors: result.authors,
     year: result.year,
     venue: result.venue,
+    doi: result.doi,
     url: result.url,
     pdfUrl: result.pdfUrl,
   });
@@ -109,6 +116,8 @@ export function SearchPanel({
         className="search-panel"
         role="dialog"
         aria-modal="true"
+        ref={panelRef}
+        tabIndex={-1}
         onClick={(event) => event.stopPropagation()}
       >
         <header className="search-panel-header">
@@ -236,15 +245,15 @@ export function SearchPanel({
         </section>
 
         <section className="search-panel-section">
-          <h3>Google Scholar</h3>
+          <h3>Scholar Search (OpenAlex)</h3>
           <p className="search-panel-note">
-            Results shown in-app (OpenAlex metadata).
+            Results shown in-app from OpenAlex metadata.
           </p>
           <div className="search-panel-field scholar">
             <input
               type="search"
               className="search-panel-input"
-              placeholder="Search Scholar"
+              placeholder="Search scholarly sources"
               value={scholarQuery}
               onChange={(event) => onScholarQueryChange(event.target.value)}
               onKeyDown={(event) => {
@@ -253,7 +262,7 @@ export function SearchPanel({
                   onScholarSearch();
                 }
               }}
-              aria-label="Search Google Scholar"
+              aria-label="Search scholarly sources"
             />
             <button
               type="button"

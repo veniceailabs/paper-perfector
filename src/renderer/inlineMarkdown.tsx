@@ -33,6 +33,28 @@ function stripWrapping(token: string) {
   return token;
 }
 
+function sanitizeHref(rawHref: string) {
+  const trimmed = rawHref.trim();
+  if (!trimmed) {
+    return null;
+  }
+  if (trimmed.startsWith("#") || trimmed.startsWith("/")) {
+    return trimmed;
+  }
+  try {
+    const base =
+      typeof window !== "undefined" ? window.location.origin : "https://example.com";
+    const url = new URL(trimmed, base);
+    const protocol = url.protocol.toLowerCase();
+    if (protocol === "http:" || protocol === "https:" || protocol === "mailto:" || protocol === "tel:") {
+      return url.href;
+    }
+  } catch {
+    return null;
+  }
+  return null;
+}
+
 export function renderHighlightedText(
   text: string,
   keyPrefix: string,
@@ -110,15 +132,27 @@ function renderInlineMarkdownLine(
       const linkMatch = token.match(/^\[([^\]]+)\]\(([^)]+)\)$/);
       if (linkMatch) {
         const [, label, href] = linkMatch;
-        nodes.push(
-          <a key={key} href={href} target="_blank" rel="noreferrer">
-            {renderHighlightedText(
-              label,
+        const safeHref = sanitizeHref(href);
+        const linkLabel = label || href;
+        if (safeHref) {
+          nodes.push(
+            <a key={key} href={safeHref} target="_blank" rel="noreferrer">
+              {renderHighlightedText(
+                linkLabel,
+                `${keyPrefix}-link-${tokenIndex}`,
+                highlightQuery
+              )}
+            </a>
+          );
+        } else {
+          nodes.push(
+            ...renderHighlightedText(
+              linkLabel,
               `${keyPrefix}-link-${tokenIndex}`,
               highlightQuery
-            )}
-          </a>
-        );
+            )
+          );
+        }
       } else {
         nodes.push(
           ...renderHighlightedText(

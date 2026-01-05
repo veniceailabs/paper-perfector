@@ -14,6 +14,12 @@ export type Source = {
   authors: string[];
   year?: number;
   venue?: string;
+  doi?: string;
+  volume?: string;
+  issue?: string;
+  pages?: string;
+  publisher?: string;
+  edition?: string;
   url?: string;
   pdfUrl?: string;
   accessed?: string;

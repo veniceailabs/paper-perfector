@@ -8,6 +8,7 @@ import { FormatModal } from "./components/FormatModal";
 import { ExportChecklistModal } from "./components/ExportChecklistModal";
 import { HoverTip } from "./components/HoverTip";
 import { SearchPanel } from "./components/SearchPanel";
+import { HistoryModal } from "./components/HistoryModal";
 import type { Document, DocumentFormat, Source } from "./models/DocumentSchema";
 import type { ScholarResult } from "./models/Scholar";
 import {
@@ -22,25 +23,41 @@ import { useAutoSave, loadAutoSavedDocument } from "./hooks/useAutoSave";
 import {
   getSharedDocumentFromUrl,
 } from "./utils/share";
+import { downloadTextFile } from "./utils/download";
+import { createId } from "./utils/id";
+import type { SavedDocument } from "./utils/library";
+import {
+  deleteDocumentFromLibrary,
+  loadLibrary,
+  saveDocumentToLibrary,
+} from "./utils/library";
+import { loadLastDraft, type DraftPayload } from "./utils/draft";
 import {
   loadSavedFormatDefaults,
   resolveFormat,
   saveFormatDefaults,
 } from "./utils/formatting";
-import { replaceInDocument } from "./utils/search";
+import { replaceInDocument, replaceNextInDocument, type ReplaceCursor } from "./utils/search";
 import { fetchScholarResults } from "./utils/scholar";
 import { calculateDocumentStats } from "./utils/documentStats";
 import { PaperScoreModal } from "./components/PaperScoreModal";
 import { TrustCenterModal } from "./components/TrustCenterModal";
 import { quickstartGuide } from "./documents/quickstartGuide";
+import { serializePaperDoc } from "./utils/paperDoc";
 
 export default function App() {
   const sharedDoc = getSharedDocumentFromUrl();
   const initialDoc = sharedDoc ?? null;
 
   const [doc, setDoc] = useState<Document | null>(initialDoc);
+  const [docId, setDocId] = useState<string | null>(() =>
+    initialDoc ? createId("doc") : null
+  );
   const [resumeDoc, setResumeDoc] = useState<Document | null>(() =>
     sharedDoc ? null : loadAutoSavedDocument()
+  );
+  const [resumeDraft, setResumeDraft] = useState<DraftPayload | null>(() =>
+    sharedDoc ? null : loadLastDraft()
   );
   const [history, setHistory] = useState<Document[]>(() =>
     initialDoc ? [initialDoc] : []
@@ -54,6 +71,7 @@ export default function App() {
   const [showMobilePreview, setShowMobilePreview] = useState(false);
   const [showScoreModal, setShowScoreModal] = useState(false);
   const [showTrustCenter, setShowTrustCenter] = useState(false);
+  const [showHistoryModal, setShowHistoryModal] = useState(false);
   const [theme, setTheme] = useState<"dark" | "light">("dark");
   const [tipsEnabled, setTipsEnabled] = useState(() => {
     try {
@@ -74,6 +92,7 @@ export default function App() {
   const [showHelpAssistant, setShowHelpAssistant] = useState(false);
   const [findQuery, setFindQuery] = useState("");
   const [replaceValue, setReplaceValue] = useState("");
+  const [replaceCursor, setReplaceCursor] = useState<ReplaceCursor | null>(null);
   const [searchScope, setSearchScope] = useState<SearchScope>(defaultSearchScope);
   const [scholarQuery, setScholarQuery] = useState("");
   const [scholarResults, setScholarResults] = useState<ScholarResult[]>([]);
@@ -89,7 +108,9 @@ export default function App() {
   const importInputRef = useRef<HTMLInputElement | null>(null);
   const scholarRequestRef = useRef(0);
   const toolbarMenuRef = useRef<HTMLDivElement | null>(null);
+  const replaceSignatureRef = useRef<string>("");
   const [showToolbarMenu, setShowToolbarMenu] = useState(false);
+  const [library, setLibrary] = useState<SavedDocument[]>(() => loadLibrary());
 
   const searchResults = useMemo<SearchResult[]>(() => {
     const trimmedQuery = findQuery.trim();
@@ -211,9 +232,85 @@ export default function App() {
     const format = resolveFormat(doc);
     return calculateDocumentStats(doc, format.lineHeight ?? 1.5);
   }, [doc]);
+  const currentLibraryEntry = useMemo(
+    () => (docId ? library.find((entry) => entry.id === docId) ?? null : null),
+    [docId, library]
+  );
 
-  const appActions = useMemo(
-    () => [
+  const refreshLibrary = () => {
+    setLibrary(loadLibrary());
+  };
+
+  const openDocument = (nextDoc: Document, nextId?: string) => {
+    const id = nextId ?? createId("doc");
+    setDoc(nextDoc);
+    setDocId(id);
+    setHistory([nextDoc]);
+    setHistoryIndex(0);
+    setEditMode(false);
+    setHasUnsavedChanges(false);
+  };
+
+  const handleResumeDraft = () => {
+    if (!resumeDraft) {
+      return;
+    }
+    openDocument(resumeDraft.doc, resumeDraft.docId);
+    setEditMode(true);
+  };
+
+  const closeDocument = () => {
+    setDoc(null);
+    setDocId(null);
+    setHistory([]);
+    setHistoryIndex(-1);
+    setEditMode(false);
+    setHasUnsavedChanges(false);
+    setShowHistoryModal(false);
+  };
+
+  const handleSaveToLibrary = () => {
+    if (!doc) {
+      return;
+    }
+    const saved = saveDocumentToLibrary(doc, docId ?? undefined);
+    setDocId(saved.id);
+    refreshLibrary();
+    setStatus("Saved to library.");
+    setTimeout(() => setStatus(null), 2000);
+  };
+
+  const handleExportPaperDoc = (docToExport: Document, docIdToExport?: string) => {
+    const fileName = `${docToExport.title.replace(/[/\\?%*:|"<>]/g, "-")}.ppdoc`;
+    downloadTextFile(serializePaperDoc(docToExport, docIdToExport), fileName);
+  };
+
+  const handleOpenSavedDocument = (entryId: string, versionId?: string) => {
+    const entries = loadLibrary();
+    const entry = entries.find((item) => item.id === entryId);
+    if (!entry) {
+      return;
+    }
+    const versionDoc = versionId
+      ? entry.versions.find((version) => version.id === versionId)?.doc
+      : null;
+    const target = versionDoc ?? entry.doc;
+    openDocument(target, entry.id);
+  };
+
+  const handleDeleteSavedDocument = (entryId: string) => {
+    deleteDocumentFromLibrary(entryId);
+    refreshLibrary();
+    if (docId === entryId) {
+      closeDocument();
+    }
+  };
+
+  const appActions = useMemo(() => {
+    const hasSavedEntry = docId
+      ? library.some((entry) => entry.id === docId)
+      : false;
+    return [
       { id: "home", label: "Home", description: "Start screen" },
       {
         id: "back",
@@ -232,6 +329,13 @@ export default function App() {
         label: editMode ? "View Mode" : "Edit Mode",
         description: editMode ? "Return to viewer" : "Open editor",
       },
+      { id: "save-library", label: "Save", description: "Save to library" },
+      {
+        id: "history",
+        label: "History",
+        description: "Version history",
+        disabled: !hasSavedEntry,
+      },
       { id: "format", label: "Format", description: "Fonts & spacing" },
       { id: "mobile", label: "Mobile Preview", description: "Device frame" },
       { id: "share", label: "Share", description: "Link + email" },
@@ -248,9 +352,8 @@ export default function App() {
         label: tipsEnabled ? "Tips Off" : "Tips On",
         description: "Toggle helpful tips",
       },
-    ],
-    [editMode, history.length, historyIndex, theme, tipsEnabled]
-  );
+    ];
+  }, [docId, editMode, history.length, historyIndex, library, theme, tipsEnabled]);
 
   // Auto-save document
   useAutoSave(doc);
@@ -281,9 +384,16 @@ export default function App() {
   useEffect(() => {
     if (!doc) {
       setResumeDoc(loadAutoSavedDocument());
+      setResumeDraft(loadLastDraft());
       setShowToolbarMenu(false);
+      setDocId(null);
     }
   }, [doc]);
+
+  useEffect(() => {
+    replaceSignatureRef.current = "";
+    setReplaceCursor(null);
+  }, [docId, findQuery, replaceValue, searchScope]);
 
   useEffect(() => {
     if (!showToolbarMenu) {
@@ -461,7 +571,10 @@ export default function App() {
 
       try {
         const result = await importDocumentFromFile(file);
-        applyDocument(applySavedFormatDefaults(result.document));
+        openDocument(
+          applySavedFormatDefaults(result.document),
+          result.docId ?? undefined
+        );
         if (result.warnings.length > 0) {
           setStatus(result.warnings.join(" "));
         } else {
@@ -635,22 +748,51 @@ export default function App() {
       return;
     }
 
+    const trimmedQuery = findQuery.trim();
+    const signature = JSON.stringify({
+      query: trimmedQuery,
+      replacement: replaceValue,
+      scope: searchScope,
+    });
+    if (signature !== replaceSignatureRef.current) {
+      replaceSignatureRef.current = signature;
+      setReplaceCursor(null);
+    }
+
     let count = 0;
     if (editMode && editorRef.current) {
       count = replaceAll
         ? editorRef.current.replaceAll(findQuery, replaceValue, searchScope)
         : editorRef.current.replaceNext(findQuery, replaceValue, searchScope);
     } else {
-      const result = replaceInDocument(
-        doc,
-        findQuery,
-        replaceValue,
-        searchScope,
-        replaceAll
-      );
-      count = result.count;
-      if (count > 0) {
-        applyDocument(result.doc);
+      if (replaceAll) {
+        const result = replaceInDocument(
+          doc,
+          findQuery,
+          replaceValue,
+          searchScope,
+          true
+        );
+        count = result.count;
+        if (count > 0) {
+          applyDocument(result.doc);
+        }
+        setReplaceCursor(null);
+      } else {
+        const result = replaceNextInDocument(
+          doc,
+          findQuery,
+          replaceValue,
+          searchScope,
+          replaceCursor
+        );
+        count = result.count;
+        if (count > 0) {
+          applyDocument(result.doc);
+          setReplaceCursor(result.cursor);
+        } else {
+          setReplaceCursor(null);
+        }
       }
     }
 
@@ -666,8 +808,7 @@ export default function App() {
     switch (actionId) {
       case "home":
         requestSafeNavigation(() => {
-          setDoc(null);
-          setEditMode(false);
+          closeDocument();
         });
         break;
       case "back":
@@ -678,6 +819,17 @@ export default function App() {
         break;
       case "edit":
         handleToggleEditMode();
+        break;
+      case "save-library":
+        handleSaveToLibrary();
+        break;
+      case "history":
+        if (!currentLibraryEntry) {
+          setStatus("Save to your library to unlock history.");
+          setTimeout(() => setStatus(null), 2000);
+          break;
+        }
+        setShowHistoryModal(true);
         break;
       case "share":
         setShowShareModal(true);
@@ -778,7 +930,7 @@ export default function App() {
             <button
               className="brand brand-button"
               type="button"
-              onClick={() => setDoc(null)}
+              onClick={closeDocument}
               data-tip="Return to the Paper Perfector home screen."
             >
               Paper Perfector
@@ -787,10 +939,20 @@ export default function App() {
               <button
                 className="toolbar-button toolbar-resume"
                 type="button"
-                onClick={() => applyDocument(resumeDoc)}
+                onClick={() => openDocument(resumeDoc)}
                 data-tip="Resume your last auto-saved document."
               >
                 ↩️ Resume
+              </button>
+            ) : null}
+            {resumeDraft ? (
+              <button
+                className="toolbar-button toolbar-resume"
+                type="button"
+                onClick={handleResumeDraft}
+                data-tip="Resume your latest unsaved draft."
+              >
+                📝 Draft
               </button>
             ) : null}
           </div>
@@ -815,8 +977,12 @@ export default function App() {
         </div>
         <StartScreen
           onSelectDocument={(nextDoc) =>
-            applyDocument(applySavedFormatDefaults(nextDoc))
+            openDocument(applySavedFormatDefaults(nextDoc))
           }
+          savedDocuments={library}
+          onOpenSavedDocument={handleOpenSavedDocument}
+          onDeleteSavedDocument={handleDeleteSavedDocument}
+          onExportSavedDocument={handleExportPaperDoc}
           onImport={handleImport}
           onThemeChange={setTheme}
         />
@@ -833,8 +999,7 @@ export default function App() {
             type="button"
             onClick={() => {
               requestSafeNavigation(() => {
-                setDoc(null);
-                setEditMode(false);
+                closeDocument();
               });
             }}
             data-tip="Go back to the start screen."
@@ -874,8 +1039,7 @@ export default function App() {
             type="button"
             onClick={() => {
               requestSafeNavigation(() => {
-                setDoc(null);
-                setEditMode(false);
+                closeDocument();
               });
             }}
             data-tip="Return to the home screen."
@@ -884,16 +1048,24 @@ export default function App() {
           </button>
           <label
             className="file-upload"
-            data-tip="Import HTML, PDF, Word, Markdown, text, or images."
+            data-tip="Import .ppdoc, HTML, PDF, Word, Markdown, text, or images."
           >
             Import
             <input
               ref={importInputRef}
               type="file"
-              accept="text/html,.html,.htm,application/pdf,.pdf,image/*,text/markdown,.md,text/plain,.txt,application/vnd.openxmlformats-officedocument.wordprocessingml.document,.docx,.doc"
+              accept="text/html,.html,.htm,application/pdf,.pdf,image/*,text/markdown,.md,text/plain,.txt,application/vnd.openxmlformats-officedocument.wordprocessingml.document,.docx,.doc,.ppdoc"
               onChange={handleImport}
             />
           </label>
+          <button
+            className="toolbar-button"
+            type="button"
+            onClick={handleSaveToLibrary}
+            data-tip="Save this document to your library."
+          >
+            💾 Save
+          </button>
           <button
             className="toolbar-button"
             type="button"
@@ -937,6 +1109,30 @@ export default function App() {
             </button>
             {showToolbarMenu ? (
               <div className="toolbar-menu-panel">
+                <button
+                  className="toolbar-menu-item"
+                  type="button"
+                  onClick={() => {
+                    handleSaveToLibrary();
+                    setShowToolbarMenu(false);
+                  }}
+                  data-tip="Save this document to your library."
+                >
+                  💾 Save
+                </button>
+                <button
+                  className="toolbar-menu-item"
+                  type="button"
+                  onClick={() => {
+                    setShowHistoryModal(true);
+                    setShowToolbarMenu(false);
+                  }}
+                  data-tip="Review saved versions."
+                  disabled={!currentLibraryEntry}
+                >
+                  🕒 History
+                </button>
+                <div className="toolbar-menu-divider" />
                 <button
                   className="toolbar-menu-item"
                   type="button"
@@ -1011,6 +1207,7 @@ export default function App() {
         <DocumentEditor
           ref={editorRef}
           doc={doc}
+          docId={docId}
           onSave={handleDocSave}
           onDirtyChange={setHasUnsavedChanges}
           onSaveDefaults={handleSaveDefaultFormat}
@@ -1024,7 +1221,7 @@ export default function App() {
         />
       )}
       {showShareModal && doc ? (
-        <ShareModal doc={doc} onClose={() => setShowShareModal(false)} />
+        <ShareModal doc={doc} docId={docId} onClose={() => setShowShareModal(false)} />
       ) : null}
       {showExportChecklist && doc ? (
         <ExportChecklistModal
@@ -1080,6 +1277,18 @@ export default function App() {
       {showScoreModal && doc ? (
         <PaperScoreModal doc={doc} onClose={() => setShowScoreModal(false)} />
       ) : null}
+      {showHistoryModal && currentLibraryEntry ? (
+        <HistoryModal
+          entry={currentLibraryEntry}
+          onRestore={(restored) => {
+            applyDocument(restored);
+            setShowHistoryModal(false);
+            setStatus("Version restored.");
+            setTimeout(() => setStatus(null), 2000);
+          }}
+          onClose={() => setShowHistoryModal(false)}
+        />
+      ) : null}
       {showTrustCenter && doc ? (
         <TrustCenterModal doc={doc} onClose={() => setShowTrustCenter(false)} />
       ) : null}
@@ -1112,7 +1321,7 @@ export default function App() {
                 <button
                   type="button"
                   onClick={() =>
-                    requestSafeNavigation(() => applyDocument(quickstartGuide))
+                    requestSafeNavigation(() => openDocument(quickstartGuide))
                   }
                   data-tip="Open the quickstart guide."
                 >

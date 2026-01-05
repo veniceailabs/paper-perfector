@@ -1,0 +1,122 @@
+.history-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(8, 12, 22, 0.7);
+  backdrop-filter: blur(10px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  z-index: 30;
+}
+
+.history-modal {
+  width: min(680px, 92vw);
+  background: linear-gradient(135deg, #0f172a, #111827);
+  border-radius: 18px;
+  border: 1px solid rgba(148, 163, 184, 0.25);
+  padding: 24px;
+  color: var(--text-primary);
+  box-shadow: 0 24px 60px rgba(2, 6, 23, 0.6);
+}
+
+.history-modal-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.history-modal-header h2 {
+  margin: 0 0 6px;
+  font-size: 1.4em;
+}
+
+.history-modal-header p {
+  margin: 0;
+  color: var(--text-muted);
+}
+
+.history-modal-close {
+  border: 1px solid rgba(148, 163, 184, 0.4);
+  background: transparent;
+  color: var(--text-primary);
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+.history-modal-list {
+  display: grid;
+  gap: 12px;
+}
+
+.history-modal-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 16px;
+  border-radius: 12px;
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  background: rgba(15, 23, 42, 0.55);
+}
+
+.history-modal-row strong {
+  display: block;
+  color: #e2e8f0;
+  font-weight: 600;
+}
+
+.history-modal-row span {
+  display: block;
+  color: var(--text-muted);
+  font-size: 0.85em;
+  margin-top: 4px;
+}
+
+.history-restore-button {
+  border-radius: 999px;
+  border: 1px solid var(--rule-color);
+  background: transparent;
+  color: var(--text-primary);
+  padding: 6px 14px;
+  font-size: 0.85em;
+  cursor: pointer;
+}
+
+.history-restore-button:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.history-restore-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.history-modal-empty {
+  color: var(--text-muted);
+  text-align: center;
+  padding: 24px 0;
+}
+
+[data-theme="light"] .history-modal {
+  background: linear-gradient(135deg, #ffffff, #f8fafc);
+  color: #0f172a;
+}
+
+[data-theme="light"] .history-modal-row {
+  background: rgba(248, 250, 252, 0.9);
+  border-color: rgba(148, 163, 184, 0.3);
+}
+
+[data-theme="light"] .history-modal-row strong {
+  color: #0f172a;
+}
+
+[data-theme="light"] .history-modal-close {
+  border-color: rgba(148, 163, 184, 0.5);
+  color: #0f172a;
+}

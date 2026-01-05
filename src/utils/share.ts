@@ -1,5 +1,5 @@
 import type { Document } from "../models/DocumentSchema";
-import { exportToPdfBlob } from "./export";
+import { exportToPdfBlob, exportToPdfTextBlob } from "./export";
 
 function toBase64Url(bytes: Uint8Array) {
   let binary = "";
@@ -102,7 +102,12 @@ export async function emailDocument(
   const subject = encodeURIComponent(`Paper Perfector - ${doc.title}`);
 
   try {
-    const pdfBlob = await exportToPdfBlob(doc.title);
+    let pdfBlob: Blob;
+    try {
+      pdfBlob = await exportToPdfTextBlob(doc);
+    } catch {
+      pdfBlob = await exportToPdfBlob(doc.title);
+    }
     const fileName = `${sanitizeFileName(doc.title)}.pdf`;
     const file = new File([pdfBlob], fileName, { type: "application/pdf" });
 

@@ -357,6 +357,20 @@ mark {
   line-height: var(--paper-line-height, 1.65);
 }
 
+[data-exporting="pdf"] .document-container {
+  margin: 0;
+  padding: 0;
+  max-width: none;
+}
+
+[data-exporting="pdf"] .paper-canvas {
+  max-width: none;
+  width: 100%;
+  padding: var(--paper-margin, 24mm);
+  padding-top: calc(var(--paper-margin, 24mm) + var(--paper-header-height, 0px));
+  padding-bottom: calc(var(--paper-margin, 24mm) + var(--paper-footer-height, 0px));
+}
+
 /* Legacy fallback for DocumentEditor view */
 .editor-container .paper-canvas {
   margin: 32px auto 0;

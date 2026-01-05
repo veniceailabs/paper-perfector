@@ -1,9 +1,10 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { Document } from "../models/DocumentSchema";
 import { calculateDocumentStats } from "../utils/documentStats";
 import { formatPresetLabel, resolveFormat } from "../utils/formatting";
 import { formatReference, formatReferenceTitle } from "../utils/citations";
 import { hashDocument } from "../utils/hash";
+import { useFocusTrap } from "../hooks/useFocusTrap";
 import "../styles/TrustCenterModal.css";
 
 type TrustCenterModalProps = {
@@ -47,6 +48,7 @@ async function copyToClipboard(text: string) {
 }
 
 export function TrustCenterModal({ doc, onClose }: TrustCenterModalProps) {
+  const modalRef = useRef<HTMLDivElement | null>(null);
   const [hash, setHash] = useState<string | null>(null);
   const [hashError, setHashError] = useState<string | null>(null);
   const [copyStatus, setCopyStatus] = useState<string | null>(null);
@@ -104,9 +106,16 @@ export function TrustCenterModal({ doc, onClose }: TrustCenterModalProps) {
     setTimeout(() => setCopyStatus(null), 2000);
   };
 
+  useFocusTrap(modalRef, onClose);
+
   return (
     <div className="trust-center-backdrop" role="dialog" aria-modal="true" onClick={onClose}>
-      <div className="trust-center-modal" onClick={(event) => event.stopPropagation()}>
+      <div
+        className="trust-center-modal"
+        ref={modalRef}
+        tabIndex={-1}
+        onClick={(event) => event.stopPropagation()}
+      >
         <header className="trust-center-header">
           <div>
             <h2>Trust Center</h2>

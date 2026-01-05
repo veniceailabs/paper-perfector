@@ -1,5 +1,7 @@
+import { useRef } from "react";
 import type { Document } from "../models/DocumentSchema";
 import { scorePaper } from "../utils/paperScore";
+import { useFocusTrap } from "../hooks/useFocusTrap";
 import "../styles/PaperScoreModal.css";
 
 type PaperScoreModalProps = {
@@ -8,7 +10,10 @@ type PaperScoreModalProps = {
 };
 
 export function PaperScoreModal({ doc, onClose }: PaperScoreModalProps) {
+  const modalRef = useRef<HTMLDivElement | null>(null);
   const report = scorePaper(doc);
+
+  useFocusTrap(modalRef, onClose);
 
   return (
     <div
@@ -17,7 +22,12 @@ export function PaperScoreModal({ doc, onClose }: PaperScoreModalProps) {
       aria-modal="true"
       onClick={onClose}
     >
-      <div className="paper-score-modal" onClick={(event) => event.stopPropagation()}>
+      <div
+        className="paper-score-modal"
+        ref={modalRef}
+        tabIndex={-1}
+        onClick={(event) => event.stopPropagation()}
+      >
         <div className="paper-score-header">
           <div>
             <h2>Professor Score</h2>

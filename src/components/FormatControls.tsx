@@ -36,22 +36,34 @@ export function FormatControls({
 }: FormatControlsProps) {
   const preset = format.preset ?? "default";
   const defaults = formatPresets[preset] ?? formatPresets.default;
-  const sizeData = parseFontSize(format.fontSize, defaults.fontSize ?? "12pt");
-  const lineHeightValue = format.lineHeight ?? defaults.lineHeight ?? 1.5;
+  const isLocked = preset === "apa" || preset === "mla" || preset === "chicago";
+  const displayFormat = isLocked
+    ? {
+        ...defaults,
+        headerText: format.headerText ?? defaults.headerText,
+        renderMarkdown: format.renderMarkdown ?? defaults.renderMarkdown,
+      }
+    : { ...defaults, ...format };
+  const sizeData = parseFontSize(displayFormat.fontSize, defaults.fontSize ?? "12pt");
+  const lineHeightValue = displayFormat.lineHeight ?? defaults.lineHeight ?? 1.5;
   const marginData = parsePageMargin(
-    format.pageMargin,
+    displayFormat.pageMargin,
     defaults.pageMargin ?? "24mm"
   );
-  const fontWeightValue = format.fontWeight ?? defaults.fontWeight ?? 400;
+  const fontWeightValue = displayFormat.fontWeight ?? defaults.fontWeight ?? 400;
   const paragraphSpacingValue =
-    format.paragraphSpacing ?? defaults.paragraphSpacing ?? 12;
-  const showHeaderValue = format.showHeader ?? defaults.showHeader ?? false;
+    displayFormat.paragraphSpacing ?? defaults.paragraphSpacing ?? 12;
+  const showHeaderValue = displayFormat.showHeader ?? defaults.showHeader ?? false;
   const showPageNumbersValue =
-    format.showPageNumbers ?? defaults.showPageNumbers ?? false;
-  const headerTextValue = format.headerText ?? "";
-  const renderMarkdownValue = format.renderMarkdown ?? defaults.renderMarkdown ?? true;
+    displayFormat.showPageNumbers ?? defaults.showPageNumbers ?? false;
+  const headerTextValue = displayFormat.headerText ?? "";
+  const renderMarkdownValue =
+    displayFormat.renderMarkdown ?? defaults.renderMarkdown ?? true;
 
   const updateFormat = (partial: Partial<DocumentFormat>) => {
+    if (isLocked) {
+      return;
+    }
     onChange({
       ...format,
       ...partial,
@@ -83,13 +95,19 @@ export function FormatControls({
             </option>
           ))}
         </select>
+        {isLocked ? (
+          <p className="format-lock-hint">
+            Format locked to {preset.toUpperCase()}. Switch to Custom to edit.
+          </p>
+        ) : null}
       </div>
 
       <div className="format-field" data-tip="Select the font family.">
         <label>Font</label>
         <select
-          value={format.fontFamily ?? defaults.fontFamily}
+          value={displayFormat.fontFamily ?? defaults.fontFamily}
           onChange={(event) => updateFormat({ fontFamily: event.target.value })}
+          disabled={isLocked}
         >
           {fontOptions.map((option) => (
             <option key={option.value} value={option.value}>
@@ -106,6 +124,7 @@ export function FormatControls({
           onChange={(event) =>
             updateFormat({ fontWeight: Number(event.target.value) })
           }
+          disabled={isLocked}
         >
           {fontWeightOptions.map((option) => (
             <option key={option.value} value={option.value.toString()}>
@@ -129,6 +148,7 @@ export function FormatControls({
                 fontSize: formatFontSize(Number(event.target.value), sizeData.unit),
               })
             }
+            disabled={isLocked}
           />
         </div>
         <div className="format-field" data-tip="Choose pt or px sizing.">
@@ -140,6 +160,7 @@ export function FormatControls({
                 fontSize: formatFontSize(sizeData.size, event.target.value as "pt" | "px"),
               })
             }
+            disabled={isLocked}
           >
             <option value="pt">pt</option>
             <option value="px">px</option>
@@ -156,6 +177,7 @@ export function FormatControls({
               lineHeight: Number(event.target.value),
             })
           }
+          disabled={isLocked}
         >
           {lineHeightOptions.map((value) => (
             <option key={value} value={value.toString()}>
@@ -181,6 +203,7 @@ export function FormatControls({
               paragraphSpacing: Number(event.target.value),
             })
           }
+          disabled={isLocked}
         />
       </div>
 
@@ -192,6 +215,7 @@ export function FormatControls({
             onChange={(event) =>
               updateFormat({ renderMarkdown: event.target.checked })
             }
+            disabled={isLocked}
           />
           <span>Markdown formatting</span>
         </label>
@@ -213,6 +237,7 @@ export function FormatControls({
             onChange={(event) =>
               updateFormat({ showHeader: event.target.checked })
             }
+            disabled={isLocked}
           />
           <span>Show header (running head)</span>
         </label>
@@ -225,6 +250,7 @@ export function FormatControls({
           value={headerTextValue}
           onChange={(event) => updateFormat({ headerText: event.target.value })}
           placeholder="Running head"
+          disabled={isLocked}
         />
       </div>
 
@@ -236,6 +262,7 @@ export function FormatControls({
             onChange={(event) =>
               updateFormat({ showPageNumbers: event.target.checked })
             }
+            disabled={isLocked}
           />
           <span>Show page numbers</span>
         </label>
@@ -258,6 +285,7 @@ export function FormatControls({
                 ),
               })
             }
+            disabled={isLocked}
           />
         </div>
         <div className="format-field" data-tip="Choose mm or in.">
@@ -272,6 +300,7 @@ export function FormatControls({
                 ),
               })
             }
+            disabled={isLocked}
           >
             <option value="mm">mm</option>
             <option value="in">in</option>

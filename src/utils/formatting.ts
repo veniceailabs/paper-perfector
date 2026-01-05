@@ -207,6 +207,15 @@ function inferPresetFromDoc(doc: Document): FormatPreset {
 export function resolveFormat(doc: Document): DocumentFormat {
   const preset = inferPresetFromDoc(doc);
   const defaults = formatPresets[preset] ?? formatPresets.default;
+  const isLocked = preset === "apa" || preset === "mla" || preset === "chicago";
+  if (isLocked) {
+    return {
+      ...defaults,
+      preset,
+      headerText: doc.format?.headerText ?? defaults.headerText,
+      renderMarkdown: doc.format?.renderMarkdown ?? defaults.renderMarkdown,
+    };
+  }
   return {
     ...defaults,
     ...(doc.format ?? {}),

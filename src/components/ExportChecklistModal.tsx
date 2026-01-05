@@ -1,6 +1,8 @@
+import { useRef } from "react";
 import type { Document } from "../models/DocumentSchema";
 import { auditCitationCoverage } from "../utils/citationAudit";
 import { parsePageMargin, resolveFormat } from "../utils/formatting";
+import { useFocusTrap } from "../hooks/useFocusTrap";
 import "../styles/ExportChecklistModal.css";
 
 type ExportChecklistModalProps = {
@@ -27,6 +29,7 @@ export function ExportChecklistModal({
   onConfirm,
   onClose,
 }: ExportChecklistModalProps) {
+  const modalRef = useRef<HTMLDivElement | null>(null);
   const format = resolveFormat(doc);
   const marginValue = format.pageMargin ?? "24mm";
   const marginData = parsePageMargin(marginValue, marginValue);
@@ -49,6 +52,8 @@ export function ExportChecklistModal({
     missingFields.push("Date");
   }
 
+  useFocusTrap(modalRef, onClose);
+
   return (
     <div
       className="export-modal-backdrop"
@@ -56,7 +61,12 @@ export function ExportChecklistModal({
       aria-modal="true"
       onClick={onClose}
     >
-      <div className="export-modal" onClick={(event) => event.stopPropagation()}>
+      <div
+        className="export-modal"
+        ref={modalRef}
+        tabIndex={-1}
+        onClick={(event) => event.stopPropagation()}
+      >
         <div className="export-modal-header">
           <div>
             <h2>Pre-Export Checklist</h2>

@@ -6,16 +6,34 @@ import { importFromMarkdown } from "./markdownImport";
 import { importFromPlainText } from "./plainTextImport";
 import { importFromDocx } from "./docxImport";
 import { importFromLegacyDoc } from "./legacyDocImport";
+import { parsePaperDoc } from "./paperDoc";
 
 export type ImportResult = {
   document: Document;
   warnings: string[];
   source: string;
+  docId?: string;
 };
 
 export async function importDocumentFromFile(file: File): Promise<ImportResult> {
   const fileName = file.name.toLowerCase();
   const warnings: string[] = [];
+
+  if (
+    fileName.endsWith(".ppdoc")
+  ) {
+    const raw = await file.text();
+    const parsed = parsePaperDoc(raw);
+    if (!parsed) {
+      throw new Error("Could not read this Paper Perfector document.");
+    }
+    return {
+      document: parsed.doc,
+      warnings,
+      source: "Paper Perfector",
+      docId: parsed.id,
+    };
+  }
 
   if (
     file.type === "text/html" ||

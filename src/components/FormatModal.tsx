@@ -1,5 +1,7 @@
+import { useRef } from "react";
 import type { DocumentFormat } from "../models/DocumentSchema";
 import { FormatControls } from "./FormatControls";
+import { useFocusTrap } from "../hooks/useFocusTrap";
 import "../styles/FormatModal.css";
 
 interface FormatModalProps {
@@ -9,9 +11,18 @@ interface FormatModalProps {
 }
 
 export function FormatModal({ format, onChange, onClose }: FormatModalProps) {
+  const modalRef = useRef<HTMLDivElement | null>(null);
+
+  useFocusTrap(modalRef, onClose);
+
   return (
     <div className="format-modal-backdrop" role="dialog" aria-modal="true" onClick={onClose}>
-      <div className="format-modal" onClick={(event) => event.stopPropagation()}>
+      <div
+        className="format-modal"
+        ref={modalRef}
+        tabIndex={-1}
+        onClick={(event) => event.stopPropagation()}
+      >
         <div className="format-modal-header">
           <div>
             <h2>Document Formatting</h2>
