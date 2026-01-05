@@ -65,6 +65,7 @@ export const templates: Record<TemplateType, Document> = {
     },
     format: {
       preset: "apa",
+      renderMarkdown: false,
     },
     sections: [
       {
@@ -152,6 +153,7 @@ export const templates: Record<TemplateType, Document> = {
     },
     format: {
       preset: "mla",
+      renderMarkdown: false,
     },
     sections: [
       {
@@ -237,6 +239,7 @@ export const templates: Record<TemplateType, Document> = {
     },
     format: {
       preset: "chicago",
+      renderMarkdown: false,
     },
     sections: [
       {

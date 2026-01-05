@@ -9,6 +9,10 @@ export const samplePaper: Document = {
     version: "1.0.0",
     classification: "Example",
   },
+  format: {
+    preset: "default",
+    renderMarkdown: false,
+  },
   sections: [
     {
       id: "introduction",
