@@ -4,6 +4,9 @@ import "../styles/HoverTip.css";
 const TIP_DELAY_MS = 1600;
 const TIP_OFFSET = 14;
 const TIP_PADDING = 12;
+const MAX_TIP_LENGTH = 140;
+const INTERACTIVE_SELECTOR =
+  "[data-tip], [aria-label], [title], button, a, input, textarea, select, label, [role='button'], [tabindex]";
 
 type TipState = {
   visible: boolean;
@@ -16,6 +19,17 @@ type HoverTipProps = {
   enabled?: boolean;
 };
 
+function sanitizeTipText(text: string) {
+  const cleaned = text.replace(/\s+/g, " ").trim();
+  if (!cleaned) {
+    return "";
+  }
+  if (cleaned.length <= MAX_TIP_LENGTH) {
+    return cleaned;
+  }
+  return `${cleaned.slice(0, MAX_TIP_LENGTH - 1)}…`;
+}
+
 function getTipText(element: Element | null) {
   if (!element) {
     return "";
@@ -23,14 +37,39 @@ function getTipText(element: Element | null) {
   const htmlElement = element as HTMLElement;
   const dataTip = htmlElement.dataset.tip?.trim();
   if (dataTip) {
-    return dataTip;
+    return sanitizeTipText(dataTip);
   }
   const ariaLabel = htmlElement.getAttribute("aria-label")?.trim();
   if (ariaLabel) {
-    return ariaLabel;
+    return sanitizeTipText(ariaLabel);
   }
   const title = htmlElement.getAttribute("title")?.trim();
-  return title ?? "";
+  if (title) {
+    return sanitizeTipText(title);
+  }
+
+  if (
+    htmlElement instanceof HTMLInputElement ||
+    htmlElement instanceof HTMLTextAreaElement
+  ) {
+    const placeholder = htmlElement.placeholder?.trim();
+    if (placeholder) {
+      return sanitizeTipText(placeholder);
+    }
+  }
+
+  if (htmlElement instanceof HTMLSelectElement) {
+    const selected = htmlElement.options[htmlElement.selectedIndex]?.textContent?.trim();
+    if (selected) {
+      return sanitizeTipText(selected);
+    }
+  }
+
+  const text = htmlElement.textContent?.trim() ?? "";
+  if (!/[a-z0-9]/i.test(text)) {
+    return "";
+  }
+  return sanitizeTipText(text);
 }
 
 export function HoverTip({ enabled = true }: HoverTipProps) {
@@ -99,7 +138,7 @@ export function HoverTip({ enabled = true }: HoverTipProps) {
         return;
       }
       const target = (event.target as Element | null)?.closest(
-        "[data-tip], [aria-label], [title]"
+        INTERACTIVE_SELECTOR
       );
       if (!target) {
         hoveredRef.current = null;
