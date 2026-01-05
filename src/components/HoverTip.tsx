@@ -12,6 +12,10 @@ type TipState = {
   y: number;
 };
 
+type HoverTipProps = {
+  enabled?: boolean;
+};
+
 function getTipText(element: Element | null) {
   if (!element) {
     return "";
@@ -29,7 +33,7 @@ function getTipText(element: Element | null) {
   return title ?? "";
 }
 
-export function HoverTip() {
+export function HoverTip({ enabled = true }: HoverTipProps) {
   const [tip, setTip] = useState<TipState>({
     visible: false,
     text: "",
@@ -76,6 +80,10 @@ export function HoverTip() {
   };
 
   useEffect(() => {
+    if (!enabled) {
+      hideTip();
+      return;
+    }
     const handlePointerMove = (event: PointerEvent) => {
       if (event.pointerType === "touch") {
         return;
@@ -157,9 +165,9 @@ export function HoverTip() {
       document.removeEventListener("keydown", handleKeyDown);
       clearTimer();
     };
-  }, [tip.visible]);
+  }, [enabled, tip.visible]);
 
-  if (!tip.visible) {
+  if (!enabled || !tip.visible) {
     return null;
   }
 

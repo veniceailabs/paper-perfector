@@ -55,6 +55,14 @@ export default function App() {
   const [showScoreModal, setShowScoreModal] = useState(false);
   const [showTrustCenter, setShowTrustCenter] = useState(false);
   const [theme, setTheme] = useState<"dark" | "light">("dark");
+  const [tipsEnabled, setTipsEnabled] = useState(() => {
+    try {
+      const saved = localStorage.getItem("paper-perfector-tips");
+      return saved ? saved === "true" : true;
+    } catch {
+      return true;
+    }
+  });
   const [printHash, setPrintHash] = useState<string>("");
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [formatModalValue, setFormatModalValue] = useState<DocumentFormat | null>(
@@ -233,8 +241,13 @@ export default function App() {
         label: theme === "dark" ? "Light Mode" : "Dark Mode",
         description: "Toggle theme",
       },
+      {
+        id: "tips",
+        label: tipsEnabled ? "Tips Off" : "Tips On",
+        description: "Toggle helpful tips",
+      },
     ],
-    [editMode, history.length, historyIndex, theme]
+    [editMode, history.length, historyIndex, theme, tipsEnabled]
   );
 
   // Auto-save document
@@ -243,6 +256,17 @@ export default function App() {
   useEffect(() => {
     document.documentElement.setAttribute("data-theme", theme);
   }, [theme]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(
+        "paper-perfector-tips",
+        tipsEnabled ? "true" : "false"
+      );
+    } catch {
+      // Ignore storage failures.
+    }
+  }, [tipsEnabled]);
 
   useEffect(() => {
     historyRef.current = history;
@@ -642,6 +666,9 @@ export default function App() {
       case "theme":
         setTheme(theme === "dark" ? "light" : "dark");
         break;
+      case "tips":
+        setTipsEnabled((prev) => !prev);
+        break;
       case "export":
         openExportChecklist();
         break;
@@ -747,6 +774,14 @@ export default function App() {
               data-tip="Switch between light and dark background themes."
             >
               {theme === "dark" ? "☀️ Light" : "🌙 Dark"} Mode
+            </button>
+            <button
+              className="toolbar-button"
+              type="button"
+              onClick={() => setTipsEnabled((prev) => !prev)}
+              data-tip="Turn hover tips on or off."
+            >
+              {tipsEnabled ? "💡 Tips On" : "💡 Tips Off"}
             </button>
           </div>
         </div>
@@ -886,6 +921,14 @@ export default function App() {
             data-tip="Switch between light and dark background themes."
           >
             {theme === "dark" ? "☀️ Light" : "🌙 Dark"} Mode
+          </button>
+          <button
+            className="toolbar-button"
+            type="button"
+            onClick={() => setTipsEnabled((prev) => !prev)}
+            data-tip="Turn hover tips on or off."
+          >
+            {tipsEnabled ? "💡 Tips On" : "💡 Tips Off"}
           </button>
           <button
             className="toolbar-button"
@@ -1058,7 +1101,7 @@ export default function App() {
           </button>
         </div>
       ) : null}
-      <HoverTip />
+      <HoverTip enabled={tipsEnabled} />
     </div>
   );
 }
