@@ -88,6 +88,8 @@ export default function App() {
   const editorRef = useRef<DocumentEditorHandle | null>(null);
   const importInputRef = useRef<HTMLInputElement | null>(null);
   const scholarRequestRef = useRef(0);
+  const toolbarMenuRef = useRef<HTMLDivElement | null>(null);
+  const [showToolbarMenu, setShowToolbarMenu] = useState(false);
 
   const searchResults = useMemo<SearchResult[]>(() => {
     const trimmedQuery = findQuery.trim();
@@ -279,8 +281,34 @@ export default function App() {
   useEffect(() => {
     if (!doc) {
       setResumeDoc(loadAutoSavedDocument());
+      setShowToolbarMenu(false);
     }
   }, [doc]);
+
+  useEffect(() => {
+    if (!showToolbarMenu) {
+      return;
+    }
+    const handleClick = (event: MouseEvent) => {
+      if (!toolbarMenuRef.current) {
+        return;
+      }
+      if (!toolbarMenuRef.current.contains(event.target as Node)) {
+        setShowToolbarMenu(false);
+      }
+    };
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setShowToolbarMenu(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClick);
+    window.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("mousedown", handleClick);
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [showToolbarMenu]);
 
   useEffect(() => {
     if (!scholarQuery.trim()) {
@@ -813,32 +841,6 @@ export default function App() {
           >
             Paper Perfector
           </button>
-          <button
-            className="toolbar-button toolbar-nav"
-            type="button"
-            onClick={handleBack}
-            disabled={historyIndex <= 0}
-            data-tip="Go back to the previous document state."
-          >
-            ← Back
-          </button>
-          <button
-            className="toolbar-button toolbar-nav"
-            type="button"
-            onClick={handleForward}
-            disabled={historyIndex >= history.length - 1}
-            data-tip="Go forward to the next document state."
-          >
-            Forward →
-          </button>
-          <button
-            className="toolbar-button toolbar-nav"
-            type="button"
-            onClick={() => setShowSearchPanel(true)}
-            data-tip="Search the document or jump to app actions."
-          >
-            🔍 Search
-          </button>
         </div>
         <div className="toolbar-actions">
           <button
@@ -893,51 +895,117 @@ export default function App() {
           <button
             className="toolbar-button"
             type="button"
-            onClick={() => setShowScoreModal(true)}
-            data-tip="Get an academic score and feedback."
-          >
-            🎓 Score
-          </button>
-          <button
-            className="toolbar-button"
-            type="button"
-            onClick={() => setShowTrustCenter(true)}
-            data-tip="Open integrity and proof-of-process tools."
-          >
-            🛡️ Trust
-          </button>
-          <button
-            className="toolbar-button"
-            type="button"
-            onClick={() => setShowMobilePreview(true)}
-            data-tip="Preview the document inside a mobile device frame."
-          >
-            📱 Mobile
-          </button>
-          <button
-            className="toolbar-button"
-            type="button"
-            onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-            data-tip="Switch between light and dark background themes."
-          >
-            {theme === "dark" ? "☀️ Light" : "🌙 Dark"} Mode
-          </button>
-          <button
-            className="toolbar-button"
-            type="button"
-            onClick={() => setTipsEnabled((prev) => !prev)}
-            data-tip="Turn hover tips on or off."
-          >
-            {tipsEnabled ? "💡 Tips On" : "💡 Tips Off"}
-          </button>
-          <button
-            className="toolbar-button"
-            type="button"
             onClick={openExportChecklist}
             data-tip="Open the export checklist and generate a PDF."
           >
             📥 Export PDF
           </button>
+          <div className="toolbar-menu" ref={toolbarMenuRef}>
+            <button
+              className="toolbar-button"
+              type="button"
+              onClick={() => setShowToolbarMenu((prev) => !prev)}
+              data-tip="More tools and navigation."
+            >
+              ⋯ More
+            </button>
+            {showToolbarMenu ? (
+              <div className="toolbar-menu-panel">
+                <button
+                  className="toolbar-menu-item"
+                  type="button"
+                  onClick={() => {
+                    handleBack();
+                    setShowToolbarMenu(false);
+                  }}
+                  disabled={historyIndex <= 0}
+                  data-tip="Go back to the previous document state."
+                >
+                  ← Back
+                </button>
+                <button
+                  className="toolbar-menu-item"
+                  type="button"
+                  onClick={() => {
+                    handleForward();
+                    setShowToolbarMenu(false);
+                  }}
+                  disabled={historyIndex >= history.length - 1}
+                  data-tip="Go forward to the next document state."
+                >
+                  Forward →
+                </button>
+                <button
+                  className="toolbar-menu-item"
+                  type="button"
+                  onClick={() => {
+                    setShowSearchPanel(true);
+                    setShowToolbarMenu(false);
+                  }}
+                  data-tip="Search the document or jump to app actions."
+                >
+                  🔍 Search
+                </button>
+                <div className="toolbar-menu-divider" />
+                <button
+                  className="toolbar-menu-item"
+                  type="button"
+                  onClick={() => {
+                    setShowScoreModal(true);
+                    setShowToolbarMenu(false);
+                  }}
+                  data-tip="Get an academic score and feedback."
+                >
+                  🎓 Score
+                </button>
+                <button
+                  className="toolbar-menu-item"
+                  type="button"
+                  onClick={() => {
+                    setShowTrustCenter(true);
+                    setShowToolbarMenu(false);
+                  }}
+                  data-tip="Open integrity and proof-of-process tools."
+                >
+                  🛡️ Trust
+                </button>
+                <button
+                  className="toolbar-menu-item"
+                  type="button"
+                  onClick={() => {
+                    setShowMobilePreview(true);
+                    setShowToolbarMenu(false);
+                  }}
+                  data-tip="Preview the document inside a mobile device frame."
+                >
+                  📱 Mobile
+                </button>
+                <div className="toolbar-menu-divider" />
+                <button
+                  className="toolbar-menu-item"
+                  type="button"
+                  onClick={() => {
+                    setTheme(theme === "dark" ? "light" : "dark");
+                    setShowToolbarMenu(false);
+                  }}
+                  data-tip="Switch between light and dark background themes."
+                >
+                  {theme === "dark" ? "☀️ Light Mode" : "🌙 Dark Mode"}
+                </button>
+                <button
+                  className="toolbar-menu-item"
+                  type="button"
+                  onClick={() => {
+                    setTipsEnabled((prev) => !prev);
+                    setShowToolbarMenu(false);
+                  }}
+                  data-tip="Turn hover tips on or off."
+                >
+                  {tipsEnabled ? "💡 Tips On" : "💡 Tips Off"}
+                </button>
+              </div>
+            ) : null}
+          </div>
         </div>
       </div>
       {status ? <div className="status">{status}</div> : null}
