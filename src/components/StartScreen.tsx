@@ -3,6 +3,8 @@ import { Document } from "../models/DocumentSchema";
 import { samplePaper } from "../documents/samplePaper";
 import { templates } from "../documents/templates";
 import { quickstartGuide } from "../documents/quickstartGuide";
+import { dataBlasterOneSheet } from "../documents/dataBlasterOneSheet";
+import { paperPerfectorOneSheet } from "../documents/paperPerfectorOneSheet";
 import { importFromMarkdownText } from "../utils/markdownImport";
 import { importFromHtmlText } from "../utils/htmlImport";
 import type { SavedDocument } from "../utils/library";
@@ -540,6 +542,20 @@ export function StartScreen({
                 data-tip="Open the quickstart guide."
               >
                 Quickstart Guide
+              </button>
+              <button
+                type="button"
+                onClick={() => handleSelectFromAssistant(dataBlasterOneSheet)}
+                data-tip="Open the Data Blaster one-sheet overview."
+              >
+                Data Blaster One Sheet
+              </button>
+              <button
+                type="button"
+                onClick={() => handleSelectFromAssistant(paperPerfectorOneSheet)}
+                data-tip="Open the Paper Perfector one-sheet overview."
+              >
+                Paper Perfector One Sheet
               </button>
               <button
                 type="button"
