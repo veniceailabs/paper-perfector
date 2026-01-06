@@ -976,17 +976,18 @@ export default function App() {
             </button>
           </div>
         </div>
-        <StartScreen
-          onSelectDocument={(nextDoc) =>
-            openDocument(applySavedFormatDefaults(nextDoc))
-          }
-          savedDocuments={library}
-          onOpenSavedDocument={handleOpenSavedDocument}
-          onDeleteSavedDocument={handleDeleteSavedDocument}
-          onExportSavedDocument={handleExportPaperDoc}
-          onImport={handleImport}
-          onThemeChange={setTheme}
-        />
+      <StartScreen
+        onSelectDocument={(nextDoc) =>
+          openDocument(applySavedFormatDefaults(nextDoc))
+        }
+        savedDocuments={library}
+        onOpenSavedDocument={handleOpenSavedDocument}
+        onDeleteSavedDocument={handleDeleteSavedDocument}
+        onExportSavedDocument={handleExportPaperDoc}
+        onImport={handleImport}
+        onThemeChange={setTheme}
+        onSamplePaperLoaded={() => setEditMode(true)}
+      />
       </div>
     );
   }
