@@ -111,72 +111,96 @@ export function DocumentRenderer({
         }`.trim()}
         style={formatStyle}
       >
-        {showHeader ? (
-          <div className="paper-header">
-            <span className="paper-header-text">{headerText}</span>
-            {showPageNumbers ? (
-              <span className="paper-header-page">
-                Page <span className="page-number" />
-              </span>
-            ) : null}
-          </div>
-        ) : null}
-        <header>
-          <h1>
-            {renderText(doc.title, "doc-title", highlightScope?.title)}
-          </h1>
-          {doc.subtitle ? (
-            <h2>
-              {renderText(doc.subtitle, "doc-subtitle", highlightScope?.title)}
-            </h2>
-          ) : null}
-          {showFormatLock ? (
-            <div className="format-lock">
-              <span className="format-lock-label">Format Lock</span>
-              <strong>{formatLabel}</strong>
-              <span className="format-lock-meta">{formatDetails}</span>
-            </div>
-          ) : null}
-          <Divider />
-          <MetaBlock
-            data={doc.metadata}
-            highlightQuery={highlightScope?.metadata ? highlightQuery : undefined}
-          />
-        </header>
+        <table className="print-layout">
+          <thead>
+            <tr>
+              <td>
+                <div className="print-header-spacer">
+                  {showHeader ? (
+                    <div className="paper-header">
+                      <span className="paper-header-text">{headerText}</span>
+                      {showPageNumbers ? (
+                        <span className="paper-header-page">
+                          Page <span className="page-number" />
+                        </span>
+                      ) : null}
+                    </div>
+                  ) : null}
+                </div>
+              </td>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>
+                <header>
+                  <h1>
+                    {renderText(doc.title, "doc-title", highlightScope?.title)}
+                  </h1>
+                  {doc.subtitle ? (
+                    <h2>
+                      {renderText(doc.subtitle, "doc-subtitle", highlightScope?.title)}
+                    </h2>
+                  ) : null}
+                  {showFormatLock ? (
+                    <div className="format-lock">
+                      <span className="format-lock-label">Format Lock</span>
+                      <strong>{formatLabel}</strong>
+                      <span className="format-lock-meta">{formatDetails}</span>
+                    </div>
+                  ) : null}
+                  <Divider />
+                  <MetaBlock
+                    data={doc.metadata}
+                    highlightQuery={highlightScope?.metadata ? highlightQuery : undefined}
+                  />
+                </header>
 
-        {doc.sections.map((section) => (
-          <div key={section.id} data-section-id={section.id} id={`section-${section.id}`}>
-            <Section
-              {...section}
-              highlightQuery={highlightScope?.body ? highlightQuery : undefined}
-              renderMarkdown={renderMarkdown}
-            />
-          </div>
-        ))}
-        {sources.length > 0 && !hasReferenceSection ? (
-          <section className="paper-section level-1 auto-references">
-            <h2>{referenceTitle}</h2>
-            <ol className="reference-list">
-              {sources.map((source) => (
-                <li key={source.id}>
-                  {renderHighlightedText(
-                    formatReference(source, citationStyle),
-                    `ref-${source.id}`,
-                    highlightScope?.body ? highlightQuery : undefined
-                  )}
-                </li>
-              ))}
-            </ol>
-          </section>
-        ) : null}
-        {showPageNumbers && !showHeader ? (
-          <div className="paper-footer">
-            Page <span className="page-number" />
-          </div>
-        ) : null}
-        {printHash ? (
-          <div className="print-hash">Document Integrity Hash: {printHash}</div>
-        ) : null}
+                {doc.sections.map((section) => (
+                  <div key={section.id} data-section-id={section.id} id={`section-${section.id}`}>
+                    <Section
+                      {...section}
+                      highlightQuery={highlightScope?.body ? highlightQuery : undefined}
+                      renderMarkdown={renderMarkdown}
+                    />
+                  </div>
+                ))}
+                {sources.length > 0 && !hasReferenceSection ? (
+                  <section className="paper-section level-1 auto-references">
+                    <h2>{referenceTitle}</h2>
+                    <ol className="reference-list">
+                      {sources.map((source) => (
+                        <li key={source.id}>
+                          {renderHighlightedText(
+                            formatReference(source, citationStyle),
+                            `ref-${source.id}`,
+                            highlightScope?.body ? highlightQuery : undefined
+                          )}
+                        </li>
+                      ))}
+                    </ol>
+                  </section>
+                ) : null}
+                {printHash ? (
+                  <div className="print-hash">Document Integrity Hash: {printHash}</div>
+                ) : null}
+              </td>
+            </tr>
+          </tbody>
+          <tfoot>
+            <tr>
+              <td>
+                <div className="print-footer-spacer">
+                  {showPageNumbers && !showHeader ? (
+                    <div className="paper-footer">
+                      Page <span className="page-number" />
+                    </div>
+                  ) : null}
+                </div>
+              </td>
+            </tr>
+          </tfoot>
+        </table>
       </article>
 
       <aside className="document-sidebar">

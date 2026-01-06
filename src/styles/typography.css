@@ -662,12 +662,59 @@ mark {
   }
 }
 
+/* Print Layout (Table Hack for Repeating Headers/Margins) */
+.print-layout {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.print-layout thead,
+.print-layout tfoot,
+.print-layout tbody,
+.print-layout tr,
+.print-layout td {
+  border: none;
+  padding: 0;
+  margin: 0;
+}
+
+/* Screen Mode: Behave like blocks */
+@media screen {
+  .print-layout,
+  .print-layout tbody,
+  .print-layout tr,
+  .print-layout td {
+    display: block;
+    width: 100%;
+  }
+
+  .print-layout thead,
+  .print-layout tfoot {
+    display: none; /* Hide print spacers on screen */
+  }
+
+  /* Restore screen headers/footers if needed, 
+     but DocumentRenderer puts them in thead/tfoot now.
+     We need to show them on screen? 
+     Actually, DocumentRenderer puts headers in thead. 
+     If we hide thead on screen, we lose headers on screen!
+     
+     Wait, the previous design had headers ABSOLUTELY positioned or FLEX for screen?
+     Screen view usually doesn't show "Page 1" headers repeating.
+     It shows a single continuous doc.
+     So hiding thead/tfoot on screen is CORRECT for "continuous" view.
+     BUT we need the Title/Meta (which is in tbody) to show.
+     
+     Check DocumentRenderer again:
+     <header> (Title, Subtitle, Meta) is in <tbody>.
+     The "Paper Header" (Page 1, Running Head) is in <thead>.
+     So hiding <thead> on screen is correct!
+  */
+}
+
 @media print {
   @page {
-    margin-top: calc(var(--paper-margin, 24mm) + var(--paper-header-height, 0px));
-    margin-bottom: calc(var(--paper-margin, 24mm) + var(--paper-footer-height, 0px));
-    margin-left: var(--paper-margin, 24mm);
-    margin-right: var(--paper-margin, 24mm);
+    margin: 0; /* Borderless */
   }
 
   * {
@@ -685,8 +732,10 @@ mark {
     print-color-adjust: exact !important;
     background: var(--bg-primary) !important;
     counter-reset: page;
+    margin: 0;
   }
 
+  /* Hide UI */
   .toolbar,
   .status,
   .document-stats,
@@ -736,28 +785,78 @@ mark {
     display: none !important;
   }
 
+  /* Table Layout for Print */
   .paper-canvas {
     padding: 0 !important;
     margin: 0;
     max-width: none;
     width: 100%;
+    display: block; /* Wrapper */
   }
 
-  .paper-header,
-  .paper-footer {
-    position: fixed;
+  .print-layout {
+    display: table;
+    width: 100%;
+  }
+
+  .print-layout thead {
+    display: table-header-group;
+  }
+
+  .print-layout tfoot {
+    display: table-footer-group;
+  }
+  
+  .print-layout tbody {
+    display: table-row-group;
+  }
+
+  .print-layout tr {
+    display: table-row;
+  }
+
+  .print-layout td {
+    display: table-cell;
+  }
+
+  /* Spacers replace the @page margin */
+  .print-header-spacer {
+    height: calc(var(--paper-margin, 24mm) + var(--paper-header-height, 0px));
+    position: relative;
+    /* Ensure content doesn't clip if header is large */
+  }
+
+  .print-footer-spacer {
+    height: calc(var(--paper-margin, 24mm) + var(--paper-footer-height, 0px));
+    position: relative;
+  }
+  
+  /* Positioning headers inside the spacer */
+  .paper-header {
+    position: absolute;
+    bottom: 12px; /* Slight offset from content */
     left: var(--paper-margin, 24mm);
     right: var(--paper-margin, 24mm);
-    z-index: 2;
-  }
-
-  .paper-header {
-    top: var(--paper-margin, 24mm);
+    margin: 0;
   }
 
   .paper-footer {
-    bottom: var(--paper-margin, 24mm);
+    position: absolute;
+    top: 12px; /* Slight offset from content */
+    left: var(--paper-margin, 24mm);
+    right: var(--paper-margin, 24mm);
+    margin: 0;
   }
+
+  /* Horizontal Margins via Padding on Content Cell */
+  .print-layout tbody td {
+    padding-left: var(--paper-margin, 24mm);
+    padding-right: var(--paper-margin, 24mm);
+  }
+  
+  /* Also align headers/footers spacers to margin? 
+     No, the spacer div is full width, we positioned the text inside.
+  */
 
   .paper-section,
   .meta-block,
@@ -799,8 +898,8 @@ mark {
 
   .print-hash {
     display: block;
+    margin-top: 24px;
+    padding-top: 12px;
+    border-top: 1px solid var(--rule-color);
   }
 }
-  .page-number::after {
-    content: counter(page);
-  }
