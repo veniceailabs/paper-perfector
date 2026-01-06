@@ -7,6 +7,7 @@ import { importFromMarkdownText } from "../utils/markdownImport";
 import { importFromHtmlText } from "../utils/htmlImport";
 import type { SavedDocument } from "../utils/library";
 import { useFocusTrap } from "../hooks/useFocusTrap";
+import { openFeedbackEmail } from "../utils/feedback";
 import "../styles/StartScreen.css";
 
 interface StartScreenProps {
@@ -539,6 +540,13 @@ export function StartScreen({
                 data-tip="Open the quickstart guide."
               >
                 Quickstart Guide
+              </button>
+              <button
+                type="button"
+                onClick={openFeedbackEmail}
+                data-tip="Send product feedback."
+              >
+                Send feedback
               </button>
             </div>
             <div className="assistant-footer">

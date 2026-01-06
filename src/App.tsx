@@ -19,6 +19,7 @@ import {
 import { importDocumentFromFile } from "./utils/importers";
 import { exportToPdf } from "./utils/export";
 import { hashDocument } from "./utils/hash";
+import { openFeedbackEmail } from "./utils/feedback";
 import { useAutoSave, loadAutoSavedDocument } from "./hooks/useAutoSave";
 import {
   getSharedDocumentFromUrl,
@@ -1354,6 +1355,13 @@ export default function App() {
                   data-tip="Export the current document as PDF."
                 >
                   Export PDF
+                </button>
+                <button
+                  type="button"
+                  onClick={openFeedbackEmail}
+                  data-tip="Send product feedback."
+                >
+                  Send feedback
                 </button>
               </div>
             </div>
