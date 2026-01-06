@@ -11,8 +11,12 @@ export function exportToPdf(title?: string, onAfterPrint?: () => void) {
     document.title = title;
   }
 
+  const root = document.documentElement;
+  root.setAttribute("data-printing", "true");
+
   const restoreTitle = () => {
     document.title = previousTitle;
+    root.removeAttribute("data-printing");
     window.removeEventListener("afterprint", restoreTitle);
     if (onAfterPrint) {
       onAfterPrint();
