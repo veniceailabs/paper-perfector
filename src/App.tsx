@@ -986,7 +986,6 @@ export default function App() {
         onExportSavedDocument={handleExportPaperDoc}
         onImport={handleImport}
         onThemeChange={setTheme}
-        onSamplePaperLoaded={() => setEditMode(true)}
       />
       </div>
     );

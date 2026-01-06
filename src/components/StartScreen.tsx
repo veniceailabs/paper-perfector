@@ -20,7 +20,6 @@ interface StartScreenProps {
   onOpenSavedDocument: (id: string) => void;
   onDeleteSavedDocument: (id: string) => void;
   onExportSavedDocument: (doc: Document, docId?: string) => void;
-  onSamplePaperLoaded?: () => void;
 }
 
 export function StartScreen({
@@ -31,7 +30,6 @@ export function StartScreen({
   onOpenSavedDocument,
   onDeleteSavedDocument,
   onExportSavedDocument,
-  onSamplePaperLoaded,
 }: StartScreenProps) {
   const [showPasteModal, setShowPasteModal] = useState(false);
   const [showThemeModal, setShowThemeModal] = useState(false);
@@ -135,7 +133,6 @@ export function StartScreen({
       const result = await importDocumentFromFile(file);
       setAssistantOpen(false);
       onSelectDocument(result.document);
-      onSamplePaperLoaded?.();
     } catch (error) {
       setSamplePaperError(
         error instanceof Error ? error.message : "Failed to load the sample paper."
