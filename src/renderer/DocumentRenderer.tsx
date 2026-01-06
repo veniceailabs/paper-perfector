@@ -80,6 +80,17 @@ export function DocumentRenderer({
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
+  // Sync margin to root for @page support
+  useEffect(() => {
+    document.documentElement.style.setProperty(
+      "--paper-margin",
+      resolvedFormat.pageMargin ?? "24mm"
+    );
+    return () => {
+      document.documentElement.style.removeProperty("--paper-margin");
+    };
+  }, [resolvedFormat.pageMargin]);
+
   const renderText = (
     text: string,
     keyPrefix: string,

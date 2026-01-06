@@ -664,13 +664,20 @@ mark {
 
 @media print {
   @page {
-    margin: 0;
+    margin-top: calc(var(--paper-margin, 24mm) + var(--paper-header-height, 0px));
+    margin-bottom: calc(var(--paper-margin, 24mm) + var(--paper-footer-height, 0px));
+    margin-left: var(--paper-margin, 24mm);
+    margin-right: var(--paper-margin, 24mm);
   }
 
   * {
     animation: none !important;
     transition: none !important;
     box-shadow: none !important;
+  }
+
+  html {
+    background: var(--bg-primary) !important;
   }
 
   body {
@@ -683,12 +690,34 @@ mark {
   .toolbar,
   .status,
   .document-stats,
-  .hash-footnote {
+  .hash-footnote,
+  .start-assistant,
+  .assistant-toggle,
+  .assistant-panel,
+  .editor-toolbar,
+  .editor-sidebar,
+  .editor-mode-toggle,
+  .save-status,
+  .save-btn,
+  .add-paragraph-btn,
+  .add-section-btn,
+  .remove-section-btn,
+  .remove-paragraph-btn,
+  .paragraph-actions,
+  .format-toolbar,
+  .format-lock-row,
+  .editor-markdown-actions,
+  .editor-format-panel,
+  .editor-notes-panel,
+  .editor-sources-panel,
+  .editor-tips,
+  .editor-alert {
     display: none !important;
   }
 
   .app-shell {
     padding-top: 0;
+    min-height: 100vh;
   }
 
   .document-container {
@@ -708,9 +737,7 @@ mark {
   }
 
   .paper-canvas {
-    padding: var(--paper-margin, 24mm);
-    padding-top: calc(var(--paper-margin, 24mm) + var(--paper-header-height, 0px));
-    padding-bottom: calc(var(--paper-margin, 24mm) + var(--paper-footer-height, 0px));
+    padding: 0 !important;
     margin: 0;
     max-width: none;
     width: 100%;
