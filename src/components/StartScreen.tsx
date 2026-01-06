@@ -6,6 +6,7 @@ import { dataBlasterOneSheet } from "../documents/dataBlasterOneSheet";
 import { paperPerfectorOneSheet } from "../documents/paperPerfectorOneSheet";
 import { importFromMarkdownText } from "../utils/markdownImport";
 import { importFromHtmlText } from "../utils/htmlImport";
+import { importDocumentFromFile } from "../utils/importers";
 import type { SavedDocument } from "../utils/library";
 import { useFocusTrap } from "../hooks/useFocusTrap";
 import { openFeedbackEmail } from "../utils/feedback";
@@ -36,6 +37,8 @@ export function StartScreen({
   const [markdownError, setMarkdownError] = useState<string | null>(null);
   const [pendingDoc, setPendingDoc] = useState<Document | null>(null);
   const [assistantOpen, setAssistantOpen] = useState(false);
+  const [loadingSamplePaper, setLoadingSamplePaper] = useState(false);
+  const [samplePaperError, setSamplePaperError] = useState<string | null>(null);
   const importInputRef = useRef<HTMLInputElement>(null);
   const pasteModalRef = useRef<HTMLDivElement | null>(null);
   const themeModalRef = useRef<HTMLDivElement | null>(null);
@@ -94,18 +97,49 @@ export function StartScreen({
     setShowPasteModal(true);
   };
 
-  const openSamplePaperPdf = () => {
+  const openImportPicker = () => {
+    importInputRef.current?.click();
+  };
+
+  const resolveSamplePaperUrl = () => {
     if (typeof window === "undefined") {
-      return;
+      return null;
     }
     const base = `${window.location.origin}${import.meta.env.BASE_URL ?? "/"}`;
     const normalizedBase = base.endsWith("/") ? base : `${base}/`;
-    const url = new URL("Sample Research Paper.pdf", normalizedBase).href;
-    window.open(url, "_blank");
+    return new URL("Sample Research Paper.pdf", normalizedBase).href;
   };
 
-  const openImportPicker = () => {
-    importInputRef.current?.click();
+  const loadSamplePaperDocument = async () => {
+    if (loadingSamplePaper) {
+      return;
+    }
+    const url = resolveSamplePaperUrl();
+    if (!url) {
+      setSamplePaperError("Unable to resolve sample paper URL.");
+      return;
+    }
+    setSamplePaperError(null);
+    setLoadingSamplePaper(true);
+    try {
+      const response = await fetch(url);
+      if (!response.ok) {
+        throw new Error(`Could not download the sample paper (${response.status}).`);
+      }
+      const blob = await response.blob();
+      const file = new File([blob], "Sample Research Paper.pdf", {
+        type: "application/pdf",
+      });
+      const result = await importDocumentFromFile(file);
+      setAssistantOpen(false);
+      onSelectDocument(result.document);
+    } catch (error) {
+      setSamplePaperError(
+        error instanceof Error ? error.message : "Failed to load the sample paper."
+      );
+    } finally {
+      setLoadingSamplePaper(false);
+    }
   };
 
   const handleSelectFromAssistant = (doc: Document) => {
@@ -353,14 +387,27 @@ export function StartScreen({
             </div>
 
             {/* Sample Example */}
-            <div
-              className="start-card start-card-example"
-            onClick={openSamplePaperPdf}
-            data-tip="Open the polished sample paper PDF."
-            >
-              <div className="card-icon">📚</div>
-              <h3>Sample Paper</h3>
-              <p>View a formatted example</p>
+            <div className="start-card-wrapper">
+              <div
+                className="start-card start-card-example start-card-sample"
+                onClick={loadSamplePaperDocument}
+                data-tip="Load the polished sample paper for editing."
+              >
+                <div className="card-icon">📚</div>
+                <h3>Sample Paper</h3>
+                <p>View a formatted example</p>
+              </div>
+              <div
+                className={`start-card-status ${
+                  loadingSamplePaper ? "loading" : ""
+                } ${samplePaperError ? "error" : ""}`}
+              >
+                {samplePaperError
+                  ? samplePaperError
+                  : loadingSamplePaper
+                  ? "Loading sample paper..."
+                  : "Load the sample paper document."}
+              </div>
             </div>
 
             {/* Paste Text */}
@@ -519,11 +566,8 @@ export function StartScreen({
               </button>
               <button
                 type="button"
-              onClick={() => {
-                setAssistantOpen(false);
-                openSamplePaperPdf();
-              }}
-              data-tip="Open the sample paper PDF."
+                onClick={loadSamplePaperDocument}
+                data-tip="Load the sample paper document."
               >
                 Sample Paper
               </button>
