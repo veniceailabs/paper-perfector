@@ -807,10 +807,10 @@ mark {
   /* Table Layout for Print */
   .paper-canvas {
     padding: 0 !important;
-    margin: 0;
-    max-width: none;
-    width: 100%;
-    display: block; /* Wrapper */
+    margin: 0 !important;
+    max-width: none !important;
+    width: 100% !important;
+    display: block !important; /* Wrapper */
   }
 
   .print-layout {
