@@ -6,7 +6,6 @@ import { dataBlasterOneSheet } from "../documents/dataBlasterOneSheet";
 import { paperPerfectorOneSheet } from "../documents/paperPerfectorOneSheet";
 import { importFromMarkdownText } from "../utils/markdownImport";
 import { importFromHtmlText } from "../utils/htmlImport";
-import { importDocumentFromFile } from "../utils/importers";
 import type { SavedDocument } from "../utils/library";
 import { useFocusTrap } from "../hooks/useFocusTrap";
 import { openFeedbackEmail } from "../utils/feedback";
@@ -37,8 +36,6 @@ export function StartScreen({
   const [markdownError, setMarkdownError] = useState<string | null>(null);
   const [pendingDoc, setPendingDoc] = useState<Document | null>(null);
   const [assistantOpen, setAssistantOpen] = useState(false);
-  const [loadingSamplePaper, setLoadingSamplePaper] = useState(false);
-  const [samplePaperError, setSamplePaperError] = useState<string | null>(null);
   const importInputRef = useRef<HTMLInputElement>(null);
   const pasteModalRef = useRef<HTMLDivElement | null>(null);
   const themeModalRef = useRef<HTMLDivElement | null>(null);
@@ -99,47 +96,6 @@ export function StartScreen({
 
   const openImportPicker = () => {
     importInputRef.current?.click();
-  };
-
-  const resolveSamplePaperUrl = () => {
-    if (typeof window === "undefined") {
-      return null;
-    }
-    const base = `${window.location.origin}${import.meta.env.BASE_URL ?? "/"}`;
-    const normalizedBase = base.endsWith("/") ? base : `${base}/`;
-    return new URL("Sample Research Paper.pdf", normalizedBase).href;
-  };
-
-  const loadSamplePaperDocument = async () => {
-    if (loadingSamplePaper) {
-      return;
-    }
-    const url = resolveSamplePaperUrl();
-    if (!url) {
-      setSamplePaperError("Unable to resolve sample paper URL.");
-      return;
-    }
-    setSamplePaperError(null);
-    setLoadingSamplePaper(true);
-    try {
-      const response = await fetch(url);
-      if (!response.ok) {
-        throw new Error(`Could not download the sample paper (${response.status}).`);
-      }
-      const blob = await response.blob();
-      const file = new File([blob], "Sample Research Paper.pdf", {
-        type: "application/pdf",
-      });
-      const result = await importDocumentFromFile(file);
-      setAssistantOpen(false);
-      onSelectDocument(result.document);
-    } catch (error) {
-      setSamplePaperError(
-        error instanceof Error ? error.message : "Failed to load the sample paper."
-      );
-    } finally {
-      setLoadingSamplePaper(false);
-    }
   };
 
   const handleSelectFromAssistant = (doc: Document) => {
@@ -386,30 +342,6 @@ export function StartScreen({
               <p>Start from scratch</p>
             </div>
 
-            {/* Sample Example */}
-            <div className="start-card-wrapper">
-              <div
-                className="start-card start-card-example start-card-sample"
-                onClick={loadSamplePaperDocument}
-                data-tip="Load the polished sample paper for editing."
-              >
-                <div className="card-icon">📚</div>
-                <h3>Sample Paper</h3>
-                <p>View a formatted example</p>
-              </div>
-              <div
-                className={`start-card-status ${
-                  loadingSamplePaper ? "loading" : ""
-                } ${samplePaperError ? "error" : ""}`}
-              >
-                {samplePaperError
-                  ? samplePaperError
-                  : loadingSamplePaper
-                  ? "Loading sample paper..."
-                  : "Load the sample paper document."}
-              </div>
-            </div>
-
             {/* Paste Text */}
             <div
               className="start-card start-card-paste"
@@ -563,13 +495,6 @@ export function StartScreen({
                 data-tip="Start a new blank document."
               >
                 Blank Document
-              </button>
-              <button
-                type="button"
-                onClick={loadSamplePaperDocument}
-                data-tip="Load the sample paper document."
-              >
-                Sample Paper
               </button>
               <button
                 type="button"
