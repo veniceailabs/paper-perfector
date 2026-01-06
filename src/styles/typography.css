@@ -774,10 +774,11 @@ mark {
   }
 
   .document-container {
-    display: block;
-    padding: 0;
-    margin: 0;
-    max-width: none;
+    display: block !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    max-width: none !important;
+    width: 100% !important;
   }
 
   .document-sidebar,
@@ -813,28 +814,30 @@ mark {
   }
 
   .print-layout {
-    display: table;
-    width: 100%;
+    display: table !important;
+    width: 100% !important;
+    border-collapse: collapse !important;
   }
 
   .print-layout thead {
-    display: table-header-group;
+    display: table-header-group !important;
   }
 
   .print-layout tfoot {
-    display: table-footer-group;
+    display: table-footer-group !important;
   }
   
   .print-layout tbody {
-    display: table-row-group;
+    display: table-row-group !important;
   }
 
   .print-layout tr {
-    display: table-row;
+    display: table-row !important;
   }
 
   .print-layout td {
-    display: table-cell;
+    display: table-cell !important;
+    width: 100% !important; /* Ensure cell takes full width */
   }
 
   /* Spacers replace the @page margin */
