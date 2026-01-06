@@ -1,6 +1,5 @@
 import { useRef, useState } from "react";
 import { Document } from "../models/DocumentSchema";
-import { samplePaper } from "../documents/samplePaper";
 import { templates } from "../documents/templates";
 import { quickstartGuide } from "../documents/quickstartGuide";
 import { dataBlasterOneSheet } from "../documents/dataBlasterOneSheet";
@@ -93,6 +92,16 @@ export function StartScreen({
     setMarkdownText("");
     setMarkdownError(null);
     setShowPasteModal(true);
+  };
+
+  const openSamplePaperPdf = () => {
+    if (typeof window === "undefined") {
+      return;
+    }
+    const base = `${window.location.origin}${import.meta.env.BASE_URL ?? "/"}`;
+    const normalizedBase = base.endsWith("/") ? base : `${base}/`;
+    const url = new URL("Sample Research Paper.pdf", normalizedBase).href;
+    window.open(url, "_blank");
   };
 
   const openImportPicker = () => {
@@ -346,8 +355,8 @@ export function StartScreen({
             {/* Sample Example */}
             <div
               className="start-card start-card-example"
-              onClick={() => onSelectDocument(samplePaper)}
-              data-tip="Open a polished sample paper to see formatting in action."
+            onClick={openSamplePaperPdf}
+            data-tip="Open the polished sample paper PDF."
             >
               <div className="card-icon">📚</div>
               <h3>Sample Paper</h3>
@@ -510,8 +519,11 @@ export function StartScreen({
               </button>
               <button
                 type="button"
-                onClick={() => handleSelectFromAssistant(samplePaper)}
-                data-tip="Open the sample paper."
+              onClick={() => {
+                setAssistantOpen(false);
+                openSamplePaperPdf();
+              }}
+              data-tip="Open the sample paper PDF."
               >
                 Sample Paper
               </button>
