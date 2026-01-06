@@ -111,6 +111,7 @@ export function DocumentRenderer({
         }`.trim()}
         style={formatStyle}
       >
+        <div className="print-background" aria-hidden="true" />
         <table className="print-layout">
           <thead>
             <tr>

@@ -680,6 +680,10 @@ mark {
 
 /* Screen Mode: Behave like blocks */
 @media screen {
+  .print-background {
+    display: none;
+  }
+
   .print-layout,
   .print-layout tbody,
   .print-layout tr,
@@ -783,6 +787,20 @@ mark {
 
   .format-lock {
     display: none !important;
+  }
+
+  /* Fixed Background for Full Bleed */
+  .print-background {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: var(--bg-primary) !important;
+    z-index: -1;
+    display: block;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
   }
 
   /* Table Layout for Print */
