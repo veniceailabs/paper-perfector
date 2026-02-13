@@ -8,7 +8,7 @@ import {
   type KeyboardEvent as ReactKeyboardEvent,
 } from "react";
 import type { Document, DocumentFormat, Source } from "../models/DocumentSchema";
-import type { SearchScope } from "../models/Search";
+import type { SearchOptions, SearchScope } from "../models/Search";
 import { TableOfContents } from "./TableOfContents";
 import { FormatControls } from "./FormatControls";
 import { importFromMarkdownText } from "../utils/markdownImport";
@@ -42,8 +42,18 @@ export type DocumentEditorHandle = {
   save: () => boolean;
   setFormat: (format: DocumentFormat) => void;
   getFormat: () => DocumentFormat | undefined;
-  replaceAll: (query: string, replacement: string, scope: SearchScope) => number;
-  replaceNext: (query: string, replacement: string, scope: SearchScope) => number;
+  replaceAll: (
+    query: string,
+    replacement: string,
+    scope: SearchScope,
+    options?: SearchOptions
+  ) => number;
+  replaceNext: (
+    query: string,
+    replacement: string,
+    scope: SearchScope,
+    options?: SearchOptions
+  ) => number;
   addSource: (source: Source) => void;
   removeSource: (sourceId: string) => void;
   insertCitation: (source: Source) => boolean;
@@ -338,10 +348,10 @@ export const DocumentEditor = forwardRef<DocumentEditorHandle, DocumentEditorPro
         setIsDirty(true);
       },
       getFormat: () => format,
-      replaceAll: (query, replacement, scope) =>
-        runReplace(query, replacement, scope, true),
-      replaceNext: (query, replacement, scope) =>
-        runReplace(query, replacement, scope, false),
+      replaceAll: (query, replacement, scope, options) =>
+        runReplace(query, replacement, scope, true, options),
+      replaceNext: (query, replacement, scope, options) =>
+        runReplace(query, replacement, scope, false, options),
       addSource,
       removeSource,
       insertCitation,
@@ -726,7 +736,8 @@ export const DocumentEditor = forwardRef<DocumentEditorHandle, DocumentEditorPro
     query: string,
     replacement: string,
     scope: SearchScope,
-    replaceAll: boolean
+    replaceAll: boolean,
+    options?: SearchOptions
   ) => {
     const trimmedQuery = query.trim();
     const signature = JSON.stringify({
@@ -734,6 +745,7 @@ export const DocumentEditor = forwardRef<DocumentEditorHandle, DocumentEditorPro
       replacement,
       scope,
       mode: editorMode,
+      options,
     });
     if (signature !== replaceSignatureRef.current) {
       replaceSignatureRef.current = signature;
@@ -743,7 +755,13 @@ export const DocumentEditor = forwardRef<DocumentEditorHandle, DocumentEditorPro
 
     if (editorMode === "markdown") {
       if (replaceAll) {
-        const result = replaceInText(markdownDraft, query, replacement, true);
+        const result = replaceInText(
+          markdownDraft,
+          query,
+          replacement,
+          true,
+          options
+        );
         if (result.count > 0) {
           setMarkdownDraft(result.value);
           setIsDirty(true);
@@ -756,7 +774,8 @@ export const DocumentEditor = forwardRef<DocumentEditorHandle, DocumentEditorPro
         markdownDraft,
         query,
         replacement,
-        replaceTextCursor
+        replaceTextCursor,
+        options
       );
       if (result.count > 0) {
         setMarkdownDraft(result.value);
@@ -774,7 +793,8 @@ export const DocumentEditor = forwardRef<DocumentEditorHandle, DocumentEditorPro
         query,
         replacement,
         scope,
-        true
+        true,
+        options
       );
       if (result.count > 0) {
         applyParsedDoc(result.doc);
@@ -789,7 +809,8 @@ export const DocumentEditor = forwardRef<DocumentEditorHandle, DocumentEditorPro
       query,
       replacement,
       scope,
-      replaceCursor
+      replaceCursor,
+      options
     );
     if (nextResult.count > 0) {
       applyParsedDoc(nextResult.doc);

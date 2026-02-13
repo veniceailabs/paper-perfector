@@ -50,7 +50,17 @@ function addParagraph(
     return;
   }
   const lastIndex = paragraphs.length - 1;
-  paragraphs[lastIndex] = `${paragraphs[lastIndex]}${joiner}${nextLine}`;
+  const previous = paragraphs[lastIndex];
+  if (previous.endsWith("-") && /^[a-z]/.test(nextLine)) {
+    paragraphs[lastIndex] = `${previous.slice(0, -1)}${nextLine}`;
+    return;
+  }
+  const safeJoiner = noSpaceJoin(previous, nextLine) ? "" : joiner;
+  paragraphs[lastIndex] = `${previous}${safeJoiner}${nextLine}`;
+}
+
+function noSpaceJoin(previous: string, nextLine: string) {
+  return /[(\[{]$/.test(previous) || /^[,.;:!?%)\]}]/.test(nextLine);
 }
 
 export function buildDocumentFromLines(options: {
@@ -137,7 +147,7 @@ export function buildDocumentFromLines(options: {
       currentSection.body,
       line.text,
       join,
-      options.preserveLineBreaks ? "\n" : " "
+      " "
     );
     lastBodyLine = line;
   });

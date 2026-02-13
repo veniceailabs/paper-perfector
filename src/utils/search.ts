@@ -1,5 +1,5 @@
 import type { Document } from "../models/DocumentSchema";
-import type { SearchScope } from "../models/Search";
+import type { SearchOptions, SearchScope } from "../models/Search";
 
 type ReplaceTextResult = {
   value: string;
@@ -30,18 +30,59 @@ export function escapeRegExp(value: string) {
   return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
+function normalizeQuery(query: string) {
+  return query.trim();
+}
+
+function createSearchRegex(query: string, options?: SearchOptions, global = true) {
+  const normalizedQuery = normalizeQuery(query);
+  if (!normalizedQuery) {
+    return null;
+  }
+  const pattern = options?.wholeWord
+    ? `\\b${escapeRegExp(normalizedQuery)}\\b`
+    : escapeRegExp(normalizedQuery);
+  const flags = `${global ? "g" : ""}${options?.matchCase ? "" : "i"}`;
+  return new RegExp(pattern, flags);
+}
+
+function findNextMatch(
+  text: string,
+  query: string,
+  startOffset: number,
+  options?: SearchOptions
+) {
+  const regex = createSearchRegex(query, options, true);
+  if (!regex) {
+    return null;
+  }
+  regex.lastIndex = Math.max(0, startOffset);
+  const match = regex.exec(text);
+  if (!match) {
+    return null;
+  }
+  return {
+    index: match.index,
+    length: match[0].length,
+  };
+}
+
 export function replaceInText(
   text: string,
   query: string,
   replacement: string,
-  replaceAll: boolean
+  replaceAll: boolean,
+  options?: SearchOptions
 ): ReplaceTextResult {
-  const trimmedQuery = query.trim();
-  if (!trimmedQuery) {
+  const normalizedQuery = normalizeQuery(query);
+  if (!normalizedQuery) {
     return { value: text, count: 0 };
   }
 
-  const regex = new RegExp(escapeRegExp(trimmedQuery), replaceAll ? "gi" : "i");
+  const regex = createSearchRegex(normalizedQuery, options, replaceAll);
+  if (!regex) {
+    return { value: text, count: 0 };
+  }
   const matches = text.match(regex);
   if (!matches) {
     return { value: text, count: 0 };
@@ -55,29 +96,28 @@ export function replaceNextInText(
   text: string,
   query: string,
   replacement: string,
-  cursorOffset: number | null
+  cursorOffset: number | null,
+  options?: SearchOptions
 ) {
-  const trimmedQuery = query.trim();
-  if (!trimmedQuery) {
+  const normalizedQuery = normalizeQuery(query);
+  if (!normalizedQuery) {
     return { value: text, count: 0, cursorOffset: null };
   }
 
-  const lowerText = text.toLowerCase();
-  const lowerQuery = trimmedQuery.toLowerCase();
-  const startIndex = cursorOffset ?? 0;
-  const matchIndex = lowerText.indexOf(lowerQuery, startIndex);
-  if (matchIndex === -1) {
+  const startIndex = Math.max(0, cursorOffset ?? 0);
+  const match = findNextMatch(text, normalizedQuery, startIndex, options);
+  if (!match) {
     return { value: text, count: 0, cursorOffset: null };
   }
 
   const nextValue =
-    text.slice(0, matchIndex) +
+    text.slice(0, match.index) +
     replacement +
-    text.slice(matchIndex + trimmedQuery.length);
+    text.slice(match.index + match.length);
   return {
     value: nextValue,
     count: 1,
-    cursorOffset: matchIndex + replacement.length,
+    cursorOffset: match.index + replacement.length,
   };
 }
 
@@ -105,10 +145,11 @@ export function replaceNextInDocument(
   query: string,
   replacement: string,
   scope: SearchScope,
-  cursor: ReplaceCursor | null
+  cursor: ReplaceCursor | null,
+  options?: SearchOptions
 ): ReplaceNextResult {
-  const trimmedQuery = query.trim();
-  if (!trimmedQuery) {
+  const normalizedQuery = normalizeQuery(query);
+  if (!normalizedQuery) {
     return { doc, count: 0, cursor: null };
   }
 
@@ -120,20 +161,18 @@ export function replaceNextInDocument(
     targetCursor: ReplaceCursor,
     startOffset: number
   ) => {
-    const lowerText = text.toLowerCase();
-    const lowerQuery = trimmedQuery.toLowerCase();
-    const matchIndex = lowerText.indexOf(lowerQuery, startOffset);
-    if (matchIndex === -1) {
+    const match = findNextMatch(text, normalizedQuery, startOffset, options);
+    if (!match) {
       return null;
     }
     return {
       value:
-        text.slice(0, matchIndex) +
+        text.slice(0, match.index) +
         replacement +
-        text.slice(matchIndex + trimmedQuery.length),
+        text.slice(match.index + match.length),
       cursor: {
         ...targetCursor,
-        offset: matchIndex + replacement.length,
+        offset: match.index + replacement.length,
       },
     };
   };
@@ -340,10 +379,11 @@ export function replaceInDocument(
   query: string,
   replacement: string,
   scope: SearchScope,
-  replaceAll: boolean
+  replaceAll: boolean,
+  options?: SearchOptions
 ) {
-  const trimmedQuery = query.trim();
-  if (!trimmedQuery) {
+  const normalizedQuery = normalizeQuery(query);
+  if (!normalizedQuery) {
     return { doc, count: 0 };
   }
 
@@ -354,7 +394,13 @@ export function replaceInDocument(
     if (!replaceAll && replaced) {
       return { value: text, count: 0 };
     }
-    const result = replaceInText(text, trimmedQuery, replacement, replaceAll);
+    const result = replaceInText(
+      text,
+      normalizedQuery,
+      replacement,
+      replaceAll,
+      options
+    );
     if (!replaceAll && result.count > 0) {
       replaced = true;
     }

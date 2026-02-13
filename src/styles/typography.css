@@ -718,7 +718,7 @@ mark {
 
 @media print {
   @page {
-    margin: 0; /* Borderless */
+    margin: var(--paper-margin, 24mm);
   }
 
   * {
@@ -834,38 +834,38 @@ mark {
     padding: 0 !important;
   }
 
-  /* Spacers replace the @page margin */
+  /* Header and footer reserve their own vertical space within page content. */
   html[data-printing] .print-header-spacer {
-    height: calc(var(--paper-margin, 24mm) + var(--paper-header-height, 0px));
+    height: var(--paper-header-height, 0px);
     position: relative;
   }
 
   html[data-printing] .print-footer-spacer {
-    height: calc(var(--paper-margin, 24mm) + var(--paper-footer-height, 0px));
+    height: var(--paper-footer-height, 0px);
     position: relative;
   }
   
   /* Positioning headers inside the spacer */
   html[data-printing] .paper-header {
     position: absolute;
-    bottom: 12px;
-    left: var(--paper-margin, 24mm);
-    right: var(--paper-margin, 24mm);
+    bottom: 0;
+    left: 0;
+    right: 0;
     margin: 0;
   }
 
   html[data-printing] .paper-footer {
     position: absolute;
-    top: 12px;
-    left: var(--paper-margin, 24mm);
-    right: var(--paper-margin, 24mm);
+    top: 0;
+    left: 0;
+    right: 0;
     margin: 0;
   }
 
-  /* Horizontal Margins via Padding on Content Cell */
+  /* Margins are handled by @page. */
   html[data-printing] .print-layout tbody td {
-    padding-left: var(--paper-margin, 24mm) !important;
-    padding-right: var(--paper-margin, 24mm) !important;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
   }
 
   html[data-printing] .paper-section,
@@ -884,11 +884,6 @@ mark {
   }
 
   html[data-printing] .paper-section.level-1 {
-    break-before: page;
-    page-break-before: always;
-  }
-
-  html[data-printing] .paper-section.level-1:first-of-type {
     break-before: auto;
     page-break-before: auto;
   }

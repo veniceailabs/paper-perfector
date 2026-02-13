@@ -1,6 +1,6 @@
 import { useRef } from "react";
 import type { ScholarResult } from "../models/Scholar";
-import type { SearchResult, SearchScope } from "../models/Search";
+import type { SearchOptions, SearchResult, SearchScope } from "../models/Search";
 import type { Source } from "../models/DocumentSchema";
 import { useFocusTrap } from "../hooks/useFocusTrap";
 import "../styles/SearchPanel.css";
@@ -19,6 +19,8 @@ type SearchPanelProps = {
   onReplaceValueChange: (value: string) => void;
   searchScope: SearchScope;
   onSearchScopeChange: (scope: SearchScope) => void;
+  searchOptions: SearchOptions;
+  onSearchOptionsChange: (options: SearchOptions) => void;
   searchResults: SearchResult[];
   onNavigate: (sectionId: string) => void;
   scholarQuery: string;
@@ -61,6 +63,8 @@ export function SearchPanel({
   onReplaceValueChange,
   searchScope,
   onSearchScopeChange,
+  searchOptions,
+  onSearchOptionsChange,
   searchResults,
   onNavigate,
   scholarQuery,
@@ -89,6 +93,9 @@ export function SearchPanel({
 
   const handleScopeToggle = (key: keyof SearchScope) => {
     onSearchScopeChange({ ...searchScope, [key]: !searchScope[key] });
+  };
+  const handleOptionToggle = (key: keyof SearchOptions) => {
+    onSearchOptionsChange({ ...searchOptions, [key]: !searchOptions[key] });
   };
 
   const hasQuery = findQuery.trim().length > 0;
@@ -181,6 +188,24 @@ export function SearchPanel({
                 {scopeLabels[key]}
               </button>
             ))}
+          </div>
+          <div className="search-options">
+            <button
+              type="button"
+              className={`search-scope-toggle ${searchOptions.matchCase ? "active" : ""}`}
+              onClick={() => handleOptionToggle("matchCase")}
+              data-tip="Match uppercase/lowercase exactly."
+            >
+              Match Case
+            </button>
+            <button
+              type="button"
+              className={`search-scope-toggle ${searchOptions.wholeWord ? "active" : ""}`}
+              onClick={() => handleOptionToggle("wholeWord")}
+              data-tip="Match complete words only."
+            >
+              Whole Word
+            </button>
           </div>
           <div className="search-panel-results">
             {hasQuery ? (

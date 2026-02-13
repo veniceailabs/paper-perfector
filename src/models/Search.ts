@@ -4,10 +4,20 @@ export type SearchScope = {
   metadata: boolean;
 };
 
+export type SearchOptions = {
+  matchCase: boolean;
+  wholeWord: boolean;
+};
+
 export const defaultSearchScope: SearchScope = {
   title: true,
   body: true,
   metadata: false,
+};
+
+export const defaultSearchOptions: SearchOptions = {
+  matchCase: false,
+  wholeWord: false,
 };
 
 export type SearchResult = {

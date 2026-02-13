@@ -12,7 +12,9 @@ import { HistoryModal } from "./components/HistoryModal";
 import type { Document, DocumentFormat, Source } from "./models/DocumentSchema";
 import type { ScholarResult } from "./models/Scholar";
 import {
+  defaultSearchOptions,
   defaultSearchScope,
+  type SearchOptions,
   type SearchResult,
   type SearchScope,
 } from "./models/Search";
@@ -38,7 +40,12 @@ import {
   resolveFormat,
   saveFormatDefaults,
 } from "./utils/formatting";
-import { replaceInDocument, replaceNextInDocument, type ReplaceCursor } from "./utils/search";
+import {
+  escapeRegExp,
+  replaceInDocument,
+  replaceNextInDocument,
+  type ReplaceCursor,
+} from "./utils/search";
 import { fetchScholarResults } from "./utils/scholar";
 import { calculateDocumentStats } from "./utils/documentStats";
 import { PaperScoreModal } from "./components/PaperScoreModal";
@@ -95,6 +102,8 @@ export default function App() {
   const [replaceValue, setReplaceValue] = useState("");
   const [replaceCursor, setReplaceCursor] = useState<ReplaceCursor | null>(null);
   const [searchScope, setSearchScope] = useState<SearchScope>(defaultSearchScope);
+  const [searchOptions, setSearchOptions] =
+    useState<SearchOptions>(defaultSearchOptions);
   const [scholarQuery, setScholarQuery] = useState("");
   const [scholarResults, setScholarResults] = useState<ScholarResult[]>([]);
   const [scholarStatus, setScholarStatus] = useState<"idle" | "loading" | "error">(
@@ -119,16 +128,38 @@ export default function App() {
       return [];
     }
 
-    const normalized = trimmedQuery.toLowerCase();
+    const pattern = searchOptions.wholeWord
+      ? `\\b${escapeRegExp(trimmedQuery)}\\b`
+      : escapeRegExp(trimmedQuery);
+    const flags = searchOptions.matchCase ? "g" : "gi";
+    const searchRegex = new RegExp(pattern, flags);
     const results: SearchResult[] = [];
     const addResult = (result: SearchResult) => {
       if (results.length < 20) {
         results.push(result);
       }
     };
+    const hasMatch = (text: string) => {
+      searchRegex.lastIndex = 0;
+      return searchRegex.test(text);
+    };
+    const getSnippet = (text: string) => {
+      const compact = text.replace(/\s+/g, " ").trim();
+      if (!compact) {
+        return null;
+      }
+      searchRegex.lastIndex = 0;
+      const match = searchRegex.exec(compact);
+      if (!match) {
+        return null;
+      }
+      const start = Math.max(match.index - 40, 0);
+      const end = Math.min(match.index + match[0].length + 60, compact.length);
+      return compact.slice(start, end);
+    };
 
     if (searchScope.title) {
-      if (doc.title.toLowerCase().includes(normalized)) {
+      if (hasMatch(doc.title)) {
         addResult({
           sectionId: "document-top",
           title: "Document Title",
@@ -136,7 +167,7 @@ export default function App() {
           matchType: "title",
         });
       }
-      if (doc.subtitle && doc.subtitle.toLowerCase().includes(normalized)) {
+      if (doc.subtitle && hasMatch(doc.subtitle)) {
         addResult({
           sectionId: "document-top",
           title: "Subtitle",
@@ -151,8 +182,7 @@ export default function App() {
         if (results.length >= 20) {
           return;
         }
-        const combined = `${key} ${value}`.toLowerCase();
-        if (combined.includes(normalized)) {
+        if (hasMatch(`${key} ${value}`)) {
           addResult({
             sectionId: "document-top",
             title: `Metadata: ${key}`,
@@ -169,8 +199,7 @@ export default function App() {
       }
 
       if (searchScope.title) {
-        const titleMatch = section.title.toLowerCase().includes(normalized);
-        if (titleMatch) {
+        if (hasMatch(section.title)) {
           addResult({
             sectionId: section.id,
             title: section.title,
@@ -185,27 +214,17 @@ export default function App() {
       }
 
       const checkLine = (line: string) => {
-        const normalizedLine = line.replace(/\s+/g, " ").trim();
-        if (!normalizedLine) {
+        const snippet = getSnippet(line);
+        if (!snippet) {
           return false;
         }
-        const lineLower = normalizedLine.toLowerCase();
-        if (lineLower.includes(normalized)) {
-          const matchIndex = lineLower.indexOf(normalized);
-          const start = Math.max(matchIndex - 40, 0);
-          const end = Math.min(
-            matchIndex + normalized.length + 60,
-            normalizedLine.length
-          );
-          addResult({
-            sectionId: section.id,
-            title: section.title,
-            snippet: normalizedLine.slice(start, end),
-            matchType: "body",
-          });
-          return true;
-        }
-        return false;
+        addResult({
+          sectionId: section.id,
+          title: section.title,
+          snippet,
+          matchType: "body",
+        });
+        return true;
       };
 
       for (const paragraph of section.body) {
@@ -224,7 +243,7 @@ export default function App() {
     });
 
     return results;
-  }, [doc, findQuery, searchScope]);
+  }, [doc, findQuery, searchOptions, searchScope]);
 
   const docStats = useMemo(() => {
     if (!doc) {
@@ -394,7 +413,7 @@ export default function App() {
   useEffect(() => {
     replaceSignatureRef.current = "";
     setReplaceCursor(null);
-  }, [docId, findQuery, replaceValue, searchScope]);
+  }, [docId, findQuery, replaceValue, searchOptions, searchScope]);
 
   useEffect(() => {
     if (!showToolbarMenu) {
@@ -754,6 +773,7 @@ export default function App() {
       query: trimmedQuery,
       replacement: replaceValue,
       scope: searchScope,
+      options: searchOptions,
     });
     if (signature !== replaceSignatureRef.current) {
       replaceSignatureRef.current = signature;
@@ -763,8 +783,18 @@ export default function App() {
     let count = 0;
     if (editMode && editorRef.current) {
       count = replaceAll
-        ? editorRef.current.replaceAll(findQuery, replaceValue, searchScope)
-        : editorRef.current.replaceNext(findQuery, replaceValue, searchScope);
+        ? editorRef.current.replaceAll(
+            findQuery,
+            replaceValue,
+            searchScope,
+            searchOptions
+          )
+        : editorRef.current.replaceNext(
+            findQuery,
+            replaceValue,
+            searchScope,
+            searchOptions
+          );
     } else {
       if (replaceAll) {
         const result = replaceInDocument(
@@ -772,7 +802,8 @@ export default function App() {
           findQuery,
           replaceValue,
           searchScope,
-          true
+          true,
+          searchOptions
         );
         count = result.count;
         if (count > 0) {
@@ -785,7 +816,8 @@ export default function App() {
           findQuery,
           replaceValue,
           searchScope,
-          replaceCursor
+          replaceCursor,
+          searchOptions
         );
         count = result.count;
         if (count > 0) {
@@ -922,6 +954,33 @@ export default function App() {
   const handleScholarSearch = async () => {
     await runScholarSearch(scholarQuery);
   };
+
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      const key = event.key.toLowerCase();
+      if ((event.metaKey || event.ctrlKey) && key === "f" && doc) {
+        event.preventDefault();
+        setShowSearchPanel(true);
+        return;
+      }
+      if ((event.metaKey || event.ctrlKey) && key === "h" && doc) {
+        event.preventDefault();
+        setShowSearchPanel(true);
+        return;
+      }
+      if (key === "escape") {
+        if (showSearchPanel) {
+          setShowSearchPanel(false);
+        } else if (showToolbarMenu) {
+          setShowToolbarMenu(false);
+        } else if (showHelpAssistant) {
+          setShowHelpAssistant(false);
+        }
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [doc, showHelpAssistant, showSearchPanel, showToolbarMenu]);
 
   if (!doc) {
     return (
@@ -1252,6 +1311,8 @@ export default function App() {
           onReplaceValueChange={setReplaceValue}
           searchScope={searchScope}
           onSearchScopeChange={setSearchScope}
+          searchOptions={searchOptions}
+          onSearchOptionsChange={setSearchOptions}
           searchResults={searchResults}
           onNavigate={handleSearchNavigate}
           scholarQuery={scholarQuery}
