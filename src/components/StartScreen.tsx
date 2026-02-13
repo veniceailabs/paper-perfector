@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { Document } from "../models/DocumentSchema";
 import { templates } from "../documents/templates";
 import { quickstartGuide } from "../documents/quickstartGuide";
@@ -9,6 +9,11 @@ import { importFromHtmlText } from "../utils/htmlImport";
 import type { SavedDocument } from "../utils/library";
 import { useFocusTrap } from "../hooks/useFocusTrap";
 import { openFeedbackEmail } from "../utils/feedback";
+import {
+  IconImport,
+  IconNewPaper,
+  IconScholar,
+} from "./icons/CustomIcons";
 import "../styles/StartScreen.css";
 
 interface StartScreenProps {
@@ -32,6 +37,10 @@ export function StartScreen({
 }: StartScreenProps) {
   const [showPasteModal, setShowPasteModal] = useState(false);
   const [showThemeModal, setShowThemeModal] = useState(false);
+  const [workspaceView, setWorkspaceView] = useState<
+    "recent" | "library" | "templates" | "shared"
+  >("recent");
+  const [libraryQuery, setLibraryQuery] = useState("");
   const [markdownText, setMarkdownText] = useState("");
   const [markdownError, setMarkdownError] = useState<string | null>(null);
   const [pendingDoc, setPendingDoc] = useState<Document | null>(null);
@@ -106,6 +115,16 @@ export function StartScreen({
   const orderedSavedDocuments = [...savedDocuments].sort((a, b) =>
     b.updatedAt.localeCompare(a.updatedAt)
   );
+  const filteredSavedDocuments = useMemo(() => {
+    const query = libraryQuery.trim().toLowerCase();
+    if (!query) {
+      return orderedSavedDocuments;
+    }
+    return orderedSavedDocuments.filter((entry) =>
+      `${entry.title} ${entry.doc.subtitle ?? ""}`.toLowerCase().includes(query)
+    );
+  }, [libraryQuery, orderedSavedDocuments]);
+  const recentDocuments = filteredSavedDocuments.slice(0, 8);
 
   const formatSavedAt = (value: string) => {
     try {
@@ -223,166 +242,288 @@ export function StartScreen({
 
   return (
     <div className="start-screen">
-      <div className="start-container">
-        <div className="start-header">
-          <h1>Paper Perfector</h1>
-          <p>Create and format professional documents</p>
-        </div>
-
-        {orderedSavedDocuments.length > 0 ? (
-          <div className="start-section">
-            <div className="start-section-header">
-              <div className="start-section-title">
-                <h2>My Documents</h2>
-                <span className="start-section-tag">Library</span>
-              </div>
-              <span className="start-section-count">
-                {orderedSavedDocuments.length} saved
+      <div className="start-workspace">
+        <aside className="start-sidebar">
+          <div className="start-brand">
+            <h1>Paper Perfector</h1>
+            <p>Academic workspace and library</p>
+          </div>
+          <button
+            className="start-primary-action"
+            type="button"
+            onClick={() => onSelectDocument(createBlankDocument())}
+            data-tip="Start a new blank document."
+          >
+            <span className="icon-inline">
+              <IconNewPaper size={16} />
+              New Paper
+            </span>
+          </button>
+          <div className="start-quick-actions">
+            <button
+              type="button"
+              onClick={openPasteModal}
+              data-tip="Paste markdown, HTML, or plain text."
+            >
+              Paste Content
+            </button>
+            <button
+              type="button"
+              onClick={openImportPicker}
+              data-tip="Import .ppdoc, HTML, PDF, Word, Markdown, or text files."
+            >
+              <span className="icon-inline">
+                <IconImport size={15} />
+                Import File
               </span>
+            </button>
+            <button
+              type="button"
+              onClick={() => onSelectDocument(quickstartGuide)}
+              data-tip="Open the quickstart guide."
+            >
+              Quickstart Guide
+            </button>
+          </div>
+          <input
+            ref={importInputRef}
+            type="file"
+            accept="text/html,.html,.htm,application/pdf,.pdf,image/*,text/markdown,.md,text/plain,.txt,application/vnd.openxmlformats-officedocument.wordprocessingml.document,.docx,.doc,.ppdoc"
+            onChange={onImport}
+            style={{ display: "none" }}
+          />
+          <div className="start-library-search">
+            <label htmlFor="workspace-search">Search Library</label>
+            <input
+              id="workspace-search"
+              type="search"
+              value={libraryQuery}
+              onChange={(event) => setLibraryQuery(event.target.value)}
+              placeholder="Find by title..."
+            />
+          </div>
+          <nav className="start-nav">
+            <button
+              type="button"
+              className={workspaceView === "recent" ? "active" : ""}
+              onClick={() => setWorkspaceView("recent")}
+            >
+              Recent
+              <span>{Math.min(8, filteredSavedDocuments.length)}</span>
+            </button>
+            <button
+              type="button"
+              className={workspaceView === "library" ? "active" : ""}
+              onClick={() => setWorkspaceView("library")}
+            >
+              My Library
+              <span>{filteredSavedDocuments.length}</span>
+            </button>
+            <button
+              type="button"
+              className={workspaceView === "templates" ? "active" : ""}
+              onClick={() => setWorkspaceView("templates")}
+            >
+              Templates
+              <span>3</span>
+            </button>
+            <button
+              type="button"
+              className={workspaceView === "shared" ? "active" : ""}
+              onClick={() => setWorkspaceView("shared")}
+            >
+              Shared with Me
+              <span>0</span>
+            </button>
+          </nav>
+        </aside>
+        <main className="start-stage">
+          <header className="start-stage-header">
+            <div>
+              <h2>
+                {workspaceView === "recent"
+                  ? "Recent Work"
+                  : workspaceView === "library"
+                    ? "Document Library"
+                    : workspaceView === "templates"
+                      ? "Academic Templates"
+                      : "Shared Workspace"}
+              </h2>
+              <p>
+                {workspaceView === "templates"
+                  ? "Start from pre-formatted standards and one-click guides."
+                  : "Open work quickly, continue where you left off, and keep your exports consistent."}
+              </p>
             </div>
-            <div className="start-grid start-grid-saved">
-              {orderedSavedDocuments.map((entry) => (
-                <div key={entry.id} className="start-card start-card-saved">
-                  <div className="saved-card-header">
-                    <h3>{entry.title}</h3>
-                    <span>Saved {formatSavedAt(entry.updatedAt)}</span>
-                  </div>
+            <div className="start-theme-toggle">
+              <button
+                type="button"
+                onClick={() => onThemeChange("dark")}
+                data-tip="Switch workspace visuals to dark mode."
+              >
+                Dark
+              </button>
+              <button
+                type="button"
+                onClick={() => onThemeChange("light")}
+                data-tip="Switch workspace visuals to light mode."
+              >
+                Light
+              </button>
+            </div>
+          </header>
+
+          {(workspaceView === "recent" || workspaceView === "library") && (
+            <section className="start-panel">
+              {filteredSavedDocuments.length > 0 ? (
+                <div className="start-doc-grid">
+                  {(workspaceView === "recent"
+                    ? recentDocuments
+                    : filteredSavedDocuments
+                  ).map((entry) => (
+                    <article key={entry.id} className="start-doc-card">
+                      <div className="start-doc-head">
+                        <h3>{entry.title}</h3>
+                        <span>{entry.versions.length} versions</span>
+                      </div>
+                      <p>
+                        Updated {formatSavedAt(entry.updatedAt)} · Created{" "}
+                        {formatSavedAt(entry.createdAt)}
+                      </p>
+                      <div className="saved-card-actions">
+                        <button
+                          type="button"
+                          onClick={() => onOpenSavedDocument(entry.id)}
+                          data-tip="Open this saved document."
+                        >
+                          Open
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => onExportSavedDocument(entry.doc, entry.id)}
+                          data-tip="Export this document as .ppdoc."
+                        >
+                          Export
+                        </button>
+                        <button
+                          type="button"
+                          className="danger"
+                          onClick={() => handleDeleteSaved(entry)}
+                          data-tip="Delete this document from your library."
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    </article>
+                  ))}
+                </div>
+              ) : (
+                <div className="start-empty">
+                  <h3>No saved papers yet</h3>
                   <p>
-                    Versions: {entry.versions.length} · Created{" "}
-                    {formatSavedAt(entry.createdAt)}
+                    Create your first document or import a PDF/Word file to start
+                    building your library.
                   </p>
-                  <div className="saved-card-actions">
+                  <div className="start-empty-actions">
                     <button
                       type="button"
-                      onClick={() => onOpenSavedDocument(entry.id)}
-                      data-tip="Open this saved document."
+                      onClick={() => onSelectDocument(createBlankDocument())}
                     >
-                      Open
+                      New Blank Paper
                     </button>
-                    <button
-                      type="button"
-                      onClick={() => onExportSavedDocument(entry.doc, entry.id)}
-                      data-tip="Download a .ppdoc file."
-                    >
-                      Export .ppdoc
-                    </button>
-                    <button
-                      type="button"
-                      className="danger"
-                      onClick={() => handleDeleteSaved(entry)}
-                      data-tip="Remove this document from the library."
-                    >
-                      Delete
+                    <button type="button" onClick={openImportPicker}>
+                      Import Existing File
                     </button>
                   </div>
                 </div>
-              ))}
-            </div>
-          </div>
-        ) : null}
+              )}
+            </section>
+          )}
 
-        <div className="start-section">
-          <div className="start-section-header">
-            <div className="start-section-title">
-              <h2>Academic &amp; Structured</h2>
-              <span className="start-section-tag">Templates</span>
-            </div>
-          </div>
-          <div className="start-grid start-grid-templates">
-            {/* APA Template */}
-            <div
-              className="start-card start-card-example"
-              onClick={() => onSelectDocument(templates.apa)}
-              data-tip="Start an APA 7th Edition template with the right margins and spacing."
-            >
-              <div className="card-icon">📑</div>
-              <h3>APA Format</h3>
-              <p>7th Edition template</p>
-            </div>
+          {workspaceView === "templates" && (
+            <section className="start-panel">
+              <div className="start-template-grid">
+                <article className="start-template-card">
+                  <div>
+                    <h3 className="icon-inline">
+                      <IconScholar size={16} />
+                      APA Format
+                    </h3>
+                    <p>7th Edition · Running head and references ready</p>
+                  </div>
+                  <button type="button" onClick={() => onSelectDocument(templates.apa)}>
+                    Use Template
+                  </button>
+                </article>
+                <article className="start-template-card">
+                  <div>
+                    <h3 className="icon-inline">
+                      <IconScholar size={16} />
+                      MLA Format
+                    </h3>
+                    <p>9th Edition · Works cited aligned and spaced</p>
+                  </div>
+                  <button type="button" onClick={() => onSelectDocument(templates.mla)}>
+                    Use Template
+                  </button>
+                </article>
+                <article className="start-template-card">
+                  <div>
+                    <h3 className="icon-inline">
+                      <IconScholar size={16} />
+                      Chicago Style
+                    </h3>
+                    <p>17th Edition · Notes and bibliography baseline</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => onSelectDocument(templates.chicago)}
+                  >
+                    Use Template
+                  </button>
+                </article>
+              </div>
+            </section>
+          )}
 
-            {/* MLA Template */}
-            <div
-              className="start-card start-card-example"
-              onClick={() => onSelectDocument(templates.mla)}
-              data-tip="Start an MLA 9th Edition template with the right margins and spacing."
-            >
-              <div className="card-icon">📄</div>
-              <h3>MLA Format</h3>
-              <p>9th Edition template</p>
-            </div>
+          {workspaceView === "shared" && (
+            <section className="start-panel">
+              <div className="start-empty">
+                <h3>No shared documents yet</h3>
+                <p>
+                  Shared links and collaborative drops will appear here when they
+                  are opened in this workspace.
+                </p>
+              </div>
+            </section>
+          )}
 
-            {/* Chicago Template */}
-            <div
-              className="start-card start-card-example"
-              onClick={() => onSelectDocument(templates.chicago)}
-              data-tip="Start a Chicago 17th Edition template with headings and bibliography."
-            >
-              <div className="card-icon">📋</div>
-              <h3>Chicago Style</h3>
-              <p>17th Edition template</p>
+          <section className="start-panel start-panel-secondary">
+            <div className="start-one-sheet-grid">
+              <button
+                type="button"
+                onClick={() => onSelectDocument(dataBlasterOneSheet)}
+                data-tip="Open the Data Blaster one-sheet overview."
+              >
+                Data Blaster One Sheet
+              </button>
+              <button
+                type="button"
+                onClick={() => onSelectDocument(paperPerfectorOneSheet)}
+                data-tip="Open the Paper Perfector one-sheet overview."
+              >
+                Paper Perfector One Sheet
+              </button>
+              <button
+                type="button"
+                onClick={openFeedbackEmail}
+                data-tip="Send product feedback."
+              >
+                Send Feedback
+              </button>
             </div>
-          </div>
-        </div>
-
-        <div className="start-section">
-          <div className="start-section-header">
-            <div className="start-section-title">
-              <h2>Bring Your Own Content</h2>
-            </div>
-          </div>
-          <div className="start-grid start-grid-content">
-            {/* New Document */}
-            <div
-              className="start-card start-card-new"
-              onClick={() => onSelectDocument(createBlankDocument())}
-              data-tip="Start from a clean page with a default layout."
-            >
-              <div className="card-icon">📝</div>
-              <h3>Blank Document</h3>
-              <p>Start from scratch</p>
-            </div>
-
-            {/* Paste Text */}
-            <div
-              className="start-card start-card-paste"
-              onClick={openPasteModal}
-              data-tip="Paste markdown, HTML, or text and keep the formatting."
-            >
-              <div className="card-icon">🧾</div>
-              <h3>Paste Text</h3>
-              <p>Paste markdown, HTML, or a link</p>
-            </div>
-
-            {/* Import Document */}
-            <label
-              className="start-card start-card-import"
-              data-tip="Import .ppdoc, HTML, PDF, Word, Markdown, or text files."
-            >
-              <div className="card-icon">📤</div>
-              <h3>Import Document</h3>
-              <p>Load from HTML, PDF, Word, or Markdown</p>
-            <input
-              ref={importInputRef}
-              type="file"
-              accept="text/html,.html,.htm,application/pdf,.pdf,image/*,text/markdown,.md,text/plain,.txt,application/vnd.openxmlformats-officedocument.wordprocessingml.document,.docx,.doc,.ppdoc"
-              onChange={onImport}
-              style={{ display: "none" }}
-            />
-            </label>
-          </div>
-        </div>
-
-        <div className="start-footer">
-          <p>💡 Tip: You can import .ppdoc, markdown, HTML, PDF, Word, or text files</p>
-          <button
-            className="start-guide-link"
-            type="button"
-            onClick={() => onSelectDocument(quickstartGuide)}
-            data-tip="Open a quickstart guide you can export as a PDF."
-          >
-            New here? Open the Quickstart Guide (export to PDF when ready)
-          </button>
-        </div>
+          </section>
+        </main>
       </div>
 
       {showPasteModal ? (

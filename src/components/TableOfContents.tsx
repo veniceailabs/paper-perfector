@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import type { Section } from "../models/DocumentSchema";
+import { IconContents } from "./icons/CustomIcons";
 import "../styles/TableOfContents.css";
 
 interface TableOfContentsProps {
@@ -46,7 +47,10 @@ export function TableOfContents({
         onClick={() => setIsOpen(!isOpen)}
         aria-expanded={isOpen}
       >
-        📑 Contents
+        <span className="icon-inline">
+          <IconContents size={15} />
+          Contents
+        </span>
       </button>
 
       {isOpen && (

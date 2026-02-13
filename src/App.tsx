@@ -9,6 +9,7 @@ import { ExportChecklistModal } from "./components/ExportChecklistModal";
 import { HoverTip } from "./components/HoverTip";
 import { SearchPanel } from "./components/SearchPanel";
 import { HistoryModal } from "./components/HistoryModal";
+import { PdfImportDebugger } from "./components/debug/PdfImportDebugger";
 import type { Document, DocumentFormat, Source } from "./models/DocumentSchema";
 import type { ScholarResult } from "./models/Scholar";
 import {
@@ -41,7 +42,7 @@ import {
   saveFormatDefaults,
 } from "./utils/formatting";
 import {
-  escapeRegExp,
+  buildSearchRegex,
   replaceInDocument,
   replaceNextInDocument,
   type ReplaceCursor,
@@ -52,6 +53,28 @@ import { PaperScoreModal } from "./components/PaperScoreModal";
 import { TrustCenterModal } from "./components/TrustCenterModal";
 import { quickstartGuide } from "./documents/quickstartGuide";
 import { serializePaperDoc } from "./utils/paperDoc";
+import {
+  IconDebug,
+  IconDraft,
+  IconEdit,
+  IconExport,
+  IconHistory,
+  IconIntegrity,
+  IconLightbulb,
+  IconMobile,
+  IconMoon,
+  IconResume,
+  IconSave,
+  IconScore,
+  IconSearch,
+  IconShare,
+  IconSun,
+  IconView,
+} from "./components/icons/CustomIcons";
+import {
+  getLastPdfImportDebugPages,
+  type PdfImportDebugPage,
+} from "./utils/pdfImport";
 
 export default function App() {
   const sharedDoc = getSharedDocumentFromUrl();
@@ -98,6 +121,10 @@ export default function App() {
     useState<DocumentFormat | null>(() => loadSavedFormatDefaults());
   const [showSearchPanel, setShowSearchPanel] = useState(false);
   const [showHelpAssistant, setShowHelpAssistant] = useState(false);
+  const [pdfDebugEnabled, setPdfDebugEnabled] = useState(false);
+  const [showPdfDebugModal, setShowPdfDebugModal] = useState(false);
+  const [pdfDebugPages, setPdfDebugPages] = useState<PdfImportDebugPage[]>([]);
+  const [pdfDebugPageIndex, setPdfDebugPageIndex] = useState(0);
   const [findQuery, setFindQuery] = useState("");
   const [replaceValue, setReplaceValue] = useState("");
   const [replaceCursor, setReplaceCursor] = useState<ReplaceCursor | null>(null);
@@ -122,17 +149,20 @@ export default function App() {
   const [showToolbarMenu, setShowToolbarMenu] = useState(false);
   const [library, setLibrary] = useState<SavedDocument[]>(() => loadLibrary());
 
+  const trimmedFindQuery = findQuery.trim();
+  const compiledSearchRegex = useMemo(
+    () => buildSearchRegex(trimmedFindQuery, searchOptions),
+    [trimmedFindQuery, searchOptions]
+  );
+  const isInvalidRegex =
+    searchOptions.useRegex && trimmedFindQuery.length > 0 && !compiledSearchRegex;
+
   const searchResults = useMemo<SearchResult[]>(() => {
-    const trimmedQuery = findQuery.trim();
-    if (!doc || !trimmedQuery) {
+    if (!doc || !trimmedFindQuery || !compiledSearchRegex) {
       return [];
     }
 
-    const pattern = searchOptions.wholeWord
-      ? `\\b${escapeRegExp(trimmedQuery)}\\b`
-      : escapeRegExp(trimmedQuery);
-    const flags = searchOptions.matchCase ? "g" : "gi";
-    const searchRegex = new RegExp(pattern, flags);
+    const searchRegex = compiledSearchRegex;
     const results: SearchResult[] = [];
     const addResult = (result: SearchResult) => {
       if (results.length < 20) {
@@ -243,7 +273,7 @@ export default function App() {
     });
 
     return results;
-  }, [doc, findQuery, searchOptions, searchScope]);
+  }, [compiledSearchRegex, doc, trimmedFindQuery, searchScope]);
 
   const docStats = useMemo(() => {
     if (!doc) {
@@ -585,16 +615,29 @@ export default function App() {
     if (!file) {
       return;
     }
+    const isPdfFile =
+      file.type === "application/pdf" || file.name.toLowerCase().endsWith(".pdf");
 
     const processImport = async () => {
       setStatus(`Importing ${file.name}...`);
 
       try {
-        const result = await importDocumentFromFile(file);
+        const result = await importDocumentFromFile(file, {
+          pdfDebug: pdfDebugEnabled && isPdfFile,
+        });
         openDocument(
           applySavedFormatDefaults(result.document),
           result.docId ?? undefined
         );
+        if (pdfDebugEnabled && isPdfFile) {
+          const pages = getLastPdfImportDebugPages();
+          setPdfDebugPages(pages);
+          setPdfDebugPageIndex(0);
+          setShowPdfDebugModal(pages.length > 0);
+        } else {
+          setPdfDebugPages([]);
+          setShowPdfDebugModal(false);
+        }
         if (result.warnings.length > 0) {
           setStatus(result.warnings.join(" "));
         } else {
@@ -764,6 +807,11 @@ export default function App() {
     }
     if (!findQuery.trim()) {
       setStatus("Enter a search term first.");
+      setTimeout(() => setStatus(null), 2000);
+      return;
+    }
+    if (isInvalidRegex) {
+      setStatus("Invalid regex syntax.");
       setTimeout(() => setStatus(null), 2000);
       return;
     }
@@ -954,6 +1002,7 @@ export default function App() {
   const handleScholarSearch = async () => {
     await runScholarSearch(scholarQuery);
   };
+  const currentPdfDebugPage = pdfDebugPages[pdfDebugPageIndex] ?? null;
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -1002,7 +1051,10 @@ export default function App() {
                 onClick={() => openDocument(resumeDoc)}
                 data-tip="Resume your last auto-saved document."
               >
-                ↩️ Resume
+                <span className="icon-inline">
+                  <IconResume size={16} />
+                  Resume
+                </span>
               </button>
             ) : null}
             {resumeDraft ? (
@@ -1012,7 +1064,10 @@ export default function App() {
                 onClick={handleResumeDraft}
                 data-tip="Resume your latest unsaved draft."
               >
-                📝 Draft
+                <span className="icon-inline">
+                  <IconDraft size={16} />
+                  Draft
+                </span>
               </button>
             ) : null}
           </div>
@@ -1020,10 +1075,24 @@ export default function App() {
             <button
               className="toolbar-button"
               type="button"
+              onClick={() => setPdfDebugEnabled((prev) => !prev)}
+              data-tip="Capture PDF import geometry for visual debugging."
+            >
+              <span className="icon-inline">
+                <IconDebug size={16} />
+                {pdfDebugEnabled ? "Debug PDF On" : "Debug PDF Off"}
+              </span>
+            </button>
+            <button
+              className="toolbar-button"
+              type="button"
               onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
               data-tip="Switch between light and dark background themes."
             >
-              {theme === "dark" ? "☀️ Light" : "🌙 Dark"} Mode
+              <span className="icon-inline">
+                {theme === "dark" ? <IconSun size={16} /> : <IconMoon size={16} />}
+                {theme === "dark" ? "Light" : "Dark"} Mode
+              </span>
             </button>
             <button
               className="toolbar-button"
@@ -1031,7 +1100,10 @@ export default function App() {
               onClick={() => setTipsEnabled((prev) => !prev)}
               data-tip="Turn hover tips on or off."
             >
-              {tipsEnabled ? "💡 Tips On" : "💡 Tips Off"}
+              <span className="icon-inline">
+                <IconLightbulb size={16} />
+                {tipsEnabled ? "Tips On" : "Tips Off"}
+              </span>
             </button>
           </div>
         </div>
@@ -1090,7 +1162,10 @@ export default function App() {
             onClick={() => setShowSearchPanel(true)}
             data-tip="Search the document or jump to app actions."
           >
-            🔍 Search
+            <span className="icon-inline">
+              <IconSearch size={16} />
+              Search
+            </span>
           </button>
         </div>
         <div className="toolbar-actions">
@@ -1119,12 +1194,26 @@ export default function App() {
             />
           </label>
           <button
+            className={`toolbar-button ${pdfDebugEnabled ? "active" : ""}`}
+            type="button"
+            onClick={() => setPdfDebugEnabled((prev) => !prev)}
+            data-tip="Capture PDF import geometry and open a visual debugger after PDF import."
+          >
+            <span className="icon-inline">
+              <IconDebug size={16} />
+              {pdfDebugEnabled ? "Debug PDF On" : "Debug PDF Off"}
+            </span>
+          </button>
+          <button
             className="toolbar-button"
             type="button"
             onClick={handleSaveToLibrary}
             data-tip="Save this document to your library."
           >
-            💾 Save
+            <span className="icon-inline">
+              <IconSave size={16} />
+              Save
+            </span>
           </button>
           <button
             className="toolbar-button"
@@ -1132,7 +1221,10 @@ export default function App() {
             onClick={() => setShowShareModal(true)}
             data-tip="Share a link or send the PDF via email."
           >
-            🔗 Share
+            <span className="icon-inline">
+              <IconShare size={16} />
+              Share
+            </span>
           </button>
           <button
             className={`toolbar-button ${editMode ? "active" : ""}`}
@@ -1140,7 +1232,10 @@ export default function App() {
             onClick={handleToggleEditMode}
             data-tip={editMode ? "Return to view mode." : "Edit and format your paper."}
           >
-            {editMode ? "👁️ View" : "✏️ Edit"}
+            <span className="icon-inline">
+              {editMode ? <IconView size={16} /> : <IconEdit size={16} />}
+              {editMode ? "View" : "Edit"}
+            </span>
           </button>
           <button
             className="toolbar-button"
@@ -1156,7 +1251,10 @@ export default function App() {
             onClick={openExportChecklist}
             data-tip="Open the export checklist and generate a PDF."
           >
-            📥 Export PDF
+            <span className="icon-inline">
+              <IconExport size={16} />
+              Export PDF
+            </span>
           </button>
           <div className="toolbar-menu" ref={toolbarMenuRef}>
             <button
@@ -1178,7 +1276,10 @@ export default function App() {
                   }}
                   data-tip="Save this document to your library."
                 >
-                  💾 Save
+                  <span className="icon-inline">
+                    <IconSave size={15} />
+                    Save
+                  </span>
                 </button>
                 <button
                   className="toolbar-menu-item"
@@ -1190,7 +1291,10 @@ export default function App() {
                   data-tip="Review saved versions."
                   disabled={!currentLibraryEntry}
                 >
-                  🕒 History
+                  <span className="icon-inline">
+                    <IconHistory size={15} />
+                    History
+                  </span>
                 </button>
                 <div className="toolbar-menu-divider" />
                 <button
@@ -1202,7 +1306,10 @@ export default function App() {
                   }}
                   data-tip="Get an academic score and feedback."
                 >
-                  🎓 Score
+                  <span className="icon-inline">
+                    <IconScore size={15} />
+                    Score
+                  </span>
                 </button>
                 <button
                   className="toolbar-menu-item"
@@ -1213,7 +1320,10 @@ export default function App() {
                   }}
                   data-tip="Open integrity and proof-of-process tools."
                 >
-                  🛡️ Trust
+                  <span className="icon-inline">
+                    <IconIntegrity size={15} />
+                    Trust
+                  </span>
                 </button>
                 <button
                   className="toolbar-menu-item"
@@ -1224,7 +1334,10 @@ export default function App() {
                   }}
                   data-tip="Preview the document inside a mobile device frame."
                 >
-                  📱 Mobile
+                  <span className="icon-inline">
+                    <IconMobile size={15} />
+                    Mobile
+                  </span>
                 </button>
                 <div className="toolbar-menu-divider" />
                 <button
@@ -1236,7 +1349,10 @@ export default function App() {
                   }}
                   data-tip="Switch between light and dark background themes."
                 >
-                  {theme === "dark" ? "☀️ Light Mode" : "🌙 Dark Mode"}
+                  <span className="icon-inline">
+                    {theme === "dark" ? <IconSun size={15} /> : <IconMoon size={15} />}
+                    {theme === "dark" ? "Light Mode" : "Dark Mode"}
+                  </span>
                 </button>
                 <button
                   className="toolbar-menu-item"
@@ -1247,7 +1363,10 @@ export default function App() {
                   }}
                   data-tip="Turn hover tips on or off."
                 >
-                  {tipsEnabled ? "💡 Tips On" : "💡 Tips Off"}
+                  <span className="icon-inline">
+                    <IconLightbulb size={15} />
+                    {tipsEnabled ? "Tips On" : "Tips Off"}
+                  </span>
                 </button>
               </div>
             ) : null}
@@ -1313,6 +1432,7 @@ export default function App() {
           onSearchScopeChange={setSearchScope}
           searchOptions={searchOptions}
           onSearchOptionsChange={setSearchOptions}
+          isInvalidRegex={isInvalidRegex}
           searchResults={searchResults}
           onNavigate={handleSearchNavigate}
           scholarQuery={scholarQuery}
@@ -1353,6 +1473,64 @@ export default function App() {
       ) : null}
       {showTrustCenter && doc ? (
         <TrustCenterModal doc={doc} onClose={() => setShowTrustCenter(false)} />
+      ) : null}
+      {showPdfDebugModal && currentPdfDebugPage ? (
+        <div className="pdf-debug-backdrop" role="presentation">
+          <section className="pdf-debug-modal" role="dialog" aria-modal="true">
+            <header className="pdf-debug-header">
+              <div>
+                <h3>PDF Import Debugger</h3>
+                <p>
+                  Page {currentPdfDebugPage.pageIndex} of {pdfDebugPages.length}
+                </p>
+              </div>
+              <button
+                type="button"
+                className="search-panel-close"
+                onClick={() => setShowPdfDebugModal(false)}
+                aria-label="Close PDF debugger"
+              >
+                ✕
+              </button>
+            </header>
+            <div className="pdf-debug-controls">
+              <button
+                type="button"
+                className="toolbar-button"
+                onClick={() =>
+                  setPdfDebugPageIndex((prev) => Math.max(0, prev - 1))
+                }
+                disabled={pdfDebugPageIndex <= 0}
+              >
+                Previous
+              </button>
+              <button
+                type="button"
+                className="toolbar-button"
+                onClick={() =>
+                  setPdfDebugPageIndex((prev) =>
+                    Math.min(pdfDebugPages.length - 1, prev + 1)
+                  )
+                }
+                disabled={pdfDebugPageIndex >= pdfDebugPages.length - 1}
+              >
+                Next
+              </button>
+              <span>
+                Items: {currentPdfDebugPage.items.length} | Columns:{" "}
+                {currentPdfDebugPage.columns.length}
+              </span>
+            </div>
+            <div className="pdf-debug-canvas-wrap">
+              <PdfImportDebugger
+                items={currentPdfDebugPage.items}
+                columns={currentPdfDebugPage.columns}
+                pageWidth={currentPdfDebugPage.pageWidth}
+                pageHeight={currentPdfDebugPage.pageHeight}
+              />
+            </div>
+          </section>
+        </div>
       ) : null}
       {doc ? (
         <div className={`start-assistant ${showHelpAssistant ? "open" : ""}`}>

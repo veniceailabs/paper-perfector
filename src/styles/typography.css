@@ -53,6 +53,16 @@ mark {
   border-radius: 3px;
 }
 
+.icon-inline {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.icon-inline svg {
+  flex-shrink: 0;
+}
+
 [data-theme="light"] mark {
   background: var(--accent-soft);
 }
@@ -907,4 +917,62 @@ mark {
     padding-top: 12px;
     border-top: 1px solid var(--rule-color);
   }
+}
+
+.pdf-debug-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 70;
+  background: rgba(15, 23, 42, 0.65);
+  backdrop-filter: blur(3px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.pdf-debug-modal {
+  width: min(96vw, 1200px);
+  max-height: 92vh;
+  background: var(--bg-secondary);
+  border: 1px solid var(--rule-color);
+  border-radius: 14px;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.pdf-debug-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.pdf-debug-header h3 {
+  margin: 0 0 4px;
+}
+
+.pdf-debug-header p {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 12px;
+}
+
+.pdf-debug-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  color: var(--text-secondary);
+  font-size: 12px;
+}
+
+.pdf-debug-canvas-wrap {
+  overflow: auto;
+  border: 1px solid var(--rule-color);
+  border-radius: 10px;
+  background: #0b1020;
+  padding: 10px;
 }

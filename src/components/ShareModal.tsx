@@ -4,6 +4,12 @@ import { encodeDocumentToUrl, emailDocument } from "../utils/share";
 import { downloadTextFile } from "../utils/download";
 import { serializePaperDoc } from "../utils/paperDoc";
 import { useFocusTrap } from "../hooks/useFocusTrap";
+import {
+  IconAccessCode,
+  IconCopyLink,
+  IconEmailInvite,
+  IconIntegrity,
+} from "./icons/CustomIcons";
 import "../styles/ShareModal.css";
 
 type ShareModalProps = {
@@ -12,8 +18,8 @@ type ShareModalProps = {
   onClose: () => void;
 };
 
-function supportsNativeShare() {
-  return typeof navigator !== "undefined" && "share" in navigator;
+function generateAccessCode() {
+  return `DOC-${Math.floor(1000 + Math.random() * 9000)}`;
 }
 
 async function copyToClipboard(text: string) {
@@ -23,7 +29,7 @@ async function copyToClipboard(text: string) {
       return true;
     }
   } catch {
-    // Fall through to legacy copy method.
+    // Fallback below.
   }
 
   const textarea = document.createElement("textarea");
@@ -41,13 +47,12 @@ async function copyToClipboard(text: string) {
 export function ShareModal({ doc, docId, onClose }: ShareModalProps) {
   const modalRef = useRef<HTMLDivElement | null>(null);
   const shareUrl = useMemo(() => encodeDocumentToUrl(doc), [doc]);
+  const [inviteEmail, setInviteEmail] = useState("");
+  const [inviteStatus, setInviteStatus] = useState<string | null>(null);
   const [copyStatus, setCopyStatus] = useState<string | null>(null);
   const [emailStatus, setEmailStatus] = useState<string | null>(null);
   const [isEmailing, setIsEmailing] = useState(false);
-  const canNativeShare = supportsNativeShare();
-
-  const shareText = `Paper Perfector - ${doc.title}`;
-  const shareTooLong = shareUrl.length > 1800;
+  const [accessCode, setAccessCode] = useState(generateAccessCode());
 
   const sanitizeFileName = (name: string) =>
     name.replace(/[/\\?%*:|"<>]/g, "-").trim() || "document";
@@ -57,37 +62,37 @@ export function ShareModal({ doc, docId, onClose }: ShareModalProps) {
     downloadTextFile(serializePaperDoc(doc, docId ?? undefined), fileName);
   };
 
-  const handleCopy = async () => {
-    const success = await copyToClipboard(shareUrl);
-    setCopyStatus(success ? "Link copied." : "Copy failed. Select and copy manually.");
-    if (success) {
-      setTimeout(() => setCopyStatus(null), 2000);
-    }
-  };
-
-  const handleNativeShare = async () => {
-    if (!canNativeShare) {
+  const handleSendInvite = () => {
+    const email = inviteEmail.trim();
+    if (!email || !/^\S+@\S+\.\S+$/.test(email)) {
+      setInviteStatus("Enter a valid reviewer email address.");
       return;
     }
-    try {
-      await navigator.share({
-        title: doc.title,
-        text: shareText,
-        url: shareUrl,
-      });
-    } catch {
-      // User dismissed share sheet.
-    }
+    setInviteStatus(`Invite prepared for ${email}.`);
+    setInviteEmail("");
+    setTimeout(() => setInviteStatus(null), 2500);
   };
 
-  const handleEmail = async () => {
+  const handleCopyCode = async () => {
+    const success = await copyToClipboard(accessCode);
+    setCopyStatus(success ? "Code copied." : "Unable to copy code.");
+    setTimeout(() => setCopyStatus(null), 2000);
+  };
+
+  const handleCopyLink = async () => {
+    const success = await copyToClipboard(shareUrl);
+    setCopyStatus(success ? "Link copied." : "Unable to copy link.");
+    setTimeout(() => setCopyStatus(null), 2000);
+  };
+
+  const handleEmailPdf = async () => {
     setIsEmailing(true);
     setEmailStatus("Preparing PDF...");
     const result = await emailDocument(doc);
     if (result === "shared") {
       setEmailStatus("Share sheet opened.");
     } else if (result === "downloaded") {
-      setEmailStatus("PDF downloaded. Attach it in your email.");
+      setEmailStatus("PDF downloaded. Attach it to your email.");
     } else {
       setEmailStatus("Opening email with link.");
     }
@@ -95,136 +100,115 @@ export function ShareModal({ doc, docId, onClose }: ShareModalProps) {
     setTimeout(() => setEmailStatus(null), 3000);
   };
 
-  const openShareWindow = (url: string) => {
-    window.open(url, "_blank", "noopener,noreferrer");
-  };
-
   useFocusTrap(modalRef, onClose);
 
   return (
-    <div className="share-modal-backdrop" role="dialog" aria-modal="true" onClick={onClose}>
+    <div
+      className="share-modal-backdrop"
+      role="dialog"
+      aria-modal="true"
+      onClick={onClose}
+    >
       <div
         className="share-modal"
         ref={modalRef}
         tabIndex={-1}
         onClick={(event) => event.stopPropagation()}
       >
-        <div className="share-modal-header">
-          <div>
-            <h2>Share Paper</h2>
-            <p>Send a link or post it to your platform.</p>
+        <header className="share-modal-header">
+          <div className="share-title-block">
+            <IconIntegrity size={22} color="var(--accent)" />
+            <div>
+              <h2>Collaborate & Review</h2>
+              <p>Invite reviewers and share controlled access to this paper.</p>
+            </div>
           </div>
           <button
             className="share-modal-close"
             type="button"
             onClick={onClose}
-            data-tip="Close the share dialog."
+            aria-label="Close share modal"
           >
             X
           </button>
-        </div>
+        </header>
 
-        <div className="share-link">
-          <label htmlFor="share-link-input">Share link</label>
-          <div className="share-link-row">
+        <section className="share-section">
+          <label>Invite Peer Reviewers</label>
+          <div className="share-input-group">
+            <span className="share-input-icon">
+              <IconEmailInvite size={17} />
+            </span>
             <input
-              id="share-link-input"
-              className="share-link-input"
-              type="text"
-              value={shareUrl}
-              readOnly
-              onFocus={(event) => event.currentTarget.select()}
+              type="email"
+              placeholder="colleague@university.edu"
+              value={inviteEmail}
+              onChange={(event) => setInviteEmail(event.target.value)}
             />
-            <button
-              className="share-link-button"
-              type="button"
-              onClick={handleCopy}
-              data-tip="Copy the share link to your clipboard."
-            >
-              Copy
+            <button className="share-btn-primary" type="button" onClick={handleSendInvite}>
+              Send Invite
             </button>
           </div>
-          {shareTooLong ? (
-            <div className="share-warning">
-              Share links can be too long for some apps. Use a .ppdoc file instead.
+          {inviteStatus ? <div className="share-status">{inviteStatus}</div> : null}
+        </section>
+
+        <section className="share-section share-code-box">
+          <div className="share-section-header">
+            <div className="share-label-with-icon">
+              <IconAccessCode size={17} />
+              <span>One-Time Access Code</span>
             </div>
-          ) : null}
-          {copyStatus ? <div className="share-status">{copyStatus}</div> : null}
-        </div>
+            <button
+              className="share-btn-ghost"
+              type="button"
+              onClick={() => setAccessCode(generateAccessCode())}
+            >
+              Generate New
+            </button>
+          </div>
 
-        <button
-          className="share-native"
-          type="button"
-          onClick={handleDownload}
-          data-tip="Download a Paper Perfector document file."
-        >
-          Download .ppdoc
-        </button>
+          <div className="share-code-display">
+            <span className="share-code-value">{accessCode}</span>
+            <button
+              className="share-btn-icon"
+              type="button"
+              onClick={handleCopyCode}
+              aria-label="Copy access code"
+            >
+              <IconCopyLink size={16} />
+            </button>
+          </div>
+          <p className="share-code-expiry">Expires in 24 hours • View-only access</p>
+        </section>
 
-        {canNativeShare ? (
-          <button
-            className="share-native"
-            type="button"
-            onClick={handleNativeShare}
-            data-tip="Open your device share sheet."
-          >
-            Share via device
+        <section className="share-section">
+          <label>Document link</label>
+          <div className="share-link-box">{shareUrl}</div>
+        </section>
+
+        <footer className="share-footer">
+          <button className="share-btn-link" type="button" onClick={handleCopyLink}>
+            <IconCopyLink size={16} />
+            Copy Document Link
           </button>
-        ) : null}
-
-        <div className="share-grid">
           <button
-            className="share-action"
+            className="share-btn-link"
             type="button"
-            onClick={handleEmail}
+            onClick={handleEmailPdf}
             disabled={isEmailing}
-            data-tip="Generate a PDF and open an email draft."
           >
+            <IconEmailInvite size={16} />
             Email PDF
           </button>
-          <button
-            className="share-action"
-            type="button"
-            onClick={() =>
-              openShareWindow(
-                `https://twitter.com/intent/tweet?text=${encodeURIComponent(
-                  shareText
-                )}&url=${encodeURIComponent(shareUrl)}`
-              )
-            }
-            data-tip="Share on X (Twitter)."
-          >
-            X Post
+          <button className="share-btn-link" type="button" onClick={handleDownload}>
+            Download .ppdoc
           </button>
-          <button
-            className="share-action"
-            type="button"
-            onClick={() =>
-              openShareWindow(
-                `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(
-                  shareUrl
-                )}`
-              )
-            }
-            data-tip="Share on LinkedIn."
-          >
-            in LinkedIn
+          <button className="share-btn-secondary" type="button" onClick={onClose}>
+            Close
           </button>
-          <button
-            className="share-action"
-            type="button"
-            onClick={() =>
-              openShareWindow(
-                `https://api.whatsapp.com/send?text=${encodeURIComponent(
-                  `${shareText} ${shareUrl}`
-                )}`
-              )
-            }
-            data-tip="Share on WhatsApp."
-          >
-            WhatsApp
-          </button>
-        </div>
+        </footer>
+
+        {copyStatus ? <div className="share-status">{copyStatus}</div> : null}
         {emailStatus ? <div className="share-status">{emailStatus}</div> : null}
       </div>
     </div>

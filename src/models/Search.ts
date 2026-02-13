@@ -7,6 +7,7 @@ export type SearchScope = {
 export type SearchOptions = {
   matchCase: boolean;
   wholeWord: boolean;
+  useRegex: boolean;
 };
 
 export const defaultSearchScope: SearchScope = {
@@ -18,6 +19,7 @@ export const defaultSearchScope: SearchScope = {
 export const defaultSearchOptions: SearchOptions = {
   matchCase: false,
   wholeWord: false,
+  useRegex: false,
 };
 
 export type SearchResult = {

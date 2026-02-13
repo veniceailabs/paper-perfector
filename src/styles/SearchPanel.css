@@ -115,6 +115,12 @@
   gap: 8px;
 }
 
+.search-error-hint {
+  color: #ef4444;
+  font-size: 11px;
+  margin-top: -2px;
+}
+
 .search-scope-toggle {
   border: 1px solid var(--rule-color);
   background: transparent;

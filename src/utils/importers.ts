@@ -8,6 +8,10 @@ import { importFromDocx } from "./docxImport";
 import { importFromLegacyDoc } from "./legacyDocImport";
 import { parsePaperDoc } from "./paperDoc";
 
+type ImportOptions = {
+  pdfDebug?: boolean;
+};
+
 export type ImportResult = {
   document: Document;
   warnings: string[];
@@ -15,7 +19,10 @@ export type ImportResult = {
   docId?: string;
 };
 
-export async function importDocumentFromFile(file: File): Promise<ImportResult> {
+export async function importDocumentFromFile(
+  file: File,
+  options?: ImportOptions
+): Promise<ImportResult> {
   const fileName = file.name.toLowerCase();
   const warnings: string[] = [];
 
@@ -49,7 +56,9 @@ export async function importDocumentFromFile(file: File): Promise<ImportResult> 
 
   if (file.type === "application/pdf" || fileName.endsWith(".pdf")) {
     return {
-      document: await importFromPdf(file),
+      document: await importFromPdf(file, {
+        collectDebug: Boolean(options?.pdfDebug),
+      }),
       warnings,
       source: "PDF",
     };

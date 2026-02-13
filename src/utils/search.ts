@@ -30,6 +30,33 @@ export function escapeRegExp(value: string) {
   return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
+/**
+ * Builds a valid RegExp object based on search options.
+ * Returns null if the regex is invalid.
+ */
+export function buildSearchRegex(
+  query: string,
+  options: SearchOptions
+): RegExp | null {
+  if (!query) {
+    return null;
+  }
+
+  try {
+    let pattern = query;
+    if (!options.useRegex) {
+      pattern = escapeRegExp(query);
+    }
+    if (options.wholeWord) {
+      pattern = `\\b${pattern}\\b`;
+    }
+    const flags = options.matchCase ? "g" : "gi";
+    return new RegExp(pattern, flags);
+  } catch {
+    return null;
+  }
+}
+
 function normalizeQuery(query: string) {
   return query.trim();
 }
@@ -39,11 +66,17 @@ function createSearchRegex(query: string, options?: SearchOptions, global = true
   if (!normalizedQuery) {
     return null;
   }
-  const pattern = options?.wholeWord
-    ? `\\b${escapeRegExp(normalizedQuery)}\\b`
-    : escapeRegExp(normalizedQuery);
-  const flags = `${global ? "g" : ""}${options?.matchCase ? "" : "i"}`;
-  return new RegExp(pattern, flags);
+  const effectiveOptions: SearchOptions = {
+    matchCase: options?.matchCase ?? false,
+    wholeWord: options?.wholeWord ?? false,
+    useRegex: options?.useRegex ?? false,
+  };
+  const built = buildSearchRegex(normalizedQuery, effectiveOptions);
+  if (!built) {
+    return null;
+  }
+  const flags = built.flags.replace(/g/g, "");
+  return new RegExp(built.source, `${global ? "g" : ""}${flags}`);
 }
 
 function findNextMatch(

@@ -3,6 +3,7 @@ import type { ScholarResult } from "../models/Scholar";
 import type { SearchOptions, SearchResult, SearchScope } from "../models/Search";
 import type { Source } from "../models/DocumentSchema";
 import { useFocusTrap } from "../hooks/useFocusTrap";
+import { IconRegex } from "./icons/CustomIcons";
 import "../styles/SearchPanel.css";
 
 type AppAction = {
@@ -21,6 +22,7 @@ type SearchPanelProps = {
   onSearchScopeChange: (scope: SearchScope) => void;
   searchOptions: SearchOptions;
   onSearchOptionsChange: (options: SearchOptions) => void;
+  isInvalidRegex: boolean;
   searchResults: SearchResult[];
   onNavigate: (sectionId: string) => void;
   scholarQuery: string;
@@ -65,6 +67,7 @@ export function SearchPanel({
   onSearchScopeChange,
   searchOptions,
   onSearchOptionsChange,
+  isInvalidRegex,
   searchResults,
   onNavigate,
   scholarQuery,
@@ -206,7 +209,22 @@ export function SearchPanel({
             >
               Whole Word
             </button>
+            <button
+              type="button"
+              className={`search-scope-toggle ${searchOptions.useRegex ? "active" : ""}`}
+              onClick={() => handleOptionToggle("useRegex")}
+              data-tip="Use regular expression syntax (.*)."
+              aria-label="Regex mode"
+            >
+              <span className="icon-inline">
+                <IconRegex size={14} />
+                Regex
+              </span>
+            </button>
           </div>
+          {isInvalidRegex ? (
+            <div className="search-error-hint">Invalid regex syntax.</div>
+          ) : null}
           <div className="search-panel-results">
             {hasQuery ? (
               searchResults.length ? (
@@ -252,7 +270,7 @@ export function SearchPanel({
               type="button"
               className="search-panel-button"
               onClick={onReplaceNext}
-              disabled={!hasQuery}
+              disabled={!hasQuery || isInvalidRegex}
               data-tip="Replace the next match."
             >
               Replace Next
@@ -261,7 +279,7 @@ export function SearchPanel({
               type="button"
               className="search-panel-button primary"
               onClick={onReplaceAll}
-              disabled={!hasQuery}
+              disabled={!hasQuery || isInvalidRegex}
               data-tip="Replace every match in the selected scope."
             >
               Replace All

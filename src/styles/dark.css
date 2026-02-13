@@ -1,13 +1,13 @@
 :root[data-theme="dark"] {
-  --bg-primary: #0f172a;
-  --bg-secondary: #111827;
-  --text-primary: #e8eaed;
-  --text-secondary: #b0b3b8;
-  --text-muted: #8a8d91;
-  --rule-color: rgba(255, 255, 255, 0.12);
-  --accent: #e07a3f;
-  --accent-faint: rgba(224, 122, 63, 0.08);
-  --accent-soft: rgba(224, 122, 63, 0.12);
-  --accent-glow: rgba(224, 122, 63, 0.22);
-  --accent-glow-strong: rgba(224, 122, 63, 0.34);
+  --bg-primary: #0a1120;
+  --bg-secondary: #0f1a2e;
+  --text-primary: #e6ecf8;
+  --text-secondary: #b6c3da;
+  --text-muted: #8b9ab7;
+  --rule-color: rgba(161, 180, 217, 0.2);
+  --accent: #5f84d8;
+  --accent-faint: rgba(95, 132, 216, 0.1);
+  --accent-soft: rgba(95, 132, 216, 0.16);
+  --accent-glow: rgba(95, 132, 216, 0.28);
+  --accent-glow-strong: rgba(95, 132, 216, 0.4);
 }

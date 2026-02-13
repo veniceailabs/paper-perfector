@@ -27,6 +27,7 @@ import {
   formatReference,
   formatReferenceTitle,
 } from "../utils/citations";
+import { IconSave } from "./icons/CustomIcons";
 import {
   replaceInDocument,
   replaceInText,
@@ -980,7 +981,10 @@ export const DocumentEditor = forwardRef<DocumentEditorHandle, DocumentEditorPro
               onClick={handleSave}
               data-tip="Save the latest edits to your document."
             >
-              💾 Save Changes
+              <span className="icon-inline">
+                <IconSave size={15} />
+                Save Changes
+              </span>
             </button>
           </div>
         </div>
@@ -1223,7 +1227,10 @@ export const DocumentEditor = forwardRef<DocumentEditorHandle, DocumentEditorPro
                 onClick={handleSave}
                 data-tip="Save the latest edits to your document."
               >
-                💾 Save Changes
+                <span className="icon-inline">
+                  <IconSave size={15} />
+                  Save Changes
+                </span>
               </button>
               <button
                 className="editor-secondary-btn"
@@ -1305,7 +1312,10 @@ export const DocumentEditor = forwardRef<DocumentEditorHandle, DocumentEditorPro
             onClick={handleSave}
             data-tip="Save the latest edits to your document."
           >
-            💾 Save Changes
+            <span className="icon-inline">
+              <IconSave size={15} />
+              Save Changes
+            </span>
           </button>
           {citationAudit && citationAudit.totalSources > 0 ? (
             <div
